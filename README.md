@@ -9,9 +9,9 @@ packages:
 - path: app.mod1
 - path: app.mod2
   exclude:
-  - app.mod2.MyClass
-  - app.mod2.MyClass#my_instance_method
-  - app.mod2.MyClass.my_class_method
+  - MyClass
+  - MyOtherClass#my_instance_method
+  - MyOtherClass.my_class_method
 ```
   
 ## Test Frameworks

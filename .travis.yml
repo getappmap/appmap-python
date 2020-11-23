@@ -1,0 +1,25 @@
+language: python
+python: "3.9"
+
+stages:
+- lint
+- test
+
+
+cache:
+  pip: true
+  
+install:
+- pip install --upgrade pip
+- pip install poetry
+- poetry install
+
+jobs:
+  include:
+  - stage: lint
+    script:
+    - poetry run pylint appmap
+
+  - stage: test
+    script:
+    - poetry run pytest
