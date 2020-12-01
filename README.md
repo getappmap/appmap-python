@@ -79,3 +79,39 @@ An app with remote recording enabled supports these routes:
   Returns AppMap as JSON
   200 with AppMap as body
   404 if there's no recording in progress
+
+## Development
+
+### Dependency management
+
+[poetry](https://https://python-poetry.org/) for dependency management:
+
+```
+% brew install poetry
+% cd appmap-python
+% poetry install
+```
+
+### Linting
+[pylint](https://www.pylint.org/) for linting:
+
+```
+% cd appmap-python
+% poetry run pylint appmap
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+```
+
+[Note that the current configuration requires a 10.0 for the Travis build to pass. To make
+this easier to achieve, convention and refactoring checks have both been disabled. They
+should be reenabled as soon as possible.]
+
+
+### Testing
+[pytest](https://docs.pytest.org/en/stable/) for testing:
+
+```
+% cd appmap-python
+% poetry run pytest
