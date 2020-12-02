@@ -24,9 +24,9 @@ class Configuration:
         for package in config['packages']:
             path = package['path']
             self._includes.add(path)
-            if package['exclude']:
+            if package.get('exclude'):
                 excludes = [f'{path}.{e}' for e in package['exclude']]
-                self._excludes.add(excludes)
+                self._excludes.update(excludes)
 
         print(f'self._includes {self._includes} self._excludes {self._excludes}')
 
