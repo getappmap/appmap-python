@@ -6,6 +6,7 @@ import logging
 from contextlib import contextmanager
 from functools import partial
 
+
 class Filter:
     def __init__(self, next_filter):
         self.next_filter = next_filter

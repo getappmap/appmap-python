@@ -1,5 +1,6 @@
 import platform
 
+
 class Metadata:
     @staticmethod
     def dump():

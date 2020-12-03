@@ -5,6 +5,7 @@ from importlib import reload
 
 import orjson
 
+
 def test_recording_works(monkeypatch, tmp_path):
     # the appmap.yml
     appmap_yml = """
@@ -58,7 +59,6 @@ class Src:
     src = tmp_path / 'src.py'
     src.write_text(src_py)
     sys.path.append(str(tmp_path))
-
 
     monkeypatch.setenv("APPMAP", "true")
     monkeypatch.setenv("APPMAP_CONFIG", str(config))

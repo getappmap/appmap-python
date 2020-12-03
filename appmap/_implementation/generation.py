@@ -12,5 +12,6 @@ def appmap(recording):
         'events': recording.events
     }
 
+
 def dump(recording):
     return orjson.dumps(appmap(recording), default=serialize_event)

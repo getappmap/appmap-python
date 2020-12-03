@@ -16,8 +16,10 @@ from .event import Event, CallEvent, ReturnEvent, ExceptionEvent
 logging.basicConfig(level=getattr(logging,
                                   os.getenv("APPMAP_LOG_LEVEL", "warning").upper()))
 
+
 def enabled():
     return os.getenv("APPMAP", "false") == "true"
+
 
 def split_method_name(method):
     qualname = method.__qualname__
@@ -79,6 +81,7 @@ def in_set(method, which):
     return (class_name in which
             or method.__qualname__ in which)
 
+
 class ConfigFilter(Filter):
     includes = set()
     excludes = set()
@@ -122,7 +125,6 @@ class ConfigFilter(Filter):
         if self.included(method):
             return wrap(method)
         return self.next_filter.call(method)
-
 
 
 class BuiltinFilter(Filter):
