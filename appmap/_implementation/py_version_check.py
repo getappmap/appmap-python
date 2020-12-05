@@ -2,6 +2,7 @@ import platform
 
 MIN_PY_VERSION = 3.8
 
+
 class AppMapPyVerException(Exception):
     pass
 
