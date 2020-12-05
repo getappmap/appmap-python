@@ -1,7 +1,7 @@
 """Test recording context manager"""
 import os
+import platform
 import sys
-from importlib import reload
 
 import orjson
 
@@ -54,6 +54,9 @@ class Src:
             ]
         }
 
+    expected_appmap['metadata']['language']['engine'] = platform.python_implementation()
+    expected_appmap['metadata']['language']['version'] = platform.python_version()
+
     config = tmp_path / 'appmap.yml'
     config.write_text(appmap_yml)
     src = tmp_path / 'src.py'
@@ -65,13 +68,12 @@ class Src:
 
     # import here to use the environment variables set above
     import appmap
-    from appmap._implementation import generation
     r = appmap.Recording()
     with r:
         from src import Src
         Src().instance_method()
 
-    generated_appmap = orjson.loads(generation.dump(r))
+    generated_appmap = orjson.loads(appmap.generation.dump(r))
     for event in generated_appmap['events']:
         for k, v in event.items():
             if k == 'path':
