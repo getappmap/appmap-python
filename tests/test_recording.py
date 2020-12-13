@@ -75,8 +75,6 @@ class Src:
 
     generated_appmap = orjson.loads(r.dumps())
     for event in generated_appmap['events']:
-        for k, v in event.items():
-            if k == 'path':
-                event[k] = os.path.basename(v)
+        event.update((k, os.path.basename(v)) for k, v in event.items() if k == 'path')
 
     assert generated_appmap == expected_appmap
