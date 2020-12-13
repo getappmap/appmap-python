@@ -6,13 +6,8 @@ from .event import Event, CallEvent, ReturnEvent, ExceptionEvent
 
 
 def split_method_name(method):
-    qualname = method.__qualname__
-    if '.' in qualname:
-        class_name, func_name = qualname.rsplit('.', 1)
-    else:
-        class_name = ''
-        func_name = qualname
-    return (class_name, func_name)
+    """ Split method __qualname__ into class_name, func_name """
+    return ([''] * 1 + method.__qualname__.rsplit('.', 1))[-2:]
 
 
 def wrap(func):
