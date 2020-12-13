@@ -114,7 +114,7 @@ should be reenabled as soon as possible.]
 
 ```
 % cd appmap-python
-% poetry run pytest
+% APPMAP=true poetry run pytest
 ```
 
 ### Code Coverage
@@ -122,7 +122,7 @@ should be reenabled as soon as possible.]
 
 ```
 % cd appmap-python
-% poertry run coverage run -m pytest
-% poertry run coverage html
+% APPMAP=true poetry run coverage run -m pytest
+% poetry run coverage html
 % open htmlcov/index.html
 ```
