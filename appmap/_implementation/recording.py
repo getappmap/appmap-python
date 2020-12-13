@@ -17,8 +17,23 @@ class NullFilter(Filter):
 
 
 class Recorder:
+    """ Singleton Recorder class """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            logging.debug('Creating the Recorder object')
+            cls._instance = super(Recorder, cls).__new__(cls)
+
+            # Put any __init__ here.
+            cls._instance._initialized = False
+
+        return cls._instance
 
     def __init__(self):
+        if self.__getattribute__('_initialized'):  # keep pylint happy
+            return
+        self._initialized = True
         self.enabled = False
         self.filter_stack = [NullFilter]
         self._events = []
