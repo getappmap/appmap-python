@@ -1,25 +1,34 @@
 """Capture recordings of python code"""
 
 import builtins
+from functools import partial, WRAPPER_ASSIGNMENTS, WRAPPER_UPDATES
 import inspect
 import logging
-from contextlib import contextmanager
-from functools import partial
+import orjson
 
-
-class Filter:
-    def __init__(self, next_filter):
-        self.next_filter = next_filter
-
-
-class NullFilter(Filter):
-    def call(self, method):
-        return method
+from .event import serialize_event
+from .filters import NullFilter, BuiltinFilter, ConfigFilter
+from . import metadata
 
 
 class Recorder:
+    """ Singleton Recorder class """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            logging.debug('Creating the Recorder object')
+            cls._instance = super(Recorder, cls).__new__(cls)
+
+            # Put any __init__ here.
+            cls._instance._initialized = False
+
+        return cls._instance
 
     def __init__(self):
+        if self.__getattribute__('_initialized'):  # keep pylint happy
+            return
+        self._initialized = True
         self.enabled = False
         self.filter_stack = [NullFilter]
         self._events = []
@@ -73,35 +82,41 @@ class Recorder:
         return mod
 
 
-recorder = Recorder()
-
-
-@contextmanager
-def _watch_imports():
-    """
-    context manager to give Recording access to modules as they're
-    imported
-    """
-    old_import = builtins.__import__
-
-    builtins.__import__ = partial(Recorder.do_import, recorder, old_import)
-    try:
-        yield
-    finally:
-        builtins.__import__ = old_import
-
-
 class Recording:
     def __init__(self):
+        self.recorder = Recorder()
+        self.recorder.add_filter(BuiltinFilter.load_config())
+        self.recorder.add_filter(ConfigFilter.load_config())
+
         self.events = []
         self.old_import = None
 
     def __enter__(self):
         self.old_import = builtins.__import__
-        builtins.__import__ = partial(Recorder.do_import, recorder, self.old_import)
-        recorder.start_recording()
+        builtins.__import__ = partial(Recorder.do_import, self.recorder, self.old_import)
+
+        for attr in WRAPPER_ASSIGNMENTS:
+            try:
+                value = getattr(self.old_import, attr)
+            except AttributeError:
+                pass
+            else:
+                setattr(builtins.__import__, attr, value)
+        for attr in WRAPPER_UPDATES:
+            getattr(builtins.__import__, attr).update(getattr(self.old_import, attr, {}))
+
+        self.recorder.start_recording()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.events = recorder.stop_recording()
+        self.events = self.recorder.stop_recording()
         builtins.__import__ = self.old_import
         return False
+
+    def dumps(self):
+        return orjson.dumps(
+            {
+                'metadata': metadata.Metadata.dump(),
+                'events': self.events
+            },
+            default=serialize_event
+        )

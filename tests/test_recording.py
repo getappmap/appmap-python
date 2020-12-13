@@ -73,7 +73,7 @@ class Src:
         from src import Src
         Src().instance_method()
 
-    generated_appmap = orjson.loads(appmap.generation.dump(r))
+    generated_appmap = orjson.loads(r.dumps())
     for event in generated_appmap['events']:
         for k, v in event.items():
             if k == 'path':
