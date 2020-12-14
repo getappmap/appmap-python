@@ -52,11 +52,11 @@ class CallEvent(Event):
         Return a factory for creating new CallEvents based on
         introspecting the given function.
         """
-        defined_class, method_id = utils.split_method_name(fn)
+        defined_class, method_id = utils.split_function_name(fn)
         path = inspect.getsourcefile(fn)
         __, lineno = inspect.getsourcelines(fn)
-        static = (utils.is_static_method(fn_attr)
-                  or utils.is_class_method(fn_attr))
+        static = (utils.is_staticmethod(fn_attr)
+                  or utils.is_classmethod(fn_attr))
         return partial(CallEvent, defined_class,
                        method_id, path, lineno, static)
 

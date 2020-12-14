@@ -3,7 +3,6 @@ import json
 import os
 import sys
 from importlib import reload
-from pprintpp import pprint as pp
 
 import pytest
 
@@ -116,10 +115,10 @@ def test_recording_works(monkeypatch, datafiles):
 
     import appmap
     from appmap._implementation import generation
-    reload(appmap._implementation.recording)
+    reload(appmap._implementation.recording)  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:
-        from src import Src
+        from src import Src  # pylint: disable=import-error
         Src.static_method()
         Src.class_method()
         Src().instance_method()

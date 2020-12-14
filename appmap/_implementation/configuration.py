@@ -5,7 +5,7 @@ Manage Configuration AppMap recorder for Python
 import logging
 import os
 import sys
-from functools import partial, wraps
+from functools import wraps
 
 import yaml
 
@@ -46,11 +46,11 @@ def wrap(fn_attr, fn):
 
 
 def in_set(name, which):
-    return any(filter(lambda s: name.startswith(s), which))
+    return any(filter(name.startswith, which))
 
 
-def method_in_set(method, which):
-    class_name, fn_name = utils.split_method_name(method)
+def function_in_set(fn, which):
+    class_name, fn_name = utils.split_function_name(fn)
     logging.debug(('  class_name %s'
                    ' fnname %s'
                    ' which %s'),
@@ -86,14 +86,14 @@ class ConfigFilter(Filter):
         logging.debug('ConfigFilter, includes %s', self.includes)
         logging.debug('ConfigFilter, excludes %s', self.excludes)
 
-    def excluded(self, method):
-        ret = method_in_set(method, self.excludes)
-        logging.debug('ConfigFilter, %s excluded? %s', method, ret)
+    def excluded(self, fn):
+        ret = function_in_set(fn, self.excludes)
+        logging.debug('ConfigFilter, %s excluded? %s', fn, ret)
         return ret
 
-    def included(self, method):
-        ret = method_in_set(method, self.includes)
-        logging.debug('ConfigFilter, %s included? %s', method, ret)
+    def included(self, fn):
+        ret = function_in_set(fn, self.includes)
+        logging.debug('ConfigFilter, %s included? %s', fn, ret)
         return ret
 
     def filter(self, class_):
@@ -107,14 +107,14 @@ class ConfigFilter(Filter):
             return True
 
         logging.debug('  undecided')
-        return self.next.filter(class_)
+        return self.next_filter.filter(class_)
 
-    def wrap(self, method_attr, method):
-        if self.excluded(method):
-            return method
-        if self.included(method):
-            return wrap(method_attr, method)
-        return self.next.wrap(method_attr, method)
+    def wrap(self, fn_attr, fn):
+        if self.excluded(fn):
+            return fn
+        if self.included(fn):
+            return wrap(fn_attr, fn)
+        return self.next_filter.wrap(fn_attr, fn)
 
 
 class BuiltinFilter(Filter):
@@ -125,19 +125,19 @@ class BuiltinFilter(Filter):
 
         self.includes = {'os.read', 'os.write'}
 
-    def included(self, method):
-        return method_in_set(method, self.includes)
+    def included(self, fn):
+        return function_in_set(fn, self.includes)
 
     def filter(self, class_):
         name = class_.__name__
         if in_set(name, self.includes):
             return True
-        return self.next.filter(class_)
+        return self.next_filter.filter(class_)
 
-    def wrap(self, method_attr, method):
-        if self.included(method):
-            return wrap(method)
-        return self.next.wrap(method_attr, method)
+    def wrap(self, fn_attr, fn):
+        if self.included(fn):
+            return wrap(fn_attr, fn)
+        return self.next_filter.wrap(fn_attr, fn)
 
 
 recorder.use_filter(BuiltinFilter)

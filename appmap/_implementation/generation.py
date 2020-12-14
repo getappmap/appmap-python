@@ -12,8 +12,7 @@ class ClassMapSet(MutableMapping):
         self.dict = dict()
 
     def __delitem__(self, k):
-        import pdb; pdb.set_trace()
-        self.dict.discard(k)
+        del self[k]
 
     def __getitem__(self, k):
         return self.dict[k]
@@ -27,11 +26,12 @@ class ClassMapSet(MutableMapping):
     def __len__(self):
         return len(self.dict)
 
+
 class ClassMapEntry:
-    def __init__(self, key, name, type):
+    def __init__(self, key, name, entry_type):
         self.key = key
         self.name = name
-        self.type = type
+        self.type = entry_type
 
     def __eq__(self, other):
         return self.key == other.key
@@ -42,7 +42,7 @@ class ClassMapEntry:
 
 class PackageEntry(ClassMapEntry):
     def __init__(self, name):
-        super().__init__(key=name, name=name, type='package')
+        super().__init__(name, name, 'package')
         self.children = ClassMapSet()
 
     __hash__ = ClassMapEntry.__hash__
@@ -50,7 +50,7 @@ class PackageEntry(ClassMapEntry):
 
 class ClassEntry(ClassMapEntry):
     def __init__(self, name):
-        super().__init__(key=name, name=name, type='class')
+        super().__init__(name, name, 'class')
         self.children = ClassMapSet()
 
     __hash__ = ClassMapEntry.__hash__
@@ -58,7 +58,7 @@ class ClassEntry(ClassMapEntry):
 
 class FuncEntry(ClassMapEntry):
     def __init__(self, e, loc):
-        super().__init__(key=loc, name=e.method_id, type='function')
+        super().__init__(loc, e.method_id, 'function')
         self.path = e.path
         self.lineno = e.lineno
         self.static = e.static
@@ -73,12 +73,12 @@ def asdict(s):
 
 
 def classmap(recording):
-    classmap = ClassMapSet()
+    ret = ClassMapSet()
     for e in recording.events:
         if e.event != 'call':
             continue
         packages, class_ = e.defined_class.rsplit('.', 1)
-        children = classmap
+        children = ret
         for p in packages.split('.'):
             entry = children.setdefault(p, PackageEntry(p))
             children = entry.children
@@ -89,7 +89,7 @@ def classmap(recording):
         loc = f'{e.path}:{e.lineno}'
         children.setdefault(loc, FuncEntry(e, loc))
 
-    return classmap
+    return ret
 
 
 def appmap(recording):
@@ -102,14 +102,14 @@ def appmap(recording):
 
 
 class AppMapEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Event):
-            return serialize_event(obj)
-        elif isinstance(obj, ClassMapSet):
-            return list(obj.values())
-        elif isinstance(obj, ClassMapEntry):
-            return asdict(obj)
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, Event):
+            return serialize_event(o)
+        elif isinstance(o, ClassMapSet):
+            return list(o.values())
+        elif isinstance(o, ClassMapEntry):
+            return asdict(o)
+        return json.JSONEncoder.default(self, o)
 
 
 def dump(recording):

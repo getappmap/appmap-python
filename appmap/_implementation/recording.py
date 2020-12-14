@@ -3,12 +3,13 @@
 import inspect
 import logging
 import sys
-import types
+
 from abc import ABC, abstractmethod
 from functools import wraps
 
 from . import env
 from . import utils
+
 
 class Recording:
     def __init__(self):
@@ -36,8 +37,8 @@ class Recording:
 
 
 class Filter(ABC):
-    def __init__(self, next):
-        self.next = next
+    def __init__(self, next_filter):
+        self.next_filter = next_filter
 
     @abstractmethod
     def filter(self, class_):
@@ -46,25 +47,23 @@ class Filter(ABC):
         instrumented.  Return True if it should be, False if it should
         not be, or call the next filter if this filter can't decide.
         """
-        pass
 
     @abstractmethod
-    def wrap(self, method_attr, method):
+    def wrap(self, fn_attr, fn):
         """
-        Determine whether a method should be wrapped.  method_attr is
-        the original __dict__ entry for the method, method is the
-        value returned by getattr.  Returns a wrapped method if
+        Determine whether a function should be wrapped.  fn_attr is
+        the original __dict__ entry for the function, fn is the value
+        returned by getattr.  Returns a wrapped function if
         appropriate, or the original method otherwise.
         """
-        pass
 
 
 class NullFilter(Filter):
     def filter(self, class_):
         return False
 
-    def wrap(self, method):
-        return method
+    def wrap(self, fn_attr, fn):
+        return fn
 
 
 def get_classes(module):
@@ -85,8 +84,8 @@ def get_members(class_):
     def is_member_func(m):
         return (inspect.isfunction(m)
                 or inspect.ismethod(m)
-                or utils.is_static_method(m)
-                or utils.is_class_method(m))
+                or utils.is_staticmethod(m)
+                or utils.is_classmethod(m))
 
     ret = []
     for k, v in class_.__dict__.items():
@@ -94,6 +93,7 @@ def get_members(class_):
             continue
         ret.append((k, v, getattr(class_, k)))
     return ret
+
 
 class Recorder:
     def __init__(self):
@@ -145,21 +145,18 @@ class Recorder:
                       classes,
                       inspect.getmembers(mod, inspect.isclass))
         for class_ in classes:
-            logging.debug('  class_ %s', class_)
             if not self.filter_chain.filter(class_):
                 continue
 
             logging.debug('  looking for members')
             functions = get_members(class_)
             logging.debug('  functions %s', functions)
-            for func_name, func_attr, func in functions:
-                logging.debug('  func %s inspect.isfunction(func) %s',
-                              func, inspect.isfunction(func))
-                new_func = self.filter_chain.wrap(func_attr, func)
-                if new_func != func:
-                    if utils.is_static_method(func_attr):
-                        new_func = staticmethod(new_func)
-                    setattr(class_, func_name, new_func)
+            for fn_name, fn_attr, fn in functions:
+                new_fn = self.filter_chain.wrap(fn_attr, fn)
+                if new_fn != fn:
+                    if utils.is_staticmethod(fn_attr):
+                        new_fn = staticmethod(new_fn)
+                    setattr(class_, fn_name, new_fn)
 
 
 recorder = Recorder()
@@ -197,7 +194,7 @@ def wrap_find_spec(find_spec):
 
 if env.enabled():
     # import configuration so the filter stack will get initialized
-    from . import configuration  # noqa: F401
+    from . import configuration  # pylint: disable=unused-import
     for h in sys.meta_path:
         if getattr(h, 'find_spec', None) is not None:
             logging.debug('  h.find_spec %s',  h.find_spec)
