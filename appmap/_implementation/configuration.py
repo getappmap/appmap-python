@@ -2,7 +2,6 @@
 Manage Configuration AppMap recorder for Python
 """
 
-import inspect
 import logging
 import os
 import sys
@@ -10,86 +9,68 @@ from functools import partial, wraps
 
 import yaml
 
+from . import env
+from . import event
+from . import utils
 from .recording import recorder, Filter
-from .event import Event, CallEvent, ReturnEvent, ExceptionEvent
-
-logging.basicConfig(level=getattr(logging,
-                                  os.getenv("APPMAP_LOG_LEVEL", "warning").upper()))
 
 
-def enabled():
-    return os.getenv("APPMAP", "false") == "true"
+def wrap(fn_attr, fn):
+    """return a wrapped function"""
+    logging.info('hooking %s', fn)
 
+    make_call_event = event.CallEvent.make(fn_attr, fn)
 
-def split_method_name(method):
-    qualname = method.__qualname__
-    if '.' in qualname:
-        class_name, func_name = qualname.rsplit('.', 1)
-    else:
-        class_name = ''
-        func_name = qualname
-    return (class_name, func_name)
-
-
-def wrap(func):
-    """return a wrapped func"""
-    logging.info('hooking %s', func)
-
-    defined_class, method_id = split_method_name(func)
-    path = inspect.getsourcefile(func)
-    __, lineno = inspect.getsourcelines(func)
-    static = False
-    new_call_event = partial(CallEvent,
-                             defined_class=defined_class,
-                             method_id=method_id,
-                             path=path,
-                             lineno=lineno,
-                             static=static)
-
-    @wraps(func)
+    @wraps(fn)
     def run(*args, **kwargs):
         if not recorder.enabled:
-            return func(*args, **kwargs)
-        call_event = new_call_event()
-        if not isinstance(call_event, Event):
+            return fn(*args, **kwargs)
+        call_event = make_call_event(receiver=None, parameters=None)
+        if not isinstance(call_event, event.Event):
             raise TypeError
         call_event_id = call_event.id
         recorder.add_event(call_event)
         try:
-            ret = func(*args, **kwargs)
-            return_event = ReturnEvent(parent_id=call_event_id)
-            if not isinstance(return_event, Event):
+            logging.info('%s args %s kwargs %s', fn, args, kwargs)
+            ret = fn(*args, **kwargs)
+            return_event = event.ReturnEvent(parent_id=call_event_id)
+            if not isinstance(return_event, event.Event):
                 raise TypeError
             recorder.add_event(return_event)
             return ret
         except:  # noqa: E722
-            recorder.add_event(ExceptionEvent(parent_id=call_event_id, exc_info=sys.exc_info))
+            recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
+                                                    exc_info=sys.exc_info()))
             raise
     return run
 
 
-def in_set(method, which):
-    class_name, func_name = split_method_name(method)
+def in_set(name, which):
+    return any(filter(lambda s: name.startswith(s), which))
+
+
+def method_in_set(method, which):
+    class_name, fn_name = utils.split_method_name(method)
     logging.debug(('  class_name %s'
-                   ' funcname %s'
+                   ' fnname %s'
                    ' which %s'),
                   class_name,
-                  func_name,
+                  fn_name,
                   which)
-    if func_name.startswith('__'):
+    if fn_name.startswith('__'):
         return False
-    return (class_name in which
-            or method.__qualname__ in which)
+    return (in_set(class_name, which)
+            or in_set(f'{class_name}.{fn_name}', which))
 
 
 class ConfigFilter(Filter):
-    includes = set()
-    excludes = set()
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not env.enabled():
+            return
 
-    @classmethod
-    def load_config(cls):
-        if not enabled():
-            return cls
+        self.includes = set()
+        self.excludes = set()
 
         config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
         with open(config_file) as file:
@@ -98,52 +79,66 @@ class ConfigFilter(Filter):
 
         for package in config['packages']:
             path = package['path']
-            cls.includes.add(path)
+            self.includes.add(path)
             if 'exclude' in package:
                 excludes = [f'{path}.{e}' for e in package['exclude']]
-                cls.excludes.update(excludes)
-        logging.debug('ConfigFilter, includes %s', cls.includes)
-        logging.debug('ConfigFilter, excludes %s', cls.excludes)
+                self.excludes.update(excludes)
+        logging.debug('ConfigFilter, includes %s', self.includes)
+        logging.debug('ConfigFilter, excludes %s', self.excludes)
 
-        return cls
-
-    @classmethod
-    def excluded(cls, method):
-        ret = in_set(method, cls.excludes)
+    def excluded(self, method):
+        ret = method_in_set(method, self.excludes)
         logging.debug('ConfigFilter, %s excluded? %s', method, ret)
         return ret
 
-    @classmethod
-    def included(cls, method):
-        ret = in_set(method, cls.includes)
+    def included(self, method):
+        ret = method_in_set(method, self.includes)
         logging.debug('ConfigFilter, %s included? %s', method, ret)
         return ret
 
-    def call(self, method):
+    def filter(self, class_):
+        name = f'{class_.__module__}.{class_.__name__}'
+        logging.debug('ConfigFilter.filter, name %s', name)
+        if in_set(name, self.excludes):
+            logging.debug('  excluded')
+            return False
+        if in_set(name, self.includes):
+            logging.debug('  included')
+            return True
+
+        logging.debug('  undecided')
+        return self.next.filter(class_)
+
+    def wrap(self, method_attr, method):
         if self.excluded(method):
             return method
         if self.included(method):
-            return wrap(method)
-        return self.next_filter.call(method)
+            return wrap(method_attr, method)
+        return self.next.wrap(method_attr, method)
 
 
 class BuiltinFilter(Filter):
+    def __init__(self, *args):
+        super().__init__(*args)
+        if not env.enabled():
+            return
 
-    @classmethod
-    def load_config(cls):
-        if not enabled:
-            return cls
+        self.includes = {'os.read', 'os.write'}
 
-        cls.includes = {'os.read', 'os.write'}
-        logging.debug('BuiltinFilter, includes %s', cls.includes)
-        return cls
+    def included(self, method):
+        return method_in_set(method, self.includes)
 
-    @classmethod
-    def included(cls, method):
-        ret = in_set(method, cls.includes)
-        logging.debug('BuiltinFilter, %s included? %s', method, ret)
+    def filter(self, class_):
+        name = class_.__name__
+        if in_set(name, self.includes):
+            return True
+        return self.next.filter(class_)
 
-    def call(self, method):
+    def wrap(self, method_attr, method):
         if self.included(method):
             return wrap(method)
-        return self.next_filter.call(method)
+        return self.next.wrap(method_attr, method)
+
+
+recorder.use_filter(BuiltinFilter)
+recorder.use_filter(ConfigFilter)

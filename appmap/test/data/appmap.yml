@@ -1,0 +1,4 @@
+name: SrcApp
+packages:
+- path: src
+- path: package1

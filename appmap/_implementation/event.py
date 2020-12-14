@@ -1,6 +1,9 @@
 import copyreg
+import inspect
 import threading
+from functools import partial
 
+from . import utils
 
 class _EventIds:
     id = 1
@@ -38,17 +41,35 @@ class Event:
         self.thread_id = _EventIds.get_thread_id()
 
 
+
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
-                 'static']  # ,'receiver', 'parameters'
+                 'static', 'receiver', 'parameters']
 
-    def __init__(self, defined_class, method_id, path, lineno, static):
+    @staticmethod
+    def make(fn_attr, fn):
+        """
+        Return a factory for creating new CallEvents based on
+        introspecting the given function.
+        """
+        defined_class, method_id = utils.split_method_name(fn)
+        path = inspect.getsourcefile(fn)
+        __, lineno = inspect.getsourcelines(fn)
+        static = (utils.is_static_method(fn_attr)
+                  or utils.is_class_method(fn_attr))
+        return partial(CallEvent, defined_class,
+                       method_id, path, lineno, static)
+
+    def __init__(self, defined_class, method_id, path, lineno,
+                 static, receiver, parameters):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
         self.path = path
         self.lineno = lineno
         self.static = static
+        self.receiver = receiver
+        self.parameters = parameters
 
 
 class ReturnEvent(Event):
@@ -69,7 +90,7 @@ class ExceptionEvent(ReturnEvent):
             'exceptions': {
                 'class': class_,
                 'message': str(exc),
-                'object_id': exc.id(),
+                'object_id': id(exc),
             }
         }]
 
