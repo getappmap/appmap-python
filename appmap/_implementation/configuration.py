@@ -22,25 +22,24 @@ def wrap(fn_attr, fn):
     logger.info('hooking %s', fn)
 
     make_call_event = event.CallEvent.make(fn_attr, fn)
+    make_receiver = event.CallEvent.make_receiver(fn_attr, fn)
 
     @wraps(fn)
     def run(*args, **kwargs):
         if not recorder.enabled:
             return fn(*args, **kwargs)
-        call_event = make_call_event(receiver=None, parameters=None)
-        if not isinstance(call_event, event.Event):
-            raise TypeError
+        call_event = make_call_event(receiver=make_receiver(args, kwargs),
+                                     parameters=[])
         call_event_id = call_event.id
         recorder.add_event(call_event)
         try:
             logger.info('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
+
             return_event = event.ReturnEvent(parent_id=call_event_id)
-            if not isinstance(return_event, event.Event):
-                raise TypeError
             recorder.add_event(return_event)
             return ret
-        except:  # noqa: E722
+        except Exception:  # noqa: E722
             recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
                                                     exc_info=sys.exc_info()))
             raise

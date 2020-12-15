@@ -67,6 +67,45 @@ class CallEvent(Event):
         return partial(CallEvent, defined_class,
                        method_id, path, lineno, static)
 
+    @staticmethod
+    def make_receiver(fn_attr, fn):
+        """
+        Create the receiver object that should be part of the call
+        event for the given function.
+        """
+        defined_class, __ = utils.split_function_name(fn)
+        is_static = (utils.is_staticmethod(fn_attr)
+                     or utils.is_classmethod(fn_attr))
+        if is_static:
+            cls = "class"
+            value = defined_class
+            object_id = id(defined_class)
+        else:
+            cls = defined_class
+            value = None
+            object_id = None
+
+        def make(cls, value, object_id, *args):
+            if not is_static:
+                object_id = id(args[0][0])
+                slf = args[0][0]
+                # Make a best-effort attempt to get a string value for
+                # the receiver. If str() and repr() raise, formulate a
+                # value from the class and id.
+                try:
+                    value = str(slf)
+                except Exception:  # pylint: disable=broad-except
+                    try:
+                        value = repr(slf)
+                    except Exception:  # pylint: disable=broad-except
+                        value = f'<{defined_class} object at {object_id:#02x}>'
+            return {
+                "class": cls,
+                "value": value,
+                "object_id": object_id
+            }
+        return partial(make, cls, value, object_id)
+
     def __init__(self, defined_class, method_id, path, lineno,
                  static, receiver, parameters):
         super().__init__('call')
@@ -95,7 +134,7 @@ class ExceptionEvent(ReturnEvent):
         class_, exc, __ = exc_info
         self.exceptions = [{
             'exceptions': {
-                'class': class_,
+                'class': f'{class_.__module__}.{class_.__qualname__}',
                 'message': str(exc),
                 'object_id': id(exc),
             }

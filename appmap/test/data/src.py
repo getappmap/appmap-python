@@ -1,4 +1,7 @@
 class Src:
+    def __str__(self):
+        return f"It's a {self.__module__}.{self.__class__.__qualname__}!"
+
     @staticmethod
     def static_method():
         return 'Src#static_method'

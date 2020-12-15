@@ -24,21 +24,21 @@ def test_recording_works(monkeypatch, datafiles):
                     {
                         'children': [
                             {
-                                'lineno': 2,
+                                'lineno': 5,
                                 'name': 'static_method',
                                 'path': 'src.py',
                                 'static': True,
                                 'type': 'function',
                             },
                             {
-                                'lineno': 6,
+                                'lineno': 9,
                                 'name': 'class_method',
                                 'path': 'src.py',
                                 'static': True,
                                 'type': 'function',
                             },
                             {
-                                'lineno': 10,
+                                'lineno': 13,
                                 'name': 'instance_method',
                                 'path': 'src.py',
                                 'static': False,
@@ -58,11 +58,15 @@ def test_recording_works(monkeypatch, datafiles):
                 'defined_class': 'src.Src',
                 'event': 'call',
                 'id': 2,
-                'lineno': 2,
+                'lineno': 5,
                 'method_id': 'static_method',
-                'parameters': None,
+                'parameters': [],
                 'path': 'src.py',
-                'receiver': None,
+                'receiver': {
+                    'class': 'class',
+                    'object_id': 1,
+                    'value': 'src.Src',
+                },
                 'static': True,
                 'thread_id': 1,
             },
@@ -71,11 +75,15 @@ def test_recording_works(monkeypatch, datafiles):
                 'defined_class': 'src.Src',
                 'event': 'call',
                 'id': 4,
-                'lineno': 6,
+                'lineno': 9,
                 'method_id': 'class_method',
-                'parameters': None,
+                'parameters': [],
                 'path': 'src.py',
-                'receiver': None,
+                'receiver': {
+                    'class': 'class',
+                    'object_id': 2,
+                    'value': 'src.Src',
+                },
                 'static': True,
                 'thread_id': 1,
             },
@@ -84,11 +92,15 @@ def test_recording_works(monkeypatch, datafiles):
                 'defined_class': 'src.Src',
                 'event': 'call',
                 'id': 6,
-                'lineno': 10,
+                'lineno': 13,
                 'method_id': 'instance_method',
-                'parameters': None,
+                'parameters': [],
                 'path': 'src.py',
-                'receiver': None,
+                'receiver': {
+                    'class': 'src.Src',
+                    'object_id': 3,
+                    'value': "It's a src.Src!",
+                },
                 'static': False,
                 'thread_id': 1,
             },
@@ -100,13 +112,21 @@ def test_recording_works(monkeypatch, datafiles):
                 'url': 'https://github.com/applandinc/appmap-python',
             },
             'language': {
-                'engine': platform.python_implementation(),
+                'engine': 'CPython',
                 'name': 'python',
-                'version': platform.python_version()
+                'version': '3.9.0',
             },
         },
         'version': '1.4',
     }
+
+    # Setting these outside the definition of expected_appmap makes it
+    # easier to update when the expected appmap changes
+    py_impl = platform.python_implementation()
+    py_version = platform.python_version()
+    expected_appmap['metadata']['language']['engine'] = py_impl
+    expected_appmap['metadata']['language']['version'] = py_version
+
 
     sys.path.append(str(datafiles))
 
@@ -124,16 +144,25 @@ def test_recording_works(monkeypatch, datafiles):
         Src().instance_method()
 
     # Normalize paths
-    def normalize_paths(dct):
+    object_id = 1
+
+    def normalize(dct):
+        nonlocal object_id
         if 'path' in dct:
             dct['path'] = os.path.basename(dct['path'])
+        if 'object_id' in dct:
+            assert isinstance(dct['object_id'], int)
+            dct['object_id'] = object_id
+            object_id += 1
         return dct
 
     generated_appmap = json.loads(appmap.generation.dump(r),
-                                  object_hook=normalize_paths)
+                                  object_hook=normalize)
     for event in generated_appmap['events']:
         for k, v in event.items():
             if k == 'path':
                 event[k] = os.path.basename(v)
 
+    from pprintpp import pprint as pp
+    pp(generated_appmap)
     assert generated_appmap == expected_appmap
