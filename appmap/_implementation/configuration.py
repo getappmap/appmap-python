@@ -14,10 +14,12 @@ from . import event
 from . import utils
 from .recording import recorder, Filter
 
+logger = logging.getLogger(__name__)
+
 
 def wrap(fn_attr, fn):
     """return a wrapped function"""
-    logging.info('hooking %s', fn)
+    logger.info('hooking %s', fn)
 
     make_call_event = event.CallEvent.make(fn_attr, fn)
 
@@ -31,7 +33,7 @@ def wrap(fn_attr, fn):
         call_event_id = call_event.id
         recorder.add_event(call_event)
         try:
-            logging.info('%s args %s kwargs %s', fn, args, kwargs)
+            logger.info('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
             return_event = event.ReturnEvent(parent_id=call_event_id)
             if not isinstance(return_event, event.Event):
@@ -51,7 +53,7 @@ def in_set(name, which):
 
 def function_in_set(fn, which):
     class_name, fn_name = utils.split_function_name(fn)
-    logging.debug(('  class_name %s'
+    logger.debug(('  class_name %s'
                    ' fnname %s'
                    ' which %s'),
                   class_name,
@@ -75,7 +77,7 @@ class ConfigFilter(Filter):
         config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
         with open(config_file) as file:
             config = yaml.load(file, Loader=yaml.BaseLoader)
-            logging.debug('config %s', config)
+            logger.debug('config %s', config)
 
         for package in config['packages']:
             path = package['path']
@@ -83,30 +85,30 @@ class ConfigFilter(Filter):
             if 'exclude' in package:
                 excludes = [f'{path}.{e}' for e in package['exclude']]
                 self.excludes.update(excludes)
-        logging.debug('ConfigFilter, includes %s', self.includes)
-        logging.debug('ConfigFilter, excludes %s', self.excludes)
+        logger.debug('ConfigFilter, includes %s', self.includes)
+        logger.debug('ConfigFilter, excludes %s', self.excludes)
 
     def excluded(self, fn):
         ret = function_in_set(fn, self.excludes)
-        logging.debug('ConfigFilter, %s excluded? %s', fn, ret)
+        logger.debug('ConfigFilter, %s excluded? %s', fn, ret)
         return ret
 
     def included(self, fn):
         ret = function_in_set(fn, self.includes)
-        logging.debug('ConfigFilter, %s included? %s', fn, ret)
+        logger.debug('ConfigFilter, %s included? %s', fn, ret)
         return ret
 
     def filter(self, class_):
         name = f'{class_.__module__}.{class_.__name__}'
-        logging.debug('ConfigFilter.filter, name %s', name)
+        logger.debug('ConfigFilter.filter, name %s', name)
         if in_set(name, self.excludes):
-            logging.debug('  excluded')
+            logger.debug('  excluded')
             return False
         if in_set(name, self.includes):
-            logging.debug('  included')
+            logger.debug('  included')
             return True
 
-        logging.debug('  undecided')
+        logger.debug('  undecided')
         return self.next_filter.filter(class_)
 
     def wrap(self, fn_attr, fn):

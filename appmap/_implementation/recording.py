@@ -10,6 +10,8 @@ from functools import wraps
 from . import env
 from . import utils
 
+logger = logging.getLogger(__name__)
+
 
 class Recording:
     def __init__(self):
@@ -106,11 +108,11 @@ class Recorder:
         self.filter_stack.append(filter_class)
 
     def start_recording(self):
-        logging.debug('Recorder.start_recording')
+        logger.debug('Recorder.start_recording')
         self.enabled = True
 
     def stop_recording(self):
-        logging.debug('Recorder.stop_recording')
+        logger.debug('Recorder.stop_recording')
         self.enabled = False
         return self._events
 
@@ -128,19 +130,19 @@ class Recorder:
 
     def do_import(self, *args, **kwargs):
         mod = args[0]
-        logging.debug('do_import, args %s kwargs %s', args, kwargs)
+        logger.debug('do_import, args %s kwargs %s', args, kwargs)
         if not self.filter_chain:
-            logging.debug('  filter_stack %s', self.filter_stack)
+            logger.debug('  filter_stack %s', self.filter_stack)
             self.filter_chain = self.filter_stack[0](None)
             for filter_ in self.filter_stack[1:]:
                 self.filter_chain = filter_(self.filter_chain)
-                logging.debug('  self.filter chain: %s', self.filter_chain)
+                logger.debug('  self.filter chain: %s', self.filter_chain)
 
         if mod.__name__.startswith('appmap'):
             return
 
         classes = get_classes(mod)
-        logging.debug(('  classes %s'
+        logger.debug(('  classes %s'
                        ' inspect.getmembers(mod, inspect.isclass) %s'),
                       classes,
                       inspect.getmembers(mod, inspect.isclass))
@@ -148,9 +150,9 @@ class Recorder:
             if not self.filter_chain.filter(class_):
                 continue
 
-            logging.debug('  looking for members')
+            logger.debug('  looking for members')
             functions = get_members(class_)
-            logging.debug('  functions %s', functions)
+            logger.debug('  functions %s', functions)
             for fn_name, fn_attr, fn in functions:
                 new_fn = self.filter_chain.wrap(fn_attr, fn)
                 if new_fn != fn:
@@ -165,7 +167,7 @@ recorder = Recorder()
 def wrap_exec_module(exec_module):
     @wraps(exec_module)
     def wrapped_exec_module(*args, **kwargs):
-        logging.debug(('exec_module %s'
+        logger.debug(('exec_module %s'
                        ' exec_module.__name__ %s'
                        ' args %s'
                        ' kwargs %s'),
@@ -185,9 +187,11 @@ def wrap_find_spec(find_spec):
         if spec is not None:
             if getattr(spec.loader, "exec_module", None) is not None:
                 loader = spec.loader
+                logger.debug("wrap_find_spec, before loader.exec_module %s", loader.exec_module)
                 loader.exec_module = wrap_exec_module(loader.exec_module)
+                logger.debug("  after loader.exec_module %s", loader.exec_module)
             else:
-                logging.warning("%s doesn't have exec_module", spec.loader)
+                logger.warning("%s doesn't have exec_module", spec.loader)
         return spec
     return wrapped_find_spec
 
@@ -197,5 +201,5 @@ if env.enabled():
     from . import configuration  # pylint: disable=unused-import
     for h in sys.meta_path:
         if getattr(h, 'find_spec', None) is not None:
-            logging.debug('  h.find_spec %s',  h.find_spec)
+            logger.debug('  h.find_spec %s',  h.find_spec)
             h.find_spec = wrap_find_spec(h.find_spec)
