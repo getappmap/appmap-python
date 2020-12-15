@@ -143,9 +143,9 @@ class Recorder:
 
         classes = get_classes(mod)
         logger.debug(('  classes %s'
-                       ' inspect.getmembers(mod, inspect.isclass) %s'),
-                      classes,
-                      inspect.getmembers(mod, inspect.isclass))
+                      ' inspect.getmembers(mod, inspect.isclass) %s'),
+                     classes,
+                     inspect.getmembers(mod, inspect.isclass))
         for class_ in classes:
             if not self.filter_chain.filter(class_):
                 continue
@@ -168,13 +168,13 @@ def wrap_exec_module(exec_module):
     @wraps(exec_module)
     def wrapped_exec_module(*args, **kwargs):
         logger.debug(('exec_module %s'
-                       ' exec_module.__name__ %s'
-                       ' args %s'
-                       ' kwargs %s'),
-                      exec_module,
-                      exec_module.__name__,
-                      args,
-                      kwargs)
+                      ' exec_module.__name__ %s'
+                      ' args %s'
+                      ' kwargs %s'),
+                     exec_module,
+                     exec_module.__name__,
+                     args,
+                     kwargs)
         exec_module(*args, **kwargs)
         recorder.do_import(*args, **kwargs)
     return wrapped_exec_module
@@ -187,9 +187,11 @@ def wrap_find_spec(find_spec):
         if spec is not None:
             if getattr(spec.loader, "exec_module", None) is not None:
                 loader = spec.loader
-                logger.debug("wrap_find_spec, before loader.exec_module %s", loader.exec_module)
+                logger.debug("wrap_find_spec, before loader.exec_module %s",
+                             loader.exec_module)
                 loader.exec_module = wrap_exec_module(loader.exec_module)
-                logger.debug("  after loader.exec_module %s", loader.exec_module)
+                logger.debug("  after loader.exec_module %s",
+                             loader.exec_module)
             else:
                 logger.warning("%s doesn't have exec_module", spec.loader)
         return spec
