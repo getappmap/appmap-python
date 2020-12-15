@@ -1,37 +1,118 @@
 """Capture recordings of python code"""
 
-import builtins
 import inspect
 import logging
-from contextlib import contextmanager
-from functools import partial
+import sys
 
-class Filter:
+from abc import ABC, abstractmethod
+from functools import wraps
+
+from . import env
+from . import utils
+
+logger = logging.getLogger(__name__)
+
+
+class Recording:
+    def __init__(self):
+        self.events = []
+
+    def start(self):
+
+        if not env.enabled():
+            return
+
+        recorder.start_recording()
+
+    def stop(self):
+        if not env.enabled():
+            return False
+
+        self.events = recorder.stop_recording()
+
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+        return False
+
+
+class Filter(ABC):
     def __init__(self, next_filter):
         self.next_filter = next_filter
 
+    @abstractmethod
+    def filter(self, class_):
+        """
+        Determine whether the given class should have its methods
+        instrumented.  Return True if it should be, False if it should
+        not be, or call the next filter if this filter can't decide.
+        """
+
+    @abstractmethod
+    def wrap(self, fn_attr, fn):
+        """
+        Determine whether a function should be wrapped.  fn_attr is
+        the original __dict__ entry for the function, fn is the value
+        returned by getattr.  Returns a wrapped function if
+        appropriate, or the original method otherwise.
+        """
+
 
 class NullFilter(Filter):
-    def call(self, method):
-        return method
+    def filter(self, class_):
+        return False
+
+    def wrap(self, fn_attr, fn):
+        return fn
+
+
+def get_classes(module):
+    return [v for __, v in module.__dict__.items() if inspect.isclass(v)]
+
+
+def get_members(class_):
+    """
+    Get the function members of the given class.  Unlike
+    inspect.getmembers, this function only calls getattr on functions,
+    to avoid potential side effects.
+
+    Returns a list of tuples of the form (key, dict_value, attr_value):
+      * key is the attribute name
+      * dict_value is class_.__dict__[key]
+      * and attr_value is getattr(class_, key)
+    """
+    def is_member_func(m):
+        return (inspect.isfunction(m)
+                or inspect.ismethod(m)
+                or utils.is_staticmethod(m)
+                or utils.is_classmethod(m))
+
+    ret = []
+    for k, v in class_.__dict__.items():
+        if not is_member_func(v):
+            continue
+        ret.append((k, v, getattr(class_, k)))
+    return ret
 
 
 class Recorder:
-
     def __init__(self):
         self.enabled = False
         self.filter_stack = [NullFilter]
+        self.filter_chain = []
         self._events = []
 
-    def add_filter(self, filter_):
-        self.filter_stack.append(filter_)
+    def use_filter(self, filter_class):
+        self.filter_stack.append(filter_class)
 
     def start_recording(self):
-        logging.debug('Recorder.start_recording')
+        logger.debug('Recorder.start_recording')
         self.enabled = True
 
     def stop_recording(self):
-        logging.debug('Recorder.stop_recording')
+        logger.debug('Recorder.stop_recording')
         self.enabled = False
         return self._events
 
@@ -47,60 +128,78 @@ class Recorder:
         """
         return self._events
 
-    def do_import(self, import_func, *args, **kwargs):
-        logging.debug('do_import, filter_stack %s', self.filter_stack)
-        filter_chain = self.filter_stack[0](None)
-        for filter_ in self.filter_stack[1:]:
-            filter_chain = filter_(filter_chain)
-        logging.debug('  filter chain: %s', filter_chain)
+    def do_import(self, *args, **kwargs):
+        mod = args[0]
+        logger.debug('do_import, args %s kwargs %s', args, kwargs)
+        if not self.filter_chain:
+            logger.debug('  filter_stack %s', self.filter_stack)
+            self.filter_chain = self.filter_stack[0](None)
+            for filter_ in self.filter_stack[1:]:
+                self.filter_chain = filter_(self.filter_chain)
+                logger.debug('  self.filter chain: %s', self.filter_chain)
 
-        mod = import_func(*args, **kwargs)
-        classes = inspect.getmembers(mod, inspect.isclass)
-        for __, class_ in classes:
-            logging.debug('  class_ %s dir(class_) %s', class_, dir(class_))
-            functions = inspect.getmembers(
-                class_,
-                lambda f: inspect.isfunction(f) or inspect.ismethod(f)
-            )
-            logging.debug('  functions %s', functions)
-            for func_name, func in functions:
-                logging.debug('  func %s inspect.isfunction(func) %s',
-                              func, inspect.isfunction(func))
-                new_func = filter_chain.call(func)
-                if new_func != func:
-                    setattr(class_, func_name, new_func)
-        return mod
+        if mod.__name__.startswith('appmap'):
+            return
+
+        classes = get_classes(mod)
+        logger.debug(('  classes %s'
+                       ' inspect.getmembers(mod, inspect.isclass) %s'),
+                      classes,
+                      inspect.getmembers(mod, inspect.isclass))
+        for class_ in classes:
+            if not self.filter_chain.filter(class_):
+                continue
+
+            logger.debug('  looking for members')
+            functions = get_members(class_)
+            logger.debug('  functions %s', functions)
+            for fn_name, fn_attr, fn in functions:
+                new_fn = self.filter_chain.wrap(fn_attr, fn)
+                if new_fn != fn:
+                    if utils.is_staticmethod(fn_attr):
+                        new_fn = staticmethod(new_fn)
+                    setattr(class_, fn_name, new_fn)
 
 
 recorder = Recorder()
 
 
-@contextmanager
-def _watch_imports():
-    """
-    context manager to give Recording access to modules as they're
-    imported
-    """
-    old_import = builtins.__import__
+def wrap_exec_module(exec_module):
+    @wraps(exec_module)
+    def wrapped_exec_module(*args, **kwargs):
+        logger.debug(('exec_module %s'
+                       ' exec_module.__name__ %s'
+                       ' args %s'
+                       ' kwargs %s'),
+                      exec_module,
+                      exec_module.__name__,
+                      args,
+                      kwargs)
+        exec_module(*args, **kwargs)
+        recorder.do_import(*args, **kwargs)
+    return wrapped_exec_module
 
-    builtins.__import__ = partial(Recorder.do_import, recorder, old_import)
-    try:
-        yield
-    finally:
-        builtins.__import__ = old_import
+
+def wrap_find_spec(find_spec):
+    @wraps(find_spec)
+    def wrapped_find_spec(*args, **kwargs):
+        spec = find_spec(*args, **kwargs)
+        if spec is not None:
+            if getattr(spec.loader, "exec_module", None) is not None:
+                loader = spec.loader
+                logger.debug("wrap_find_spec, before loader.exec_module %s", loader.exec_module)
+                loader.exec_module = wrap_exec_module(loader.exec_module)
+                logger.debug("  after loader.exec_module %s", loader.exec_module)
+            else:
+                logger.warning("%s doesn't have exec_module", spec.loader)
+        return spec
+    return wrapped_find_spec
 
 
-class Recording:
-    def __init__(self):
-        self.events = []
-        self.old_import = None
-
-    def __enter__(self):
-        self.old_import = builtins.__import__
-        builtins.__import__ = partial(Recorder.do_import, recorder, self.old_import)
-        recorder.start_recording()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.events = recorder.stop_recording()
-        builtins.__import__ = self.old_import
-        return False
+if env.enabled():
+    # import configuration so the filter stack will get initialized
+    from . import configuration  # pylint: disable=unused-import
+    for h in sys.meta_path:
+        if getattr(h, 'find_spec', None) is not None:
+            logger.debug('  h.find_spec %s',  h.find_spec)
+            h.find_spec = wrap_find_spec(h.find_spec)

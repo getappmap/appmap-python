@@ -1,5 +1,10 @@
-from itertools import chain
+import copyreg
+import inspect
 import threading
+from functools import partial
+from itertools import chain
+
+from . import utils
 
 
 class _EventIds:
@@ -44,17 +49,35 @@ class Event:
         }
 
 
+
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
-                 'static']  # ,'receiver', 'parameters'
+                 'static', 'receiver', 'parameters']
 
-    def __init__(self, defined_class, method_id, path, lineno, static):
+    @staticmethod
+    def make(fn_attr, fn):
+        """
+        Return a factory for creating new CallEvents based on
+        introspecting the given function.
+        """
+        defined_class, method_id = utils.split_function_name(fn)
+        path = inspect.getsourcefile(fn)
+        __, lineno = inspect.getsourcelines(fn)
+        static = (utils.is_staticmethod(fn_attr)
+                  or utils.is_classmethod(fn_attr))
+        return partial(CallEvent, defined_class,
+                       method_id, path, lineno, static)
+
+    def __init__(self, defined_class, method_id, path, lineno,
+                 static, receiver, parameters):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
         self.path = path
         self.lineno = lineno
         self.static = static
+        self.receiver = receiver
+        self.parameters = parameters
 
 
 class ReturnEvent(Event):
@@ -75,7 +98,7 @@ class ExceptionEvent(ReturnEvent):
             'exceptions': {
                 'class': class_,
                 'message': str(exc),
-                'object_id': exc.id(),
+                'object_id': id(exc),
             }
         }]
 
