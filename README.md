@@ -13,7 +13,7 @@ packages:
   - MyOtherClass#my_instance_method
   - MyOtherClass.my_class_method
 ```
-  
+
 ## Test Frameworks
 `appmap-python` supports recording `unittest` and `pytest` test cases. Import the
 appropriate test framework support into your tests.
@@ -22,7 +22,7 @@ appropriate test framework support into your tests.
 `import appmap.unittest`. Instruments subclasses of `unittest.TestCase` and records each
 `test_*` function in the subclasses.
 
-### pytest 
+### pytest
 `import appmap.pytest`. Instruments and records `test_*` functions.
 
 ### Run your tests
@@ -58,23 +58,23 @@ $ APPMAP=true python manage.py runserver
 
 An app with remote recording enabled supports these routes:
 
-* `POST /_appmap/record` 
+* `POST /_appmap/record`
   Starts a new recording
-  
+
   200 if the recording was started successfully
   409 if there's already a recording in progress
-  
+
 * `GET /_appmap/record`
   Returns JSON describing current recording state
   200 with body
-  
+
   ```json
-  { 
+  {
     "enabled": true
   }
   ```
   `enabled` indicates whether recording has been enabled
-  
+
 * `DELETE /_appmap/record`
   Returns AppMap as JSON
   200 with AppMap as body
@@ -114,4 +114,15 @@ should be reenabled as soon as possible.]
 
 ```
 % cd appmap-python
-% poetry run pytest
+% APPMAP=true poetry run pytest
+```
+
+### Code Coverage
+[coverage](https://coverage.readthedocs.io/) for coverage:
+
+```
+% cd appmap-python
+% APPMAP=true poetry run coverage run -m pytest
+% poetry run coverage html
+% open htmlcov/index.html
+```

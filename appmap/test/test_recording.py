@@ -1,6 +1,7 @@
 """Test recording context manager"""
 import json
 import os
+import platform
 import sys
 from importlib import reload
 
@@ -99,9 +100,9 @@ def test_recording_works(monkeypatch, datafiles):
                 'url': 'https://github.com/applandinc/appmap-python',
             },
             'language': {
-                'engine': 'CPython',
+                'engine': platform.python_implementation(),
                 'name': 'python',
-                'version': '3.9.0',
+                'version': platform.python_version()
             },
         },
         'version': '1.4',
@@ -114,7 +115,6 @@ def test_recording_works(monkeypatch, datafiles):
     monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
     import appmap
-    from appmap._implementation import generation
     reload(appmap._implementation.recording)  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:
@@ -129,7 +129,7 @@ def test_recording_works(monkeypatch, datafiles):
             dct['path'] = os.path.basename(dct['path'])
         return dct
 
-    generated_appmap = json.loads(generation.dump(r),
+    generated_appmap = json.loads(appmap.generation.dump(r),
                                   object_hook=normalize_paths)
     for event in generated_appmap['events']:
         for k, v in event.items():

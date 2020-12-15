@@ -6,6 +6,7 @@ __pycache__/
 
 .python-version
 
-.venv
-
 /dist/
+.venv/
+
+htmlcov/

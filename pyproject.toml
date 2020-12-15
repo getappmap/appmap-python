@@ -17,6 +17,7 @@ flake8 = "^3.8.4"
 pyfakefs = "^4.3.2"
 pytest-datafiles = "^2.0"
 pprintpp = "^0.4.0"
+coverage = "^5.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
