@@ -67,7 +67,6 @@ class NullFilter(Filter):
     def wrap(self, fn_attr, fn):
         return fn
 
-
 def get_classes(module):
     return [v for __, v in module.__dict__.items() if inspect.isclass(v)]
 
@@ -98,7 +97,23 @@ def get_members(class_):
 
 
 class Recorder:
+    """ Singleton Recorder class """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            logger.debug('Creating the Recorder object')
+            cls._instance = super(Recorder, cls).__new__(cls)
+
+            # Put any __init__ here.
+            cls._instance._initialized = False
+
+        return cls._instance
+
     def __init__(self):
+        if self.__getattribute__('_initialized'):  # keep pylint happy
+            return
+        self._initialized = True
         self.enabled = False
         self.filter_stack = [NullFilter]
         self.filter_chain = []
