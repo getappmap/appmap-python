@@ -1,7 +1,7 @@
-import copyreg
 import inspect
 import threading
 from functools import partial
+from itertools import chain
 
 from . import utils
 
@@ -39,6 +39,13 @@ class Event:
         self.id = _EventIds.next_id()
         self.event = event
         self.thread_id = _EventIds.get_thread_id()
+
+    def to_dict(self):
+        return {
+            k: getattr(self, k, None)
+            for k in chain.from_iterable(getattr(cls, '__slots__', [])
+                                         for cls in type(self).__mro__)
+        }
 
 
 
@@ -97,7 +104,5 @@ class ExceptionEvent(ReturnEvent):
 
 def serialize_event(event):
     if isinstance(event, Event):
-        # XXX Is there really not a better way to get all the slots for a subclass?  # pylint: disable=fixme
-        slots = copyreg._slotnames(type(event))  # pylint: disable=protected-access
-        return {k: getattr(event, k, None) for k in slots}
+        return event.to_dict()
     raise TypeError
