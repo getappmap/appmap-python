@@ -158,11 +158,5 @@ def test_recording_works(monkeypatch, datafiles):
 
     generated_appmap = json.loads(appmap.generation.dump(r),
                                   object_hook=normalize)
-    for event in generated_appmap['events']:
-        for k, v in event.items():
-            if k == 'path':
-                event[k] = os.path.basename(v)
 
-    from pprintpp import pprint as pp
-    pp(generated_appmap)
     assert generated_appmap == expected_appmap
