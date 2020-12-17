@@ -1,4 +1,4 @@
-name: SrcApp
+name: TestApp
 packages:
-- path: src
+- path: test_class
 - path: package1

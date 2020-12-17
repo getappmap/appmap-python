@@ -12,113 +12,15 @@ FIXTURE_DIR = os.path.join(
     'data'
     )
 
+
 @pytest.mark.datafiles(
     os.path.join(FIXTURE_DIR, 'appmap.yml'),
-    os.path.join(FIXTURE_DIR, 'src.py')
+    os.path.join(FIXTURE_DIR, 'test_class.py'),
+    os.path.join(FIXTURE_DIR, 'expected.appmap.json')
     )
 def test_recording_works(monkeypatch, datafiles):
-    expected_appmap = {
-        'classMap': [
-            {
-                'children': [
-                    {
-                        'children': [
-                            {
-                                'lineno': 5,
-                                'name': 'static_method',
-                                'path': 'src.py',
-                                'static': True,
-                                'type': 'function',
-                            },
-                            {
-                                'lineno': 9,
-                                'name': 'class_method',
-                                'path': 'src.py',
-                                'static': True,
-                                'type': 'function',
-                            },
-                            {
-                                'lineno': 13,
-                                'name': 'instance_method',
-                                'path': 'src.py',
-                                'static': False,
-                                'type': 'function',
-                            },
-                        ],
-                        'name': 'Src',
-                        'type': 'class',
-                    },
-                ],
-                'name': 'src',
-                'type': 'package',
-            },
-        ],
-        'events': [
-            {
-                'defined_class': 'src.Src',
-                'event': 'call',
-                'id': 2,
-                'lineno': 5,
-                'method_id': 'static_method',
-                'parameters': [],
-                'path': 'src.py',
-                'receiver': {
-                    'class': 'class',
-                    'object_id': 1,
-                    'value': 'src.Src',
-                },
-                'static': True,
-                'thread_id': 1,
-            },
-            {'event': 'return', 'id': 3, 'parent_id': 2, 'thread_id': 1},
-            {
-                'defined_class': 'src.Src',
-                'event': 'call',
-                'id': 4,
-                'lineno': 9,
-                'method_id': 'class_method',
-                'parameters': [],
-                'path': 'src.py',
-                'receiver': {
-                    'class': 'class',
-                    'object_id': 2,
-                    'value': 'src.Src',
-                },
-                'static': True,
-                'thread_id': 1,
-            },
-            {'event': 'return', 'id': 5, 'parent_id': 4, 'thread_id': 1},
-            {
-                'defined_class': 'src.Src',
-                'event': 'call',
-                'id': 6,
-                'lineno': 13,
-                'method_id': 'instance_method',
-                'parameters': [],
-                'path': 'src.py',
-                'receiver': {
-                    'class': 'src.Src',
-                    'object_id': 3,
-                    'value': "It's a src.Src!",
-                },
-                'static': False,
-                'thread_id': 1,
-            },
-            {'event': 'return', 'id': 7, 'parent_id': 6, 'thread_id': 1},
-        ],
-        'metadata': {
-            'client': {
-                'name': 'appmap',
-                'url': 'https://github.com/applandinc/appmap-python',
-            },
-            'language': {
-                'engine': 'CPython',
-                'name': 'python',
-                'version': '3.9.0',
-            },
-        },
-        'version': '1.4',
-    }
+    with open(datafiles / 'expected.appmap.json') as f:
+        expected_appmap = json.load(f)
 
     # Setting these outside the definition of expected_appmap makes it
     # easier to update when the expected appmap changes
@@ -138,10 +40,10 @@ def test_recording_works(monkeypatch, datafiles):
     reload(appmap._implementation.recording)  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:
-        from src import Src  # pylint: disable=import-error
-        Src.static_method()
-        Src.class_method()
-        Src().instance_method()
+        from test_class import TestClass  # pylint: disable=import-error
+        TestClass.static_method()
+        TestClass.class_method()
+        TestClass().instance_method()
 
     # Normalize paths
     object_id = 1

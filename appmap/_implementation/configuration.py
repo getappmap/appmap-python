@@ -1,5 +1,5 @@
 """
-Manage Configuration AppMap recorder for Python
+Manage Configuration AppMap recorder for Python.
 """
 
 import logging
@@ -17,12 +17,12 @@ from .recording import recorder, Filter
 logger = logging.getLogger(__name__)
 
 
-def wrap(fn_attr, fn):
+def wrap(fn, isstatic):
     """return a wrapped function"""
-    logger.info('hooking %s', fn)
+    logger.info('hooking %s', '.'.join(utils.split_function_name(fn)))
 
-    make_call_event = event.CallEvent.make(fn_attr, fn)
-    make_receiver = event.CallEvent.make_receiver(fn_attr, fn)
+    make_call_event = event.CallEvent.make(fn, isstatic)
+    make_receiver = event.CallEvent.make_receiver(fn, isstatic)
 
     @wraps(fn)
     def run(*args, **kwargs):
@@ -33,7 +33,7 @@ def wrap(fn_attr, fn):
         call_event_id = call_event.id
         recorder.add_event(call_event)
         try:
-            logger.info('%s args %s kwargs %s', fn, args, kwargs)
+            logger.debug('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
 
             return_event = event.ReturnEvent(parent_id=call_event_id)
@@ -43,6 +43,7 @@ def wrap(fn_attr, fn):
             recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
                                                     exc_info=sys.exc_info()))
             raise
+    setattr(run, '_appmap_wrapped', True)
     return run
 
 
@@ -52,24 +53,48 @@ def in_set(name, which):
 
 def function_in_set(fn, which):
     class_name, fn_name = utils.split_function_name(fn)
-    logger.debug(('  class_name %s'
-                   ' fnname %s'
-                   ' which %s'),
-                  class_name,
-                  fn_name,
-                  which)
-    if fn_name.startswith('__'):
-        return False
+    class_name += '.'
+    logger.debug(('class_name %s'
+                  ' fnname %s'
+                  ' which %s'),
+                 class_name,
+                 fn_name,
+                 which)
     return (in_set(class_name, which)
-            or in_set(f'{class_name}.{fn_name}', which))
+            or in_set(f'{class_name}{fn_name}', which))
 
 
 class ConfigFilter(Filter):
+    """
+    During initialization, the ConfigFilter class reads the `package`
+    entries from the config file.  Based on these entries, it creates
+    a set of paths that should be included, and another set of paths
+    that should be excluded.
+
+    When checking to see if a function should be included,
+    ConfigFilter looks for the function in both sets.  If the function
+    is found in the included set, it's wrapped for instrumentation.
+    If it's found in the excluded set, it's used without modification.
+    If it isn't found in either set, ConfigFilter passes the function
+    on to the next Filter.
+
+    To determine whether a function is in one of the sets, the
+    fully-qualified name of the function is considered, including the
+    packages(s), module, and class that contain it.  As an example,
+    consider a function named `pkg1.pkg2.mod1.Class1.func`.  Any of
+    `pkg1`, `pkg1.pkg2.`, `pkg1.pkg2.mod1`, `pkg1.pkg2.mod1.Class1`,
+    or `pkg1.pkg2.mod1.Class1.func` will match this function (causing
+    it to be included or excluded, as appropriate).  Note that only
+    full names will match.  (This is achieved in the code by appending
+    `.` to the name retrieved from the config file.)
+    """
     def __init__(self, *args):
         super().__init__(*args)
         if not env.enabled():
             return
 
+        # Store entries from the config file. Each entry has '.'
+        # appended to it, to ensure that only full names are matched.
         self.includes = set()
         self.excludes = set()
 
@@ -80,9 +105,9 @@ class ConfigFilter(Filter):
 
         for package in config['packages']:
             path = package['path']
-            self.includes.add(path)
+            self.includes.add(path + '.')
             if 'exclude' in package:
-                excludes = [f'{path}.{e}' for e in package['exclude']]
+                excludes = [f'{path}.{e}.' for e in package['exclude']]
                 self.excludes.update(excludes)
         logger.debug('ConfigFilter, includes %s', self.includes)
         logger.debug('ConfigFilter, excludes %s', self.excludes)
@@ -110,12 +135,13 @@ class ConfigFilter(Filter):
         logger.debug('  undecided')
         return self.next_filter.filter(class_)
 
-    def wrap(self, fn_attr, fn):
+    def wrap(self, fn, isstatic):
         if self.excluded(fn):
             return fn
         if self.included(fn):
-            return wrap(fn_attr, fn)
-        return self.next_filter.wrap(fn_attr, fn)
+            if getattr(fn, '_appmap_wrapped', None) is None:
+                return wrap(fn, isstatic)
+        return self.next_filter.wrap(fn, isstatic)
 
 
 class BuiltinFilter(Filter):
@@ -135,10 +161,10 @@ class BuiltinFilter(Filter):
             return True
         return self.next_filter.filter(class_)
 
-    def wrap(self, fn_attr, fn):
+    def wrap(self, fn, isstatic):
         if self.included(fn):
-            return wrap(fn_attr, fn)
-        return self.next_filter.wrap(fn_attr, fn)
+            return wrap(fn, isstatic)
+        return self.next_filter.wrap(fn, isstatic)
 
 
 recorder.use_filter(BuiltinFilter)

@@ -54,7 +54,7 @@ class CallEvent(Event):
                  'static', 'receiver', 'parameters']
 
     @staticmethod
-    def make(fn_attr, fn):
+    def make(fn, isstatic):
         """
         Return a factory for creating new CallEvents based on
         introspecting the given function.
@@ -62,21 +62,17 @@ class CallEvent(Event):
         defined_class, method_id = utils.split_function_name(fn)
         path = inspect.getsourcefile(fn)
         __, lineno = inspect.getsourcelines(fn)
-        static = (utils.is_staticmethod(fn_attr)
-                  or utils.is_classmethod(fn_attr))
         return partial(CallEvent, defined_class,
-                       method_id, path, lineno, static)
+                       method_id, path, lineno, isstatic)
 
     @staticmethod
-    def make_receiver(fn_attr, fn):
+    def make_receiver(fn, isstatic):
         """
         Create the receiver object that should be part of the call
         event for the given function.
         """
         defined_class, __ = utils.split_function_name(fn)
-        is_static = (utils.is_staticmethod(fn_attr)
-                     or utils.is_classmethod(fn_attr))
-        if is_static:
+        if isstatic:
             cls = "class"
             value = defined_class
             object_id = id(defined_class)
@@ -86,7 +82,7 @@ class CallEvent(Event):
             object_id = None
 
         def make(cls, value, object_id, *args):
-            if not is_static:
+            if not isstatic:
                 object_id = id(args[0][0])
                 slf = args[0][0]
                 # Make a best-effort attempt to get a string value for

@@ -51,12 +51,12 @@ class Filter(ABC):
         """
 
     @abstractmethod
-    def wrap(self, fn_attr, fn):
+    def wrap(self, fn, isstatic):
         """
-        Determine whether a function should be wrapped.  fn_attr is
-        the original __dict__ entry for the function, fn is the value
-        returned by getattr.  Returns a wrapped function if
-        appropriate, or the original method otherwise.
+        Determine whether the given method should be instrumented.  If
+        so, return a new function that wraps the old.  If not, return
+        the original function.  isstatic is True if fn is a static or
+        class method, False otherwise.
         """
 
 
@@ -64,8 +64,9 @@ class NullFilter(Filter):
     def filter(self, class_):
         return False
 
-    def wrap(self, fn_attr, fn):
+    def wrap(self, fn, isstatic):
         return fn
+
 
 def get_classes(module):
     return [v for __, v in module.__dict__.items() if inspect.isclass(v)]
@@ -89,10 +90,13 @@ def get_members(class_):
                 or utils.is_classmethod(m))
 
     ret = []
-    for k, v in class_.__dict__.items():
-        if not is_member_func(v):
+    for key in dir(class_):
+        if key.startswith('__'):
             continue
-        ret.append((k, v, getattr(class_, k)))
+        value = inspect.getattr_static(class_, key)
+        if not is_member_func(value):
+            continue
+        ret.append((key, value))
     return ret
 
 
@@ -123,11 +127,11 @@ class Recorder:
         self.filter_stack.append(filter_class)
 
     def start_recording(self):
-        logger.debug('Recorder.start_recording')
+        logger.info('AppMap recording started')
         self.enabled = True
 
     def stop_recording(self):
-        logger.debug('Recorder.stop_recording')
+        logger.info('AppMap recording stopped')
         self.enabled = False
         return self._events
 
@@ -168,11 +172,20 @@ class Recorder:
             logger.debug('  looking for members')
             functions = get_members(class_)
             logger.debug('  functions %s', functions)
-            for fn_name, fn_attr, fn in functions:
-                new_fn = self.filter_chain.wrap(fn_attr, fn)
+            for fn_name, fn in functions:
+                isstatic = utils.is_staticmethod(fn)
+                isclass = utils.is_classmethod(fn)
+
+                if isstatic or isclass:
+                    new_fn = self.filter_chain.wrap(fn.__func__, isstatic=True)
+                else:
+                    new_fn = self.filter_chain.wrap(fn, isstatic=False)
+
                 if new_fn != fn:
-                    if utils.is_staticmethod(fn_attr):
+                    if isstatic:
                         new_fn = staticmethod(new_fn)
+                    elif isclass:
+                        new_fn = classmethod(new_fn)
                     setattr(class_, fn_name, new_fn)
 
 

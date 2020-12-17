@@ -22,5 +22,6 @@ if _log_config is not None:
 
 def enabled():
     is_enabled = os.getenv("APPMAP", "false") == "true"
-    logging.info('appmap enabled: %s', is_enabled)
     return is_enabled
+
+logging.info('appmap enabled: %s', enabled())
