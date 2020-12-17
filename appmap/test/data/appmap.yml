@@ -1,4 +1,4 @@
 name: TestApp
 packages:
-- path: test_class
+- path: example_class
 - path: package1

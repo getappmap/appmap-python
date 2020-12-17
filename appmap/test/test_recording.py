@@ -15,7 +15,7 @@ FIXTURE_DIR = os.path.join(
 
 @pytest.mark.datafiles(
     os.path.join(FIXTURE_DIR, 'appmap.yml'),
-    os.path.join(FIXTURE_DIR, 'test_class.py'),
+    os.path.join(FIXTURE_DIR, 'example_class.py'),
     os.path.join(FIXTURE_DIR, 'expected.appmap.json')
     )
 def test_recording_works(monkeypatch, datafiles):
@@ -40,10 +40,10 @@ def test_recording_works(monkeypatch, datafiles):
     reload(appmap._implementation.recording)  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:
-        from test_class import TestClass  # pylint: disable=import-error
-        TestClass.static_method()
-        TestClass.class_method()
-        TestClass().instance_method()
+        from example_class import ExampleClass  # pylint: disable=import-error
+        ExampleClass.static_method()
+        ExampleClass.class_method()
+        ExampleClass().instance_method()
 
     # Normalize paths
     object_id = 1

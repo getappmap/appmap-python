@@ -13,14 +13,14 @@
   },
   "events": [
     {
-      "defined_class": "test_class.TestClass",
+      "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
-      "path": "test_class.py",
+      "path": "example_class.py",
       "lineno": 18,
       "static": true,
       "receiver": {
         "class": "class",
-        "value": "test_class.TestClass",
+        "value": "example_class.ExampleClass",
         "object_id": 1
       },
       "parameters": [],
@@ -35,14 +35,14 @@
       "thread_id": 1
     },
     {
-      "defined_class": "test_class.ClassMethodMixin",
+      "defined_class": "example_class.ClassMethodMixin",
       "method_id": "class_method",
-      "path": "test_class.py",
+      "path": "example_class.py",
       "lineno": 4,
       "static": true,
       "receiver": {
         "class": "class",
-        "value": "test_class.ClassMethodMixin",
+        "value": "example_class.ClassMethodMixin",
         "object_id": 2
       },
       "parameters": [],
@@ -57,14 +57,14 @@
       "thread_id": 1
     },
     {
-      "defined_class": "test_class.Super",
+      "defined_class": "example_class.Super",
       "method_id": "instance_method",
-      "path": "test_class.py",
+      "path": "example_class.py",
       "lineno": 10,
       "static": false,
       "receiver": {
-        "class": "test_class.Super",
-        "value": "It's a test_class.TestClass!",
+        "class": "example_class.Super",
+        "value": "It's a example_class.ExampleClass!",
         "object_id": 3
       },
       "parameters": [],
@@ -81,17 +81,17 @@
   ],
   "classMap": [
     {
-      "name": "test_class",
+      "name": "example_class",
       "type": "package",
       "children": [
         {
-          "name": "TestClass",
+          "name": "ExampleClass",
           "type": "class",
           "children": [
             {
               "name": "static_method",
               "type": "function",
-              "path": "test_class.py",
+              "path": "example_class.py",
               "lineno": 18,
               "static": true
             }
@@ -104,7 +104,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "path": "test_class.py",
+              "path": "example_class.py",
               "lineno": 4,
               "static": true
             }
@@ -117,7 +117,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "path": "test_class.py",
+              "path": "example_class.py",
               "lineno": 10,
               "static": false
             }
