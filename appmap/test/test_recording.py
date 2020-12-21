@@ -3,7 +3,6 @@ import json
 import os
 import platform
 import sys
-from importlib import reload
 
 import pytest
 
@@ -29,7 +28,6 @@ def test_recording_works(monkeypatch, datafiles):
     expected_appmap['metadata']['language']['engine'] = py_impl
     expected_appmap['metadata']['language']['version'] = py_version
 
-
     sys.path.append(str(datafiles))
 
     monkeypatch.setenv("APPMAP", "true")
@@ -37,7 +35,8 @@ def test_recording_works(monkeypatch, datafiles):
     monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
     import appmap
-    reload(appmap._implementation.recording)  # pylint: disable=protected-access
+    # Reinitialize to pick up the environment variables just set
+    appmap._implementation.initialize()  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:
         from example_class import ExampleClass  # pylint: disable=import-error

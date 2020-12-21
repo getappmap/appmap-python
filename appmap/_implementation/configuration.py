@@ -12,7 +12,7 @@ import yaml
 from . import env
 from . import event
 from . import utils
-from .recording import recorder, Filter
+from .recording import Recorder, Filter
 
 logger = logging.getLogger(__name__)
 
@@ -26,21 +26,21 @@ def wrap(fn, isstatic):
 
     @wraps(fn)
     def run(*args, **kwargs):
-        if not recorder.enabled:
+        if not Recorder().enabled:
             return fn(*args, **kwargs)
         call_event = make_call_event(receiver=make_receiver(args, kwargs),
                                      parameters=[])
         call_event_id = call_event.id
-        recorder.add_event(call_event)
+        Recorder().add_event(call_event)
         try:
             logger.debug('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
 
             return_event = event.ReturnEvent(parent_id=call_event_id)
-            recorder.add_event(return_event)
+            Recorder().add_event(return_event)
             return ret
         except Exception:  # noqa: E722
-            recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
+            Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
                                                     exc_info=sys.exc_info()))
             raise
     setattr(run, '_appmap_wrapped', True)
@@ -167,5 +167,9 @@ class BuiltinFilter(Filter):
         return self.next_filter.wrap(fn, isstatic)
 
 
-recorder.use_filter(BuiltinFilter)
-recorder.use_filter(ConfigFilter)
+def initialize():
+    Recorder().use_filter(BuiltinFilter)
+    Recorder().use_filter(ConfigFilter)
+
+
+initialize()

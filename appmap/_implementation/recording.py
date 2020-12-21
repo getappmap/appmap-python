@@ -22,13 +22,13 @@ class Recording:
         if not env.enabled():
             return
 
-        recorder.start_recording()
+        Recorder().start_recording()
 
     def stop(self):
         if not env.enabled():
             return False
 
-        self.events = recorder.stop_recording()
+        self.events = Recorder().stop_recording()
 
     def __enter__(self):
         self.start()
@@ -123,6 +123,10 @@ class Recorder:
         self.filter_chain = []
         self._events = []
 
+    @classmethod
+    def initialize(cls):
+        cls._instance = None
+
     def use_filter(self, filter_class):
         self.filter_stack.append(filter_class)
 
@@ -189,9 +193,6 @@ class Recorder:
                     setattr(class_, fn_name, new_fn)
 
 
-recorder = Recorder()
-
-
 def wrap_exec_module(exec_module):
     @wraps(exec_module)
     def wrapped_exec_module(*args, **kwargs):
@@ -204,7 +205,7 @@ def wrap_exec_module(exec_module):
                      args,
                      kwargs)
         exec_module(*args, **kwargs)
-        recorder.do_import(*args, **kwargs)
+        Recorder().do_import(*args, **kwargs)
     return wrapped_exec_module
 
 
@@ -226,10 +227,10 @@ def wrap_find_spec(find_spec):
     return wrapped_find_spec
 
 
-if env.enabled():
-    # import configuration so the filter stack will get initialized
-    from . import configuration  # pylint: disable=unused-import
-    for h in sys.meta_path:
-        if getattr(h, 'find_spec', None) is not None:
-            logger.debug('  h.find_spec %s',  h.find_spec)
-            h.find_spec = wrap_find_spec(h.find_spec)
+def initialize():
+    Recorder.initialize()
+    if env.enabled():
+        for h in sys.meta_path:
+            if getattr(h, 'find_spec', None) is not None:
+                logger.debug('  h.find_spec %s',  h.find_spec)
+                h.find_spec = wrap_find_spec(h.find_spec)
