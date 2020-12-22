@@ -18,7 +18,7 @@ FIXTURE_DIR = os.path.join(
     os.path.join(FIXTURE_DIR, 'expected.appmap.json')
     )
 def test_recording_works(monkeypatch, datafiles):
-    with open(datafiles / 'expected.appmap.json') as f:
+    with open(os.path.join(str(datafiles), 'expected.appmap.json')) as f:
         expected_appmap = json.load(f)
 
     # Setting these outside the definition of expected_appmap makes it
@@ -31,7 +31,8 @@ def test_recording_works(monkeypatch, datafiles):
     sys.path.append(str(datafiles))
 
     monkeypatch.setenv("APPMAP", "true")
-    monkeypatch.setenv("APPMAP_CONFIG", str(datafiles / 'appmap.yml'))
+    monkeypatch.setenv("APPMAP_CONFIG",
+                       os.path.join(str(datafiles), 'appmap.yml'))
     monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
     import appmap

@@ -45,15 +45,11 @@ class PackageEntry(ClassMapEntry):
         super().__init__(name, name, 'package')
         self.children = ClassMapSet()
 
-    __hash__ = ClassMapEntry.__hash__
-
 
 class ClassEntry(ClassMapEntry):
     def __init__(self, name):
         super().__init__(name, name, 'class')
         self.children = ClassMapSet()
-
-    __hash__ = ClassMapEntry.__hash__
 
 
 class FuncEntry(ClassMapEntry):
@@ -62,14 +58,6 @@ class FuncEntry(ClassMapEntry):
         self.path = e.path
         self.lineno = e.lineno
         self.static = e.static
-
-    __hash__ = ClassMapEntry.__hash__
-
-
-def asdict(s):
-    ret = vars(s)
-    del ret['key']
-    return ret
 
 
 def classmap(recording):
@@ -108,8 +96,15 @@ class AppMapEncoder(json.JSONEncoder):
         elif isinstance(o, ClassMapSet):
             return list(o.values())
         elif isinstance(o, ClassMapEntry):
-            return asdict(o)
+            return AppMapEncoder.asdict(o)
         return json.JSONEncoder.default(self, o)
+
+    @staticmethod
+    def asdict(s):
+        ret = vars(s)
+        del ret['key']
+        return ret
+
 
 
 def dump(recording):
