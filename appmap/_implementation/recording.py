@@ -14,8 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class Recording:
-    def __init__(self):
+    """
+    Context manager to make it easy to capture a Recording.  exit_hook
+    will be called when the block exits, before any exceptions are
+    raised.
+    """
+    def __init__(self, exit_hook=None):
         self.events = []
+        self.exit_hook = exit_hook
 
     def start(self):
 
@@ -34,7 +40,10 @@ class Recording:
         self.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        logging.info("Recording.__exit__, stopping with exception %s", exc_type)
         self.stop()
+        if self.exit_hook is not None:
+            self.exit_hook(self)
         return False
 
 

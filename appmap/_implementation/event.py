@@ -1,8 +1,7 @@
 import inspect
-import threading
-from functools import partial
 from itertools import chain
-
+from functools import partial
+import threading
 from . import utils
 
 class _EventIds:
@@ -18,18 +17,21 @@ class _EventIds:
     # The identifiers returned by threading.get_ident() aren't
     # guaranteed to be unique: they may be recycled after the thread
     # exits. We need a unique id, so we'll manage it ourselves.
-    next_thread_id = 0
-    next_thread_id_lock = threading.Lock()
-    tls = threading.local()
+    _next_thread_id = 0
+    _next_thread_id_lock = threading.Lock()
+
+    @classmethod
+    def next_thread_id(cls):
+        with cls._next_thread_id_lock:
+            cls._next_thread_id += 1
+            return cls._next_thread_id
 
     @classmethod
     def get_thread_id(cls):
-        thread_id = getattr(cls.tls, 'thread_id', None)
-        if thread_id is None:
-            with cls.next_thread_id_lock:
-                cls.next_thread_id += 1
-                thread_id = cls.tls.thread_id = cls.next_thread_id
-        return thread_id
+        tls = utils.appmap_tls()
+        if 'thread_id' not in tls:
+            tls['thread_id'] = cls.next_thread_id()
+        return tls['thread_id']
 
 
 class Event:
@@ -137,7 +139,8 @@ class ExceptionEvent(ReturnEvent):
         }]
 
 
-def serialize_event(event):
-    if isinstance(event, Event):
-        return event.to_dict()
-    raise TypeError
+def initialize():
+    # If True, allow calls to str() and repr() to raise RuntimeErrors
+    # (e.g. Recursion Error). This makes it possible to test
+    # instrumentation's recursion avoidance.
+    _EventIds.id = 1

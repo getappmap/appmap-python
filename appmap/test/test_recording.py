@@ -6,17 +6,14 @@ import sys
 
 import pytest
 
-FIXTURE_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    'data'
-    )
+from helpers import FIXTURE_DIR
 
-
+import helpers
 @pytest.mark.datafiles(
     os.path.join(FIXTURE_DIR, 'appmap.yml'),
     os.path.join(FIXTURE_DIR, 'example_class.py'),
     os.path.join(FIXTURE_DIR, 'expected.appmap.json')
-    )
+)
 def test_recording_works(monkeypatch, datafiles):
     with open(os.path.join(str(datafiles), 'expected.appmap.json')) as f:
         expected_appmap = json.load(f)

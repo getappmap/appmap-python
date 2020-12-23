@@ -64,7 +64,7 @@
       "static": false,
       "receiver": {
         "class": "example_class.Super",
-        "value": "It's a example_class.ExampleClass!",
+        "value": "ExampleClass and ExampleClass#another_method",
         "object_id": 3
       },
       "parameters": [],
