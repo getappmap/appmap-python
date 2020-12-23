@@ -128,6 +128,9 @@ class ConfigFilter(Filter):
             path = package['path']
             self.includes.add(path + '.')
             if 'exclude' in package:
+                if not isinstance(package['exclude'], list):
+                    raise RuntimeError('Excludes for package'
+                                       f' "{path}" must be a list')
                 excludes = [f'{path}.{e}.' for e in package['exclude']]
                 self.excludes.update(excludes)
         logger.debug('ConfigFilter, includes %s', self.includes)
