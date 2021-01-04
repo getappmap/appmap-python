@@ -49,7 +49,6 @@ def split_function_name(fn):
         class_name, fn_name = qualname.rsplit('.', 1)
         class_name = f'{fn.__module__}.{class_name}'
     else:
-        class_name = ''
         class_name = fn.__module__
         fn_name = qualname
     return (class_name, fn_name)

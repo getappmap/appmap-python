@@ -47,7 +47,7 @@ def test_thread_ids():
 )
 def test_recursion_protection(monkeypatch, datafiles):
     monkeypatch.setenv("APPMAP", "true")
-    monkeypatch.setenv("APPMAP_CONFIG", os.join(str(datafiles), 'appmap.yml'))
+    monkeypatch.setenv("APPMAP_CONFIG", os.path.join(datafiles, 'appmap.yml'))
     monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
     sys.path.append(str(datafiles))
