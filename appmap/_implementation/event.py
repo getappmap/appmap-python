@@ -50,7 +50,6 @@ class Event:
         }
 
 
-
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
                  'static', 'receiver', 'parameters']
@@ -62,8 +61,17 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = utils.split_function_name(fn)
-        path = inspect.getsourcefile(fn)
-        __, lineno = inspect.getsourcelines(fn)
+
+        try:
+            path = inspect.getsourcefile(fn)
+        except TypeError:
+            path = '<builtin>'
+
+        try:
+            __, lineno = inspect.getsourcelines(fn)
+        except OSError:
+            lineno = 0
+
         return partial(CallEvent, defined_class,
                        method_id, path, lineno, isstatic)
 
