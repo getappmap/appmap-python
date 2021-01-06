@@ -1,7 +1,7 @@
+from . import configuration
 from . import env
 from . import event
 from . import recording
-from . import configuration
 from .py_version_check import check_py_version
 
 
@@ -10,7 +10,7 @@ def initialize():
     env.initialize()
     event.initialize()
     recording.initialize()
-    configuration.initialize()
+    configuration.initialize()  # needs to be initialized after recording
 
 
 initialize()

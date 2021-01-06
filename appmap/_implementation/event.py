@@ -1,8 +1,10 @@
 import inspect
+import threading
 from itertools import chain
 from functools import partial
-import threading
+
 from . import utils
+
 
 class _EventIds:
     id = 1
@@ -29,9 +31,13 @@ class _EventIds:
     @classmethod
     def get_thread_id(cls):
         tls = utils.appmap_tls()
-        if 'thread_id' not in tls:
-            tls['thread_id'] = cls.next_thread_id()
-        return tls['thread_id']
+        return (tls.get('thread_id')
+                or tls.setdefault('thread_id', cls.next_thread_id()))
+
+    @classmethod
+    def reset(cls):
+        cls.id = 1
+        cls._next_thread_id = 0
 
 
 class Event:
@@ -148,7 +154,5 @@ class ExceptionEvent(ReturnEvent):
 
 
 def initialize():
-    # If True, allow calls to str() and repr() to raise RuntimeErrors
-    # (e.g. Recursion Error). This makes it possible to test
-    # instrumentation's recursion avoidance.
-    _EventIds.id = 1
+    utils.appmap_tls().pop('thread_id', None)
+    _EventIds.reset()

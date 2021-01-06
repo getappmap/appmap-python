@@ -9,7 +9,7 @@ from threading import Thread
 
 import pytest
 
-from appmap.test.helpers import FIXTURE_DIR
+from .helpers import FIXTURE_DIR
 
 import appmap
 import appmap._implementation
