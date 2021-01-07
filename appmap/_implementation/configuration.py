@@ -58,7 +58,7 @@ def wrap(fn, isstatic):
             return ret
         except Exception:  # noqa: E722
             Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
-                                                    exc_info=sys.exc_info()))
+                                                      exc_info=sys.exc_info()))
             raise
     setattr(run, '_appmap_wrapped', True)
     return run
@@ -71,7 +71,7 @@ def in_set(name, which):
 def function_in_set(fn, which):
     class_name, fn_name = split_function_name(fn)
     if class_name is None:
-        # Is this really the right thing to do?
+        # fn isn't in a class, ignore it.
         return False
 
     class_name += '.'

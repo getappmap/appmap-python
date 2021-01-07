@@ -10,7 +10,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         assert appmap.enabled()
 
-
     def test_is_disabled_when_unset(self, monkeypatch):
         """Test that recording is disabled when APPMAP is unset"""
         monkeypatch.delenv("APPMAP", raising=False)
