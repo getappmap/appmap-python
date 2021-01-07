@@ -1,6 +1,7 @@
 import platform
 import sys
 
+
 class AppMapPyVerException(Exception):
     pass
 

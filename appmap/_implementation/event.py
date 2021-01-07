@@ -4,6 +4,7 @@ from functools import partial
 import threading
 from . import utils
 
+
 class _EventIds:
     id = 1
     lock = threading.Lock()
@@ -48,7 +49,6 @@ class Event:
             for k in chain.from_iterable(getattr(cls, '__slots__', [])
                                          for cls in type(self).__mro__)
         }
-
 
 
 class CallEvent(Event):

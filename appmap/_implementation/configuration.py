@@ -58,7 +58,7 @@ def wrap(fn, isstatic):
             return ret
         except Exception:  # noqa: E722
             Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
-                                                    exc_info=sys.exc_info()))
+                                                      exc_info=sys.exc_info()))
             raise
     setattr(run, '_appmap_wrapped', True)
     return run

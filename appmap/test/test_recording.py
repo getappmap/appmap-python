@@ -8,6 +8,7 @@ import pytest
 
 from .helpers import FIXTURE_DIR
 
+
 @pytest.mark.datafiles(
     os.path.join(FIXTURE_DIR, 'appmap.yml'),
     os.path.join(FIXTURE_DIR, 'example_class.py'),
