@@ -240,6 +240,33 @@ def initialize():
     Recorder.initialize()
     if env.enabled():
         for h in sys.meta_path:
-            if getattr(h, 'find_spec', None) is not None:
-                logger.debug('  h.find_spec %s',  h.find_spec)
-                h.find_spec = wrap_find_spec(h.find_spec)
+            fn = inspect.getattr_static(h, 'find_spec', None)
+            if fn is None:
+                continue
+            if getattr(fn, '_appmap_wrapped', None) is not None:
+                logger.debug('meta path finder find_spec, already wrapped')
+                continue
+
+            # XXX This processing of the find_spec method is very
+            # similar to the processing of instrumented functions
+            # above. At some point, we should see if we can DRY them
+            # up.
+            isstatic = utils.is_staticmethod(fn)
+            isclass = utils.is_classmethod(fn)
+            if isstatic or isclass:
+                # Wrap the function that was decorated (by
+                # staticmethod or classmethod)
+                new_fn = wrap_find_spec(fn.__func__)
+                if isstatic:
+                    new_fn = staticmethod(new_fn)
+                elif isclass:
+                    new_fn = classmethod(new_fn)
+                setattr(new_fn, '_appmap_wrapped', True)
+            else:
+                # Wrap the function, bind it to the finder instance
+                # that's on sys.meta_path.
+                new_fn = wrap_find_spec(fn)
+                setattr(new_fn, '_appmap_wrapped', True)
+                new_fn = new_fn.__get__(h)
+
+            h.find_spec = new_fn
