@@ -34,6 +34,14 @@ class _EventIds:
             tls['thread_id'] = cls.next_thread_id()
         return tls['thread_id']
 
+    @classmethod
+    def reset(cls):
+        with cls._next_thread_id_lock:
+            cls.id = 1
+            cls._next_thread_id = 0
+            tls = utils.appmap_tls()
+            tls.pop('thread_id', None)
+
 
 class Event:
     __slots__ = ['id', 'event', 'thread_id']

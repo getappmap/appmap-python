@@ -40,6 +40,8 @@ def test_thread_ids():
     all_tids = [tids.get() for _ in range(tids.qsize())]
     assert len(set(all_tids)) == len(all_tids)  # Should all be unique
 
+    _EventIds.reset()
+
 
 @pytest.mark.datafiles(
     os.path.join(FIXTURE_DIR, 'appmap.yml'),
