@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "appmap"
-version = "0.1.0"
+version = "0.1.0.dev1"
 description = "Create AppMap files by recording a Python application."
 authors = ["Alan Potter <alan@app.land>"]
 

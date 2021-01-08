@@ -1,10 +1,9 @@
 language: python
-python: "3.9"
+python: '3.9'
 
 stages:
 - lint
 - test
-
 
 cache:
   pip: true
@@ -19,7 +18,16 @@ jobs:
   - stage: lint
     script:
     - poetry run pylint appmap
-
+    
   - stage: test
     script:
     - poetry run pytest
+
+deploy:
+  provider: pypi
+  username: applandrobot
+  edge: true
+  password:
+    secure: tpO+4pJnY+s8yCw65PxF1SI3SGu8OgvVYPBjzdf77LNPu9J9uTMcpFxM+zOK8VkI9673pArDZN504tw6iKBxyPCGrS68W4Fe/NFcYJtU52ChR6hOyViMpvyD2QYcidSKcRpxN2zq8KS1w5ybH/pH2qs3K4HqlCFbtXPy9Gl0nzujhWWfnQ81XwIvhi0iDIQuBk1LwGeUo09LYeYhA/ISUo4/oEBZ4v3SZG2irbG3JyQJ2c6g+FSPi2Bgii3jw9ftd8LkdyXKWvRBeZ5PChjUCykcx2myYmIDRH7XfRy9c6mrnAg/I79pbN7xV5tnwoogTQwrModddSMwGr8WHaH7WeTSe/wbKfypryXoKlfu5wFluRcl3ulvNvv4o+4YsFaj7S0kHHJkPnMbVWh1DWHZA3mvjyhB+Ddmsnsn0pA/HNKvIRr9l2TfrkjxiKIkcFUCoaBPBM+EyjvPqAU2Kbj8oRoTXwLJH1czw8QhEqDjS5dAsbMoIMKy+qF/UdCnogLoh9hNmp5tV6jH33tECr/R7s2OJCo3ToG2WaVf1JRcn/OHJHH8dRRwOYB9i1WitIRlQM0jxbi2OpZItLO5GsW7ZucgrUOHan3A0U3OXI1VzvaPwRkxsxI9zPV7UYVbMVf81q+NXOUFMV1R+nZH2Dxa1FM9fsd2zQXSlTXAjRNw468=
+  on:
+    tags: true
