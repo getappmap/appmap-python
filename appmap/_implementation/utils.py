@@ -1,4 +1,34 @@
+import threading
 import types
+from collections.abc import MutableMapping
+
+
+class ThreadLocalDict(threading.local, MutableMapping):
+    def __init__(self):
+        super().__init__()
+        self.values = {}
+
+    def __getitem__(self, k):
+        return self.values[k]
+
+    def __setitem__(self, k, v):
+        self.values[k] = v
+
+    def __delitem__(self, k):
+        del self.values[k]
+
+    def __iter__(self):
+        return iter(self.values)
+
+    def __len__(self):
+        return len(self.values)
+
+
+_appmap_tls = ThreadLocalDict()
+
+
+def appmap_tls():
+    return _appmap_tls
 
 
 def is_staticmethod(m):
@@ -19,7 +49,6 @@ def split_function_name(fn):
         class_name, fn_name = qualname.rsplit('.', 1)
         class_name = f'{fn.__module__}.{class_name}'
     else:
-        class_name = ''
         class_name = fn.__module__
         fn_name = qualname
     return (class_name, fn_name)

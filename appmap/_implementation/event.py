@@ -1,9 +1,10 @@
 import inspect
 import threading
-from functools import partial
 from itertools import chain
+from functools import partial
 
 from . import utils
+
 
 class _EventIds:
     id = 1
@@ -18,18 +19,25 @@ class _EventIds:
     # The identifiers returned by threading.get_ident() aren't
     # guaranteed to be unique: they may be recycled after the thread
     # exits. We need a unique id, so we'll manage it ourselves.
-    next_thread_id = 0
-    next_thread_id_lock = threading.Lock()
-    tls = threading.local()
+    _next_thread_id = 0
+    _next_thread_id_lock = threading.Lock()
+
+    @classmethod
+    def next_thread_id(cls):
+        with cls._next_thread_id_lock:
+            cls._next_thread_id += 1
+            return cls._next_thread_id
 
     @classmethod
     def get_thread_id(cls):
-        thread_id = getattr(cls.tls, 'thread_id', None)
-        if thread_id is None:
-            with cls.next_thread_id_lock:
-                cls.next_thread_id += 1
-                thread_id = cls.tls.thread_id = cls.next_thread_id
-        return thread_id
+        tls = utils.appmap_tls()
+        return (tls.get('thread_id')
+                or tls.setdefault('thread_id', cls.next_thread_id()))
+
+    @classmethod
+    def reset(cls):
+        cls.id = 1
+        cls._next_thread_id = 0
 
 
 class Event:
@@ -48,7 +56,6 @@ class Event:
         }
 
 
-
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
                  'static', 'receiver', 'parameters']
@@ -60,8 +67,17 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = utils.split_function_name(fn)
-        path = inspect.getsourcefile(fn)
-        __, lineno = inspect.getsourcelines(fn)
+
+        try:
+            path = inspect.getsourcefile(fn)
+        except TypeError:
+            path = '<builtin>'
+
+        try:
+            __, lineno = inspect.getsourcelines(fn)
+        except OSError:
+            lineno = 0
+
         return partial(CallEvent, defined_class,
                        method_id, path, lineno, isstatic)
 
@@ -137,7 +153,6 @@ class ExceptionEvent(ReturnEvent):
         }]
 
 
-def serialize_event(event):
-    if isinstance(event, Event):
-        return event.to_dict()
-    raise TypeError
+def initialize():
+    utils.appmap_tls().pop('thread_id', None)
+    _EventIds.reset()

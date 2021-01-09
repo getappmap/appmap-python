@@ -5,31 +5,48 @@ Manage Configuration AppMap recorder for Python.
 import logging
 import os
 import sys
+from contextlib import contextmanager
 from functools import wraps
 
 import yaml
 
 from . import env
 from . import event
-from . import utils
 from .recording import Recorder, Filter
+from .utils import appmap_tls, split_function_name
 
 logger = logging.getLogger(__name__)
 
 
+@contextmanager
+def recording_disabled():
+    tls = appmap_tls()
+    tls['instrumentation_disabled'] = True
+    try:
+        yield
+    finally:
+        tls['instrumentation_disabled'] = False
+
+
+def is_instrumentation_disabled():
+    return appmap_tls().setdefault('instrumentation_disabled', False)
+
+
 def wrap(fn, isstatic):
     """return a wrapped function"""
-    logger.info('hooking %s', '.'.join(utils.split_function_name(fn)))
+    logger.info('hooking %s', '.'.join(split_function_name(fn)))
 
     make_call_event = event.CallEvent.make(fn, isstatic)
     make_receiver = event.CallEvent.make_receiver(fn, isstatic)
 
     @wraps(fn)
     def run(*args, **kwargs):
-        if not Recorder().enabled:
+        if not Recorder().enabled or is_instrumentation_disabled():
             return fn(*args, **kwargs)
-        call_event = make_call_event(receiver=make_receiver(args, kwargs),
-                                     parameters=[])
+
+        with recording_disabled():
+            call_event = make_call_event(receiver=make_receiver(args, kwargs),
+                                         parameters=[])
         call_event_id = call_event.id
         Recorder().add_event(call_event)
         try:
@@ -41,7 +58,7 @@ def wrap(fn, isstatic):
             return ret
         except Exception:  # noqa: E722
             Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
-                                                    exc_info=sys.exc_info()))
+                                                      exc_info=sys.exc_info()))
             raise
     setattr(run, '_appmap_wrapped', True)
     return run
@@ -52,7 +69,11 @@ def in_set(name, which):
 
 
 def function_in_set(fn, which):
-    class_name, fn_name = utils.split_function_name(fn)
+    class_name, fn_name = split_function_name(fn)
+    if class_name is None:
+        # fn isn't in a class, ignore it.
+        return False
+
     class_name += '.'
     logger.debug(('class_name %s'
                   ' fnname %s'
@@ -107,6 +128,9 @@ class ConfigFilter(Filter):
             path = package['path']
             self.includes.add(path + '.')
             if 'exclude' in package:
+                if not isinstance(package['exclude'], list):
+                    raise RuntimeError('Excludes for package'
+                                       f' "{path}" must be a list')
                 excludes = [f'{path}.{e}.' for e in package['exclude']]
                 self.excludes.update(excludes)
         logger.debug('ConfigFilter, includes %s', self.includes)

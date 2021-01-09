@@ -13,8 +13,11 @@ class Super:
 
 class ExampleClass(Super, ClassMethodMixin):
     def __str__(self):
-        return f"It's a {self.__module__}.{self.__class__.__qualname__}!"
+        return f'ExampleClass and {self.another_method()}'
 
     @staticmethod
     def static_method():
-        return 'ExampleClass#static_method'
+        return 'ExampleClass.static_method'
+
+    def another_method(self):
+        return "ExampleClass#another_method"

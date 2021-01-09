@@ -14,8 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class Recording:
-    def __init__(self):
+    """
+    Context manager to make it easy to capture a Recording.  exit_hook
+    will be called when the block exits, before any exceptions are
+    raised.
+    """
+    def __init__(self, exit_hook=None):
         self.events = []
+        self.exit_hook = exit_hook
 
     def start(self):
 
@@ -34,7 +40,10 @@ class Recording:
         self.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
+        logging.info("Recording.__exit__, stopping with exception %s", exc_type)
         self.stop()
+        if self.exit_hook is not None:
+            self.exit_hook(self)
         return False
 
 
@@ -231,6 +240,33 @@ def initialize():
     Recorder.initialize()
     if env.enabled():
         for h in sys.meta_path:
-            if getattr(h, 'find_spec', None) is not None:
-                logger.debug('  h.find_spec %s',  h.find_spec)
-                h.find_spec = wrap_find_spec(h.find_spec)
+            fn = inspect.getattr_static(h, 'find_spec', None)
+            if fn is None:
+                continue
+            if getattr(fn, '_appmap_wrapped', None) is not None:
+                logger.debug('meta path finder find_spec, already wrapped')
+                continue
+
+            # XXX This processing of the find_spec method is very
+            # similar to the processing of instrumented functions
+            # above. At some point, we should see if we can DRY them
+            # up.
+            isstatic = utils.is_staticmethod(fn)
+            isclass = utils.is_classmethod(fn)
+            if isstatic or isclass:
+                # Wrap the function that was decorated (by
+                # staticmethod or classmethod)
+                new_fn = wrap_find_spec(fn.__func__)
+                if isstatic:
+                    new_fn = staticmethod(new_fn)
+                elif isclass:
+                    new_fn = classmethod(new_fn)
+                setattr(new_fn, '_appmap_wrapped', True)
+            else:
+                # Wrap the function, bind it to the finder instance
+                # that's on sys.meta_path.
+                new_fn = wrap_find_spec(fn)
+                setattr(new_fn, '_appmap_wrapped', True)
+                new_fn = new_fn.__get__(h)
+
+            h.find_spec = new_fn
