@@ -131,18 +131,19 @@ class CallEvent(Event):
 
 
 class ReturnEvent(Event):
-    __slots__ = ['parent_id']
+    __slots__ = ['parent_id', 'elapsed']
 
-    def __init__(self, parent_id):
+    def __init__(self, parent_id, elapsed):
         super().__init__('return')
         self.parent_id = parent_id
+        self.elapsed = elapsed
 
 
 class ExceptionEvent(ReturnEvent):
     __slots__ = ['exceptions']
 
-    def __init__(self, parent_id, exc_info):
-        super().__init__(parent_id)
+    def __init__(self, parent_id, elapsed, exc_info):
+        super().__init__(parent_id, elapsed)
         class_, exc, __ = exc_info
         self.exceptions = [{
             'exceptions': {

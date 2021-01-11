@@ -21,3 +21,6 @@ class ExampleClass(Super, ClassMethodMixin):
 
     def another_method(self):
         return "ExampleClass#another_method"
+
+    def test_exception(self):
+        raise Exception('test exception')
