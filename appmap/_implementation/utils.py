@@ -1,6 +1,7 @@
 import threading
 import types
 from collections.abc import MutableMapping
+import subprocess
 
 
 class ThreadLocalDict(threading.local, MutableMapping):
@@ -52,3 +53,7 @@ def split_function_name(fn):
         class_name = fn.__module__
         fn_name = qualname
     return (class_name, fn_name)
+
+
+def subprocess_run(command_args):
+    return subprocess.run(command_args, capture_output=True, text=True, check=False)

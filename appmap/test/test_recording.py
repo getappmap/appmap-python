@@ -58,6 +58,27 @@ class TestRecording(AppMapTestBase):
             if 'elapsed' in dct:
                 assert isinstance(dct['elapsed'], float)
                 dct['elapsed'] = 0.0
+            if 'git' in dct:
+                git = dct['git']
+                if 'repository' in git:
+                    git['repository'] = 'git@github.com:applandinc/appmap-python.git'
+                if 'branch' in git:
+                    git['branch'] = 'master'
+                if 'commit' in git:
+                    git['commit'] = 'xyz'
+                if 'status' in git:
+                    assert isinstance(git['status'], list)
+                    git['status'] = []
+                if 'git_last_tag' in git:
+                    git['git_last_tag'] = ''
+                if 'git_commits_since_last_tag' in git:
+                    assert isinstance(git['git_commits_since_last_tag'], int)
+                    git['git_commits_since_last_tag'] = 0
+                if 'git_last_annotated_tag' in git:
+                    git['git_last_annotated_tag'] = None
+                if 'git_commits_since_last_annotated_tag' in git:
+                    assert isinstance(git['git_commits_since_last_annotated_tag'], int)
+                    git['git_commits_since_last_annotated_tag'] = 0
             if 'object_id' in dct:
                 assert isinstance(dct['object_id'], int)
                 dct['object_id'] = object_id
