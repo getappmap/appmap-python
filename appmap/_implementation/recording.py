@@ -40,7 +40,7 @@ class Recording:
         self.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        logging.info("Recording.__exit__, stopping with exception %s", exc_type)
+        logger.debug("Recording.__exit__, stopping with exception %s", exc_type)
         self.stop()
         if self.exit_hook is not None:
             self.exit_hook(self)
@@ -77,8 +77,19 @@ class NullFilter(Filter):
         return fn
 
 
+def is_class(c):
+    # We don't want to use inspect.isclass here. It uses isinstance to
+    # check the class of the object, which will invoke any method
+    # bound to __class__. (For example, celery.local.Proxy uses this
+    # mechanism to return the class of the proxied object.)
+    #
+    # We want the *real* class of c, not whatever it wants to claim as
+    # its class. type() give us that.
+    return type(c) == type
+
+
 def get_classes(module):
-    return [v for __, v in module.__dict__.items() if inspect.isclass(v)]
+    return [v for __, v in module.__dict__.items() if is_class(v)]
 
 
 def get_members(class_):
@@ -140,11 +151,11 @@ class Recorder:
         self.filter_stack.append(filter_class)
 
     def start_recording(self):
-        logger.info('AppMap recording started')
+        logger.debug('AppMap recording started')
         self.enabled = True
 
     def stop_recording(self):
-        logger.info('AppMap recording stopped')
+        logger.debug('AppMap recording stopped')
         self.enabled = False
         return self._events
 
@@ -162,7 +173,7 @@ class Recorder:
 
     def do_import(self, *args, **kwargs):
         mod = args[0]
-        logger.debug('do_import, args %s kwargs %s', args, kwargs)
+        logger.debug('do_import, mod %s args %s kwargs %s', mod, args, kwargs)
         if not self.filter_chain:
             logger.debug('  filter_stack %s', self.filter_stack)
             self.filter_chain = self.filter_stack[0](None)
@@ -174,10 +185,7 @@ class Recorder:
             return
 
         classes = get_classes(mod)
-        logger.debug(('  classes %s'
-                      ' inspect.getmembers(mod, inspect.isclass) %s'),
-                     classes,
-                     inspect.getmembers(mod, inspect.isclass))
+        logger.debug('  classes %s', classes)
         for class_ in classes:
             if not self.filter_chain.filter(class_):
                 continue
@@ -239,11 +247,12 @@ def wrap_find_spec(find_spec):
 def initialize():
     Recorder.initialize()
     if env.enabled():
+        wrapped_attr = '_appmap_find_spec'
         for h in sys.meta_path:
             fn = inspect.getattr_static(h, 'find_spec', None)
             if fn is None:
                 continue
-            if getattr(fn, '_appmap_wrapped', None) is not None:
+            if getattr(fn, wrapped_attr, None) is not None:
                 logger.debug('meta path finder find_spec, already wrapped')
                 continue
 
@@ -261,12 +270,12 @@ def initialize():
                     new_fn = staticmethod(new_fn)
                 elif isclass:
                     new_fn = classmethod(new_fn)
-                setattr(new_fn, '_appmap_wrapped', True)
+                setattr(new_fn, wrapped_attr, True)
             else:
                 # Wrap the function, bind it to the finder instance
                 # that's on sys.meta_path.
                 new_fn = wrap_find_spec(fn)
-                setattr(new_fn, '_appmap_wrapped', True)
+                setattr(new_fn, wrapped_attr, True)
                 new_fn = new_fn.__get__(h)
 
             h.find_spec = new_fn

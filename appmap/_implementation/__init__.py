@@ -4,7 +4,6 @@ from . import event
 from . import recording
 from .py_version_check import check_py_version
 
-
 def initialize():
     check_py_version()
     env.initialize()
