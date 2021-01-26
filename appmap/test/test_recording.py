@@ -53,8 +53,6 @@ class TestRecording(AppMapTestBase):
 
         def normalize(dct):
             nonlocal object_id
-            if 'path' in dct:
-                dct['path'] = os.path.basename(dct['path'])
             if 'elapsed' in dct:
                 assert isinstance(dct['elapsed'], float)
                 dct['elapsed'] = 0.0
@@ -79,10 +77,16 @@ class TestRecording(AppMapTestBase):
                 if 'git_commits_since_last_annotated_tag' in git:
                     assert isinstance(git['git_commits_since_last_annotated_tag'], int)
                     git['git_commits_since_last_annotated_tag'] = 0
+            if 'location' in dct:
+                path, line = dct['location'].split(':')
+                path = os.path.basename(path)
+                dct['location'] = ':'.join([path, line])
             if 'object_id' in dct:
                 assert isinstance(dct['object_id'], int)
                 dct['object_id'] = object_id
                 object_id += 1
+            if 'path' in dct:
+                dct['path'] = os.path.basename(dct['path'])
             return dct
 
         generated_appmap = json.loads(appmap.generation.dump(r),

@@ -30,14 +30,12 @@ class ClassEntry(ClassMapEntry):
 
 @dataclass
 class FuncEntry(ClassMapEntry):
-    path: str
-    lineno: int
+    location: str
     static: bool
 
     def __init__(self, e):
         super().__init__(e.method_id, 'function')
-        self.path = e.path
-        self.lineno = e.lineno
+        self.location = f'{e.path}:{e.lineno}'
         self.static = e.static
 
 

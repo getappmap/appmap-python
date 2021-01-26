@@ -33,15 +33,13 @@
             {
               "name": "static_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 18,
+              "location": "example_class.py:18",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 25,
+              "location": "example_class.py:25",
               "static": false
             }
           ]
@@ -53,8 +51,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 4,
+              "location": "example_class.py:4",
               "static": true
             }
           ]
@@ -66,8 +63,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 10,
+              "location": "example_class.py:10",
               "static": false
             }
           ]
