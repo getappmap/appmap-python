@@ -41,7 +41,7 @@ def wrap(fn, isstatic):
     make_receiver = event.CallEvent.make_receiver(fn, isstatic)
 
     @wraps(fn)
-    def run(*args, **kwargs):
+    def wrapped_fn(*args, **kwargs):
         if not Recorder().enabled or is_instrumentation_disabled():
             return fn(*args, **kwargs)
 
@@ -65,8 +65,8 @@ def wrap(fn, isstatic):
                                                       elapsed=elapsed_time,
                                                       exc_info=sys.exc_info()))
             raise
-    setattr(run, '_appmap_wrapped', True)
-    return run
+    setattr(wrapped_fn, '_appmap_wrapped', True)
+    return wrapped_fn
 
 
 def in_set(name, which):
@@ -165,11 +165,22 @@ class ConfigFilter(Filter):
         return self.next_filter.filter(class_)
 
     def wrap(self, fn, isstatic):
+        logger.debug('ConfigFilter.wrap, fn %s', fn)
+
         if self.excluded(fn):
             return fn
+
         if self.included(fn):
-            if getattr(fn, '_appmap_wrapped', None) is None:
-                return wrap(fn, isstatic)
+            wrapped = getattr(fn, '_appmap_wrapped', None)
+            logger.debug('  wrapped %s', wrapped)
+            if wrapped is None:
+                logger.debug('  wrapping %s', fn)
+                ret = wrap(fn, isstatic)
+            else:
+                logger.debug('  already wrapped %s', fn)
+                ret = fn
+            return ret
+
         return self.next_filter.wrap(fn, isstatic)
 
 
