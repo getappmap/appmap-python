@@ -2,7 +2,7 @@
 import orjson
 from dataclasses import dataclass, field
 
-from . import metadata
+from .metadata import Metadata
 from .event import Event
 
 
@@ -59,10 +59,14 @@ def classmap(recording):
     return ret
 
 
-def appmap(recording):
+def appmap(recording, metadata):
+    appmap_metadata = Metadata.to_dict()
+    if metadata:
+        appmap_metadata.update(metadata)
+
     return {
         'version': '1.4',
-        'metadata': metadata.Metadata.dump(),
+        'metadata': appmap_metadata,
         'events': recording.events,
         'classMap': list(classmap(recording).values())
     }
@@ -80,8 +84,8 @@ class AppMapEncoder:
         raise TypeError
 
 
-def dump(recording):
-    a = appmap(recording)
+def dump(recording, metadata=None):
+    a = appmap(recording, metadata)
     return orjson.dumps(a, default=AppMapEncoder.default,
                         option=(orjson.OPT_PASSTHROUGH_SUBCLASS |
                                 orjson.OPT_PASSTHROUGH_DATACLASS))
