@@ -6,7 +6,7 @@ from .utils import subprocess_run
 
 class Metadata:
     @staticmethod
-    def dump():
+    def to_dict():
         metadata = {
             'language': {
                 'name': 'python',
