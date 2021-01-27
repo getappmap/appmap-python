@@ -7,8 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - [#17] Add elapsed attribute to ReturnEvent
-- [#8] add git to metadata
+- [#8] Add git to metadata
 
+### Added
+- pytest integration
+
+### Changed
+- Use repr() instead of str() for receiver
+
+  Use repr() instead of str() to get a string representation of an event's receiver. This
+  works properly for flaskbb, and seems more correct in general.
+
+  Also, add Event.__repr__.
+    
+- Simplify (and fix) logging configuration
+    
+  The code that configured logging was overly complex, and also buggy.  These changes
+  simplify it, keep duplicate messages from being emitted, and properly allow per-module
+  configuration of log level.
+  
+- Don't use inspect.isclass
+
+  When testing to see if an object is a class, use type() instead of inpect.isclass. See
+  the comment on appmap._implementation.recording.is_class for details.  Also, make sure
+  ConfigFilter.wrap doesn't call the next filter for a function that it finds has already
+  been wrapped.
+
+### Fixed
+- Fix classmap `function` entries
+
+  Entries of type `function` in the classmap must have an attribute called "location", not
+  "path" and "lineno" attributes. Now they do.
+  
 ## [0.1.0.dev4] - 2021-01-11
 ### Added
 - Add a deploy stage to the build
