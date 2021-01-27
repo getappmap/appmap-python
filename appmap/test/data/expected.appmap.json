@@ -9,6 +9,16 @@
     "client": {
       "name": "appmap",
       "url": "https://github.com/applandinc/appmap-python"
+    },
+    "git": {
+      "repository": "git@github.com:applandinc/appmap-python.git",
+      "branch": "master",
+      "commit": "xyz",
+      "status": [],
+      "git_last_annotated_tag": null,
+      "git_last_tag": "",
+      "git_commits_since_last_annotated_tag": 0,
+      "git_commits_since_last_tag": 0
     }
   },
   "classMap": [

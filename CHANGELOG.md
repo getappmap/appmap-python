@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Add elapsed attribute to ReturnEvent
+- [#17] Add elapsed attribute to ReturnEvent
+- [#8] add git to metadata
 
 ## [0.1.0.dev4] - 2021-01-11
 ### Added
