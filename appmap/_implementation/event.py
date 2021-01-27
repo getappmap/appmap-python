@@ -55,6 +55,9 @@ class Event:
                                          for cls in type(self).__mro__)
         }
 
+    def __repr__(self):
+        return repr(self.to_dict())
+
 
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
@@ -102,15 +105,12 @@ class CallEvent(Event):
                 object_id = id(args[0][0])
                 slf = args[0][0]
                 # Make a best-effort attempt to get a string value for
-                # the receiver. If str() and repr() raise, formulate a
+                # the receiver. If repr() raises, formulate a
                 # value from the class and id.
                 try:
-                    value = str(slf)
+                    value = repr(slf)
                 except Exception:  # pylint: disable=broad-except
-                    try:
-                        value = repr(slf)
-                    except Exception:  # pylint: disable=broad-except
-                        value = f'<{defined_class} object at {object_id:#02x}>'
+                    value = f'<{defined_class} object at {object_id:#02x}>'
             return {
                 "class": cls,
                 "value": value,

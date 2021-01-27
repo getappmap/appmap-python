@@ -12,7 +12,7 @@ class Super:
 
 
 class ExampleClass(Super, ClassMethodMixin):
-    def __str__(self):
+    def __repr__(self):
         return f'ExampleClass and {self.another_method()}'
 
     @staticmethod
