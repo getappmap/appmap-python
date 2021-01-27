@@ -43,6 +43,10 @@ class TestRecording(AppMapTestBase):
             ExampleClass.static_method()
             ExampleClass.class_method()
             ExampleClass().instance_method()
+            try:
+                ExampleClass().test_exception()
+            except:  # pylint: disable=bare-except  # noqa: E722
+                pass
 
         # Normalize paths
         object_id = 1
@@ -51,6 +55,9 @@ class TestRecording(AppMapTestBase):
             nonlocal object_id
             if 'path' in dct:
                 dct['path'] = os.path.basename(dct['path'])
+            if 'elapsed' in dct:
+                assert isinstance(dct['elapsed'], float)
+                dct['elapsed'] = 0.0
             if 'object_id' in dct:
                 assert isinstance(dct['object_id'], int)
                 dct['object_id'] = object_id

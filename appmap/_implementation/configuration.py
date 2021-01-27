@@ -7,6 +7,7 @@ import os
 import sys
 from contextlib import contextmanager
 from functools import wraps
+import time
 
 import yaml
 
@@ -49,15 +50,19 @@ def wrap(fn, isstatic):
                                          parameters=[])
         call_event_id = call_event.id
         Recorder().add_event(call_event)
+        start_time = time.time()
         try:
             logger.debug('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
+            elapsed_time = time.time() - start_time
 
-            return_event = event.ReturnEvent(parent_id=call_event_id)
+            return_event = event.ReturnEvent(parent_id=call_event_id, elapsed=elapsed_time)
             Recorder().add_event(return_event)
             return ret
         except Exception:  # noqa: E722
+            elapsed_time = time.time() - start_time
             Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
+                                                      elapsed=elapsed_time,
                                                       exc_info=sys.exc_info()))
             raise
     setattr(run, '_appmap_wrapped', True)
