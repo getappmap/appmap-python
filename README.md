@@ -10,10 +10,27 @@ packages:
 - path: app.mod2
   exclude:
   - MyClass
-  - MyOtherClass#my_instance_method
+  - MyOtherClass.my_instance_method
   - MyOtherClass.my_class_method
 ```
 
+Note that `exclude`s are resolved relative to the associated path. So, for example, this
+configuration excludes `app.mod2.MyClass`
+
+## Environment Variables
+
+* `APPMAP` if `true`, code will be instrumented and AppMaps will be generated. Not
+  case-sensitive, defaults to 'false'.
+
+* `APPMAP_CONFIG` specifies the configuration file to use. Defaults to `appmap.yml` in the
+  current directory
+  
+* `APPMAP_LOG_LEVEL` specifies log level to use, from the set `CRITICAL`, `ERROR`,
+  `WARNING`, `INFO`, `DEBUG`. Not case-sensitive, defaults to `WARNING`.
+  
+* `APPMAP_OUTPUT_DIR` specifies the root directory for writing AppMaps. Defaults to
+  `tmp/appmap`.
+  
 ## Test Frameworks
 `appmap-python` supports recording [pytest](https://pytest.org) and `unittest` test cases. 
 

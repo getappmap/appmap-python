@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#17] Add elapsed attribute to ReturnEvent
 - [#8] Add git to metadata
-
-### Added
 - pytest integration
+- Support `APPMAP_OUTPUT_DIR` environment variable. If set, specifies the root directory
+  for writing AppMaps. If not set, defaults to `tmp/appmap`.
 
 ### Changed
 - Use repr() instead of str() for receiver
@@ -38,7 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   Entries of type `function` in the classmap must have an attribute called "location", not
   "path" and "lineno" attributes. Now they do.
-  
+
+- Fix support for function exclusions specified in the config.
+
 ## [0.1.0.dev4] - 2021-01-11
 ### Added
 - Add a deploy stage to the build

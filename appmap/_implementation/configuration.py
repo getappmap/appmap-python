@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager
-from functools import wraps
+from functools import wraps, cached_property
 import time
 
 import yaml
@@ -14,9 +14,49 @@ import yaml
 from . import env
 from . import event
 from .recording import Recorder, Filter
-from .utils import appmap_tls, split_function_name
+from .utils import appmap_tls, split_function_name, fqname
 
 logger = logging.getLogger(__name__)
+
+
+class Config:
+    """ Singleton Config class """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            logger.debug('Creating the Config object')
+            cls._instance = super(Config, cls).__new__(cls)
+
+            # If we're not enabled, no more initialization needs to be
+            # done.
+            cls._instance._initialized = not env.enabled()
+
+        return cls._instance
+
+    def __init__(self):
+        if self.__getattribute__('_initialized'):  # keep pylint happy
+            return
+
+        config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
+        with open(config_file) as file:
+            self._config = yaml.load(file, Loader=yaml.BaseLoader)
+            logger.debug('self._config %s', self._config)
+
+        self._initialized = True
+
+    @cached_property
+    def output_dir(self):
+        return os.getenv("APPMAP_OUTPUT_DIR",
+                         os.path.join('tmp', 'appmap'))
+
+    @cached_property
+    def name(self):
+        return self._config['name']
+
+    @cached_property
+    def packages(self):
+        return self._config['packages']
 
 
 @contextmanager
@@ -35,7 +75,7 @@ def is_instrumentation_disabled():
 
 def wrap(fn, isstatic):
     """return a wrapped function"""
-    logger.info('hooking %s', '.'.join(split_function_name(fn)))
+    logger.debug('hooking %s', '.'.join(split_function_name(fn)))
 
     make_call_event = event.CallEvent.make(fn, isstatic)
     make_receiver = event.CallEvent.make_receiver(fn, isstatic)
@@ -69,8 +109,13 @@ def wrap(fn, isstatic):
     return wrapped_fn
 
 
-def in_set(name, which):
-    return any(filter(name.startswith, which))
+def name_in_set(name, which):
+    return any(filter(lambda n: name.startswith(n + '.') or name == n,
+                      which))
+
+
+def class_in_set(class_name, which):
+    return name_in_set(class_name + '.', which)
 
 
 def function_in_set(fn, which):
@@ -79,15 +124,18 @@ def function_in_set(fn, which):
         # fn isn't in a class, ignore it.
         return False
 
-    class_name += '.'
-    logger.debug(('class_name %s'
+    ret = (class_in_set(class_name, which)
+           or name_in_set(f'{class_name}.{fn_name}', which))
+
+    logger.debug(('function_in_set, class_name %s'
                   ' fnname %s'
-                  ' which %s'),
+                  ' which %s'
+                  ' ret %s'),
                  class_name,
                  fn_name,
-                 which)
-    return (in_set(class_name, which)
-            or in_set(f'{class_name}{fn_name}', which))
+                 which,
+                 ret)
+    return ret
 
 
 class ConfigFilter(Filter):
@@ -114,51 +162,43 @@ class ConfigFilter(Filter):
     full names will match.  (This is achieved in the code by appending
     `.` to the name retrieved from the config file.)
     """
-    def __init__(self, *args):
-        super().__init__(*args)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not env.enabled():
             return
 
-        # Store entries from the config file. Each entry has '.'
-        # appended to it, to ensure that only full names are matched.
-        self.includes = set()
-        self.excludes = set()
+        self._includes = set()
+        self._excludes = set()
 
-        config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
-        with open(config_file) as file:
-            config = yaml.load(file, Loader=yaml.BaseLoader)
-            logger.debug('config %s', config)
-
-        for package in config['packages']:
+        for package in Config().packages:
             path = package['path']
-            self.includes.add(path + '.')
+            self._includes.add(path)
             if 'exclude' in package:
                 if not isinstance(package['exclude'], list):
                     raise RuntimeError('Excludes for package'
                                        f' "{path}" must be a list')
-                excludes = [f'{path}.{e}.' for e in package['exclude']]
-                self.excludes.update(excludes)
-        logger.debug('ConfigFilter, includes %s', self.includes)
-        logger.debug('ConfigFilter, excludes %s', self.excludes)
+                excludes = [f'{path}.{e}' for e in package['exclude']]
+                self._excludes.update(excludes)
+        logger.info('ConfigFilter, includes %s', self._includes)
+        logger.info('ConfigFilter, excludes %s', self._excludes)
 
     def excluded(self, fn):
-        ret = function_in_set(fn, self.excludes)
+        ret = function_in_set(fn, self._excludes)
         logger.debug('ConfigFilter, %s excluded? %s', fn, ret)
         return ret
 
     def included(self, fn):
-        ret = function_in_set(fn, self.includes)
+        ret = function_in_set(fn, self._includes)
         logger.debug('ConfigFilter, %s included? %s', fn, ret)
         return ret
 
     def filter(self, class_):
-        name = f'{class_.__module__}.{class_.__name__}'
-        logger.debug('ConfigFilter.filter, name %s', name)
-        if in_set(name, self.excludes):
-            logger.debug('  excluded')
+        name = fqname(class_)
+        if class_in_set(name, self._excludes):
+            logger.info('filter excluded %s', name)
             return False
-        if in_set(name, self.includes):
-            logger.debug('  included')
+        if class_in_set(name, self._includes):
+            logger.info('filter included %s', name)
             return True
 
         logger.debug('  undecided')
@@ -167,10 +207,13 @@ class ConfigFilter(Filter):
     def wrap(self, fn, isstatic):
         logger.debug('ConfigFilter.wrap, fn %s', fn)
 
+        fn_name = '.'.join(split_function_name(fn))
         if self.excluded(fn):
+            logger.info('wrap excluded %s', fn_name)
             return fn
 
         if self.included(fn):
+            logger.info('wrap included %s', fn_name)
             wrapped = getattr(fn, '_appmap_wrapped', None)
             logger.debug('  wrapped %s', wrapped)
             if wrapped is None:
@@ -190,14 +233,14 @@ class BuiltinFilter(Filter):
         if not env.enabled():
             return
 
-        self.includes = {'os.read', 'os.write'}
+        self._includes = {'os.read', 'os.write'}
 
     def included(self, fn):
-        return function_in_set(fn, self.includes)
+        return function_in_set(fn, self._includes)
 
     def filter(self, class_):
         name = class_.__name__
-        if in_set(name, self.includes):
+        if class_in_set(name, self._includes):
             return True
         return self.next_filter.filter(class_)
 

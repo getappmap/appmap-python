@@ -40,6 +40,10 @@ def is_classmethod(m):
     return isinstance(m, (classmethod, types.BuiltinMethodType))
 
 
+def fqname(cls):
+    return f'{cls.__module__}.{cls.__qualname__}'
+
+
 def split_function_name(fn):
     """
     Given a method, return a tuple containing its fully-qualified
