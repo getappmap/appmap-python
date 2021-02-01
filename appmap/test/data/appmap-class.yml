@@ -1,0 +1,4 @@
+name: TestApp
+packages:
+- path: example_class
+- path: package1.package2.Mod1Class

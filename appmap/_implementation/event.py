@@ -3,7 +3,7 @@ import threading
 from itertools import chain
 from functools import partial
 
-from . import utils
+from .utils import appmap_tls, split_function_name, fqname
 
 
 class _EventIds:
@@ -30,7 +30,7 @@ class _EventIds:
 
     @classmethod
     def get_thread_id(cls):
-        tls = utils.appmap_tls()
+        tls = appmap_tls()
         return (tls.get('thread_id')
                 or tls.setdefault('thread_id', cls.next_thread_id()))
 
@@ -69,7 +69,7 @@ class CallEvent(Event):
         Return a factory for creating new CallEvents based on
         introspecting the given function.
         """
-        defined_class, method_id = utils.split_function_name(fn)
+        defined_class, method_id = split_function_name(fn)
 
         try:
             path = inspect.getsourcefile(fn)
@@ -90,7 +90,7 @@ class CallEvent(Event):
         Create the receiver object that should be part of the call
         event for the given function.
         """
-        defined_class, __ = utils.split_function_name(fn)
+        defined_class, __ = split_function_name(fn)
         if isstatic:
             cls = "class"
             value = defined_class
@@ -147,7 +147,7 @@ class ExceptionEvent(ReturnEvent):
         class_, exc, __ = exc_info
         self.exceptions = [{
             'exceptions': {
-                'class': f'{class_.__module__}.{class_.__qualname__}',
+                'class': fqname(class_),
                 'message': str(exc),
                 'object_id': id(exc),
             }
@@ -155,5 +155,5 @@ class ExceptionEvent(ReturnEvent):
 
 
 def initialize():
-    utils.appmap_tls().pop('thread_id', None)
+    appmap_tls().pop('thread_id', None)
     _EventIds.reset()

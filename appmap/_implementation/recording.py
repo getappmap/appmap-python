@@ -1,4 +1,4 @@
-"""Capture recordings of python code"""
+
 
 import inspect
 import logging
@@ -70,6 +70,9 @@ class Filter(ABC):
 
 
 class NullFilter(Filter):
+    def __init__(self, next_filter=None):
+        super().__init__(next_filter)
+
     def filter(self, class_):
         return False
 
