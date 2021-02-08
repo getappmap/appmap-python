@@ -1,5 +1,3 @@
-
-
 import inspect
 import logging
 import sys
@@ -8,7 +6,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 
 from . import env
-from . import utils
+from .utils import FnType
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +58,16 @@ class Filter(ABC):
         """
 
     @abstractmethod
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         """
-        Determine whether the given method should be instrumented.  If
-        so, return a new function that wraps the old.  If not, return
-        the original function.  isstatic is True if fn is a static or
-        class method, False otherwise.
+        Determine whether the given function with the given type
+        should be instrumented.  If so, return a new function that
+        wraps the old.  If not, return the original function.
+
+        NB: fntype is the type of the function based on its
+        declaration.  It's not necessarily the same as
+        FnType.classify(fn), e.g. if fn is a staticmethod or a
+        classmethod.
         """
 
 
@@ -76,7 +78,7 @@ class NullFilter(Filter):
     def filter(self, class_):
         return False
 
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         return fn
 
 
@@ -109,8 +111,7 @@ def get_members(class_):
     def is_member_func(m):
         return (inspect.isfunction(m)
                 or inspect.ismethod(m)
-                or utils.is_staticmethod(m)
-                or utils.is_classmethod(m))
+                or FnType.classify(m) in FnType.STATIC | FnType.CLASS)
 
     ret = []
     for key in dir(class_):
@@ -197,18 +198,17 @@ class Recorder:
             functions = get_members(class_)
             logger.debug('  functions %s', functions)
             for fn_name, fn in functions:
-                isstatic = utils.is_staticmethod(fn)
-                isclass = utils.is_classmethod(fn)
+                fntype = FnType.classify(fn)
 
-                if isstatic or isclass:
-                    new_fn = self.filter_chain.wrap(fn.__func__, isstatic=True)
+                if fntype in FnType.STATIC | FnType.CLASS:
+                    new_fn = self.filter_chain.wrap(fn.__func__, fntype)
                 else:
-                    new_fn = self.filter_chain.wrap(fn, isstatic=False)
+                    new_fn = self.filter_chain.wrap(fn, fntype)
 
                 if new_fn != fn:
-                    if isstatic:
+                    if fntype & FnType.STATIC:
                         new_fn = staticmethod(new_fn)
-                    elif isclass:
+                    elif fntype & FnType.CLASS:
                         new_fn = classmethod(new_fn)
                     setattr(class_, fn_name, new_fn)
 
@@ -263,15 +263,14 @@ def initialize():
             # similar to the processing of instrumented functions
             # above. At some point, we should see if we can DRY them
             # up.
-            isstatic = utils.is_staticmethod(fn)
-            isclass = utils.is_classmethod(fn)
-            if isstatic or isclass:
+            fntype = FnType.classify(fn)
+            if fntype in FnType.STATIC | FnType.CLASS:
                 # Wrap the function that was decorated (by
                 # staticmethod or classmethod)
                 new_fn = wrap_find_spec(fn.__func__)
-                if isstatic:
+                if fntype & FnType.STATIC:
                     new_fn = staticmethod(new_fn)
-                elif isclass:
+                elif fntype & FnType.CLASS:
                     new_fn = classmethod(new_fn)
                 setattr(new_fn, wrapped_attr, True)
             else:

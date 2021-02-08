@@ -1,7 +1,23 @@
 import threading
 import types
 from collections.abc import MutableMapping
+from enum import auto, IntFlag
 import subprocess
+
+
+class FnType(IntFlag):
+    STATIC = auto()
+    CLASS = auto()
+    INSTANCE = auto()
+
+    @staticmethod
+    def classify(fn):
+        if isinstance(fn, (staticmethod, types.BuiltinMethodType)):
+            return FnType.STATIC
+        elif isinstance(fn, (classmethod, types.BuiltinMethodType)):
+            return FnType.CLASS
+        else:
+            return FnType.INSTANCE
 
 
 class ThreadLocalDict(threading.local, MutableMapping):
@@ -30,14 +46,6 @@ _appmap_tls = ThreadLocalDict()
 
 def appmap_tls():
     return _appmap_tls
-
-
-def is_staticmethod(m):
-    return isinstance(m, (staticmethod, types.BuiltinMethodType))
-
-
-def is_classmethod(m):
-    return isinstance(m, (classmethod, types.BuiltinMethodType))
 
 
 def fqname(cls):

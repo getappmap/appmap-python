@@ -3,7 +3,7 @@ import threading
 from itertools import chain
 from functools import partial
 
-from .utils import appmap_tls, split_function_name, fqname
+from .utils import appmap_tls, split_function_name, fqname, FnType
 
 
 class _EventIds:
@@ -64,7 +64,7 @@ class CallEvent(Event):
                  'static', 'receiver', 'parameters']
 
     @staticmethod
-    def make(fn, isstatic):
+    def make(fn, fntype):
         """
         Return a factory for creating new CallEvents based on
         introspecting the given function.
@@ -82,51 +82,69 @@ class CallEvent(Event):
             lineno = 0
 
         return partial(CallEvent, defined_class,
-                       method_id, path, lineno, isstatic)
+                       method_id, path, lineno, fntype)
 
     @staticmethod
-    def make_receiver(fn, isstatic):
-        """
-        Create the receiver object that should be part of the call
-        event for the given function.
-        """
-        defined_class, __ = split_function_name(fn)
-        if isstatic:
-            cls = "class"
-            value = defined_class
-            object_id = id(defined_class)
-        else:
-            cls = defined_class
-            value = None
-            object_id = None
+    def make_param(name, kind, class_name, val):
+        # Make a best-effort attempt to get a string value for the
+        # parameter. If str() and repr() raise, formulate a value from
+        # the class and id.
+        object_id = id(val)
+        try:
+            value = str(val)
+        except Exception:  # pylint: disable=broad-except
+            try:
+                value = repr(val)
+            except Exception:  # pylint: disable=broad-except
+                value = f'<{class_name} object at {object_id:#02x}>'
+        return {
+            "name": name,
+            "class": class_name,
+            "value": value,
+            "object_id": object_id,
+            "kind": kind
+        }
 
-        def make(cls, value, object_id, *args):
-            if not isstatic:
-                object_id = id(args[0][0])
-                slf = args[0][0]
-                # Make a best-effort attempt to get a string value for
-                # the receiver. If repr() raises, formulate a
-                # value from the class and id.
-                try:
-                    value = repr(slf)
-                except Exception:  # pylint: disable=broad-except
-                    value = f'<{defined_class} object at {object_id:#02x}>'
-            return {
-                "class": cls,
-                "value": value,
-                "object_id": object_id
-            }
-        return partial(make, cls, value, object_id)
+    @staticmethod
+    def make_param_defs(fn):
+        sig = inspect.signature(fn)
+        ret = []
+        for p in sig.parameters.values():
+            no_default = p.default is p.empty
+            if (p.kind == p.POSITIONAL_ONLY
+                or p.kind == p.POSITIONAL_OR_KEYWORD):
+                kind = 'req' if no_default else 'opt'
+            elif p.kind == p.VAR_POSITIONAL:
+                kind = 'rest'
+            elif p.kind == p.KEYWORD_ONLY:
+                kind = 'keyreq' if no_default else 'key'
+            elif p.kind == p.VAR_KEYWORD:
+                kind = 'keyrest'
+            ret.append(partial(CallEvent.make_param, p.name, kind))
+        return ret
+
+    @staticmethod
+    def make_params(defs):
+        def make(defs, args, kwargs):
+            ret = []
+            for i, p in enumerate(defs):
+                class_name = fqname(type(args[i]))
+                value = args[i]
+                ret.append(p(class_name, value))
+            return ret
+        return partial(make, defs)
 
     def __init__(self, defined_class, method_id, path, lineno,
-                 static, receiver, parameters):
+                 fntype, parameters):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
         self.path = path
         self.lineno = lineno
-        self.static = static
-        self.receiver = receiver
+        self.static = fntype in FnType.STATIC | FnType.CLASS
+        if fntype in FnType.CLASS | FnType.INSTANCE:
+            self.receiver = parameters[0]
+            parameters = parameters[1:]
         self.parameters = parameters
 
 
