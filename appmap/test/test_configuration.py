@@ -47,7 +47,7 @@ class TestConfiguration(AppMapTestBase):
     def test_class_included(self, datafiles, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(str(datafiles), 'appmap-class.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -62,7 +62,7 @@ class TestConfiguration(AppMapTestBase):
     def test_function_included(self, datafiles, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(str(datafiles), 'appmap-func.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -92,7 +92,7 @@ class TestConfiguration(AppMapTestBase):
     def test_function_included_by_class(self, datafiles, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(str(datafiles), 'appmap-class.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())

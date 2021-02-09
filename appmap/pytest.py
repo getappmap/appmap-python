@@ -49,7 +49,6 @@ class FuncItem:
             name = ' '.join([self.feature_group, name])
         return name
 
-
     @property
     def test_name(self):
         ret = self.item.name
@@ -78,6 +77,7 @@ class FuncItem:
         })
         return ret
 
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtestloop(session):
     if not env.enabled():
@@ -103,6 +103,7 @@ def pytest_runtestloop(session):
     }
     yield
 
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     if not env.enabled():
@@ -116,6 +117,7 @@ def pytest_pyfunc_call(pyfuncitem):
     logger.debug('pytest_pyfunc_call, metadata %s', repr(metadata))
     fname = item.filename + '.appmap.json'
     path = os.path.join(session.appmap_path, fname)
+
     def write_recording(r):
         with open(path, 'wb') as appmap:
             appmap.write(generation.dump(r, metadata))

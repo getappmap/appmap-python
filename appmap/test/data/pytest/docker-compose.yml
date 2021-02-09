@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  test:
+    build: .
+    volumes:
+    - ../../../..:/src
+    - ${APPMAP_OUTPUT_DIR:-./tmp}:/tmp
+    working_dir: /src
+    environment:
+      APPMAP_OUTPUT_DIR: "/tmp"
+    command: ["appmap/test/data/pytest/run_tests.sh"]
+      

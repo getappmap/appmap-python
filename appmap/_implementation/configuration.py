@@ -45,6 +45,10 @@ class Config:
 
         self._initialized = True
 
+    @classmethod
+    def initialize(cls):
+        cls._instance = None
+
     @cached_property
     def output_dir(self):
         return os.getenv("APPMAP_OUTPUT_DIR",
@@ -251,6 +255,7 @@ class BuiltinFilter(Filter):
 
 
 def initialize():
+    Config().initialize()
     Recorder().use_filter(BuiltinFilter)
     Recorder().use_filter(ConfigFilter)
 
