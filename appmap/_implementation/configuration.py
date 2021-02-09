@@ -45,6 +45,10 @@ class Config:
 
         self._initialized = True
 
+    @classmethod
+    def initialize(cls):
+        cls._instance = None
+
     @cached_property
     def output_dir(self):
         return os.getenv("APPMAP_OUTPUT_DIR",
@@ -164,11 +168,12 @@ class ConfigFilter(Filter):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not env.enabled():
-            return
 
         self._includes = set()
         self._excludes = set()
+
+        if not env.enabled():
+            return
 
         for package in Config().packages:
             path = package['path']
@@ -231,6 +236,7 @@ class BuiltinFilter(Filter):
     def __init__(self, *args):
         super().__init__(*args)
         if not env.enabled():
+            self._includes = set()
             return
 
         self._includes = {'os.read', 'os.write'}
@@ -251,6 +257,7 @@ class BuiltinFilter(Filter):
 
 
 def initialize():
+    Config().initialize()
     Recorder().use_filter(BuiltinFilter)
     Recorder().use_filter(ConfigFilter)
 

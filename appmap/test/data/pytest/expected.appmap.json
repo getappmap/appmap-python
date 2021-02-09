@@ -1,0 +1,128 @@
+{
+  "version": "1.4",
+  "metadata": {
+    "language": {
+      "name": "python",
+      "engine": "CPython",
+      "version": "3.9.1"
+    },
+    "client": {
+      "name": "appmap",
+      "url": "https://github.com/applandinc/appmap-python"
+    },
+    "app": "Simple",
+    "frameworks": [
+      {
+        "name": "pytest"
+      }
+    ],
+    "recorder": {
+      "name": "pytest"
+    },
+    "name": "hello world",
+    "feature": "Hello world"
+  },
+  "events": [
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "hello_world",
+      "path": "simple.py",
+      "lineno": 8,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "object_id": 1
+      },
+      "parameters": [],
+      "id": 2,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "hello",
+      "path": "simple.py",
+      "lineno": 2,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "object_id": 2
+      },
+      "parameters": [],
+      "id": 3,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "parent_id": 3,
+      "elapsed": 0.0,
+      "id": 4,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "world",
+      "path": "simple.py",
+      "lineno": 5,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "object_id": 3
+      },
+      "parameters": [],
+      "id": 5,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "parent_id": 5,
+      "elapsed": 0.0,
+      "id": 6,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "parent_id": 2,
+      "elapsed": 0.0,
+      "id": 7,
+      "event": "return",
+      "thread_id": 1
+    }
+  ],
+  "classMap": [
+    {
+      "name": "simple",
+      "type": "package",
+      "children": [
+        {
+          "name": "Simple",
+          "type": "class",
+          "children": [
+            {
+              "name": "hello_world",
+              "type": "function",
+              "location": "simple.py:8",
+              "static": false
+            },
+            {
+              "name": "hello",
+              "type": "function",
+              "location": "simple.py:2",
+              "static": false
+            },
+            {
+              "name": "world",
+              "type": "function",
+              "location": "simple.py:5",
+              "static": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

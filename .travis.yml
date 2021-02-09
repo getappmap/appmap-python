@@ -21,7 +21,7 @@ jobs:
     
   - stage: test
     script:
-    - poetry run pytest
+    - poetry run pytest -svv
 
   - stage: deploy
     script: skip
