@@ -16,6 +16,7 @@ def _configure_logging():
     log_stream = f'ext://sys.{log_stream}'
     config_dict = {
         'version': 1,
+        'disable_existing_loggers': False,
         'formatters': {
             'default': {
                 'style': '{',
@@ -29,7 +30,7 @@ def _configure_logging():
             }
         },
         'loggers': {
-            '': {
+            'root': {
                 'level': log_level,
                 'handlers': ['default']
             }

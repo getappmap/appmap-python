@@ -122,9 +122,9 @@ def pytest_pyfunc_call(pyfuncitem):
     def write_recording(r):
         with open(path, 'wb') as appmap:
             appmap.write(generation.dump(r, metadata))
-        logging.info('wrote recording %s', path)
+        logger.info('wrote recording %s', path)
 
-    logging.info('starting recording %s', path)
+    logger.info('starting recording %s', path)
     r = recording.Recording(exit_hook=write_recording)
     with r:
         yield
