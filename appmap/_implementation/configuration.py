@@ -90,13 +90,13 @@ def wrap(fn, isstatic):
             return fn(*args, **kwargs)
 
         with recording_disabled():
+            logger.debug('%s args %s kwargs %s', fn, args, kwargs)
             call_event = make_call_event(receiver=make_receiver(args, kwargs),
                                          parameters=[])
         call_event_id = call_event.id
         Recorder().add_event(call_event)
         start_time = time.time()
         try:
-            logger.debug('%s args %s kwargs %s', fn, args, kwargs)
             ret = fn(*args, **kwargs)
             elapsed_time = time.time() - start_time
 
@@ -199,10 +199,10 @@ class ConfigFilter(Filter):
     def filter(self, class_):
         name = fqname(class_)
         if class_in_set(name, self._excludes):
-            logger.info('filter excluded %s', name)
+            logger.info('excluded class %s', name)
             return False
         if class_in_set(name, self._includes):
-            logger.info('filter included %s', name)
+            logger.info('included class %s', name)
             return True
 
         logger.debug('  undecided')
@@ -213,11 +213,11 @@ class ConfigFilter(Filter):
 
         fn_name = '.'.join(split_function_name(fn))
         if self.excluded(fn):
-            logger.info('wrap excluded %s', fn_name)
+            logger.info('excluded function %s', fn_name)
             return fn
 
         if self.included(fn):
-            logger.info('wrap included %s', fn_name)
+            logger.info('included function %s', fn_name)
             wrapped = getattr(fn, '_appmap_wrapped', None)
             logger.debug('  wrapped %s', wrapped)
             if wrapped is None:
