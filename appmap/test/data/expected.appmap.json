@@ -78,11 +78,6 @@
       "path": "example_class.py",
       "lineno": 18,
       "static": true,
-      "receiver": {
-        "class": "class",
-        "value": "example_class.ExampleClass",
-        "object_id": 1
-      },
       "parameters": [],
       "id": 2,
       "event": "call",
@@ -102,9 +97,11 @@
       "lineno": 4,
       "static": true,
       "receiver": {
-        "class": "class",
-        "value": "example_class.ClassMethodMixin",
-        "object_id": 2
+        "class": "builtins.type",
+        "kind": "req",
+        "name": "cls",
+        "value": "<class 'example_class.ExampleClass'>",
+        "object_id": 1
       },
       "parameters": [],
       "id": 4,
@@ -125,9 +122,11 @@
       "lineno": 10,
       "static": false,
       "receiver": {
-        "class": "example_class.Super",
+        "class": "example_class.ExampleClass",
+        "kind": "req",
+        "name": "self",
         "value": "ExampleClass and ExampleClass#another_method",
-        "object_id": 3
+        "object_id": 2
       },
       "parameters": [],
       "id": 6,
@@ -149,7 +148,9 @@
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
-        "object_id": 4,
+        "kind": "req",
+        "name": "self",
+        "object_id": 3,
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
@@ -168,7 +169,7 @@
           "exceptions": {
             "class": "builtins.Exception",
             "message": "test exception",
-            "object_id": 5
+            "object_id": 4
           }
         }
       ]

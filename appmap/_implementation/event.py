@@ -1,9 +1,12 @@
 import inspect
+import logging
 import threading
 from itertools import chain
 from functools import partial
 
 from .utils import appmap_tls, split_function_name, fqname, FnType
+
+logger = logging.getLogger(__name__)
 
 
 class _EventIds:
@@ -49,11 +52,13 @@ class Event:
         self.thread_id = _EventIds.get_thread_id()
 
     def to_dict(self):
-        return {
-            k: getattr(self, k, None)
-            for k in chain.from_iterable(getattr(cls, '__slots__', [])
-                                         for cls in type(self).__mro__)
-        }
+        ret = {}
+        for k in chain.from_iterable(getattr(cls, '__slots__', [])
+                                     for cls in type(self).__mro__):
+            a = getattr(self, k, None)
+            if a is not None:
+                ret[k] = a
+        return ret
 
     def __repr__(self):
         return repr(self.to_dict())
@@ -112,7 +117,7 @@ class CallEvent(Event):
         for p in sig.parameters.values():
             no_default = p.default is p.empty
             if (p.kind == p.POSITIONAL_ONLY
-                or p.kind == p.POSITIONAL_OR_KEYWORD):
+                or p.kind == p.POSITIONAL_OR_KEYWORD):  # noqa: E129
                 kind = 'req' if no_default else 'opt'
             elif p.kind == p.VAR_POSITIONAL:
                 kind = 'rest'
@@ -126,6 +131,7 @@ class CallEvent(Event):
     @staticmethod
     def make_params(defs):
         def make(defs, args, kwargs):
+            logger.debug('kwargs %s', kwargs)
             ret = []
             for i, p in enumerate(defs):
                 class_name = fqname(type(args[i]))

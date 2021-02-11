@@ -51,7 +51,6 @@ def test_thread_ids():
 def test_recursion_protection(monkeypatch, datafiles):
     monkeypatch.setenv("APPMAP", "true")
     monkeypatch.setenv("APPMAP_CONFIG", os.path.join(datafiles, 'appmap.yml'))
-    monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
     sys.path.append(str(datafiles))
     appmap._implementation.initialize()  # pylint: disable=protected-access
@@ -144,8 +143,9 @@ class TestParameters(AppMapTestBase):
             set()
         )
     ])
-    def test_parameters(self, fnname, call, value, count, expected, present):
-        from params import C
+    def test_parameters(self, params,
+                        fnname, call, value, count, expected, present):
+        C = params.C
         fn = inspect.getattr_static(C, fnname)
         fntype = FnType.classify(fn)
         wrapped = self.prepare(fn, fntype)
@@ -155,15 +155,15 @@ class TestParameters(AppMapTestBase):
             wrapped = classmethod(wrapped)
         setattr(C, fnname, wrapped)
 
-        evt = eval(call)  # noqa: F841
+        evt = eval(call)  # noqa: F841 pylint: disable=eval-used
         assert len(evt.parameters) == count
-        self.check_result(eval(value),
+        self.check_result(eval(value),  # pylint: disable=eval-used
                           expected,
                           present | {'object_id'}  # all values have object_id
                           )
 
-    def test_static_no_receiver(self):
-        from params import C
+    def test_static_no_receiver(self, params):
+        C = params.C
         fn = inspect.getattr_static(C, 'static')
         setattr(C, 'static', self.prepare(fn, FnType.STATIC))
         evt = C.static('param')

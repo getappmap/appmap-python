@@ -225,7 +225,11 @@ def wrap_exec_module(exec_module):
                      args,
                      kwargs)
         exec_module(*args, **kwargs)
-        Recorder().do_import(*args, **kwargs)
+        # Only process imports if we're currently enabled. This
+        # handles the case where we previously hooked the finders, but
+        # were subsequently disabled (e.g. during testing).
+        if env.enabled():
+            Recorder().do_import(*args, **kwargs)
     return wrapped_exec_module
 
 
@@ -249,6 +253,7 @@ def wrap_find_spec(find_spec):
 
 def initialize():
     Recorder.initialize()
+    # If we're not enabled, there's no reason to hook the finders.
     if env.enabled():
         wrapped_attr = '_appmap_find_spec'
         for h in sys.meta_path:

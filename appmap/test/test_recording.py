@@ -32,7 +32,6 @@ class TestRecording(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(str(datafiles), 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
         import appmap
         # Reinitialize to pick up the environment variables just set

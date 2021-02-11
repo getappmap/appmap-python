@@ -83,7 +83,6 @@ def wrap(fn, fntype):
     logger.debug('hooking %s', '.'.join(split_function_name(fn)))
 
     make_call_event = CallEvent.make(fn, fntype)
-    # make_receiver = CallEvent.make_receiver(fn, isstatic)
     make_params = CallEvent.make_params(CallEvent.make_param_defs(fn))
 
     @wraps(fn)

@@ -42,6 +42,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>",
         "object_id": 1
       },
@@ -58,6 +60,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>",
         "object_id": 2
       },
@@ -68,7 +72,7 @@
     },
     {
       "parent_id": 3,
-      "elapsed": 0,
+      "elapsed": 0.0,
       "id": 4,
       "event": "return",
       "thread_id": 1
@@ -81,6 +85,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>",
         "object_id": 3
       },
@@ -91,14 +97,14 @@
     },
     {
       "parent_id": 5,
-      "elapsed": 0,
+      "elapsed": 0.0,
       "id": 6,
       "event": "return",
       "thread_id": 1
     },
     {
       "parent_id": 2,
-      "elapsed": 0,
+      "elapsed": 0.0,
       "id": 7,
       "event": "return",
       "thread_id": 1
