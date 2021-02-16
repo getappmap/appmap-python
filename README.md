@@ -134,6 +134,8 @@ An app with remote recording enabled supports these routes:
 
 ## Development
 
+[![Build Status](https://travis-ci.com/applandinc/appmap-python.svg?branch=master)](https://travis-ci.com/applandinc/appmap-python)
+
 ### Dependency management
 
 [poetry](https://https://python-poetry.org/) for dependency management:
