@@ -2,23 +2,11 @@
   "version": "1.4",
   "metadata": {
     "language": {
-      "name": "python",
-      "engine": "CPython",
-      "version": "3.9.0"
+      "name": "python"
     },
     "client": {
       "name": "appmap",
       "url": "https://github.com/applandinc/appmap-python"
-    },
-    "git": {
-      "repository": "git@github.com:applandinc/appmap-python.git",
-      "branch": "master",
-      "commit": "xyz",
-      "status": [],
-      "git_last_annotated_tag": null,
-      "git_last_tag": "",
-      "git_commits_since_last_annotated_tag": 0,
-      "git_commits_since_last_tag": 0
     }
   },
   "classMap": [
@@ -33,15 +21,13 @@
             {
               "name": "static_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 18,
+              "location": "example_class.py:18",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 25,
+              "location": "example_class.py:25",
               "static": false
             }
           ]
@@ -53,8 +39,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 4,
+              "location": "example_class.py:4",
               "static": true
             }
           ]
@@ -66,8 +51,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "path": "example_class.py",
-              "lineno": 10,
+              "location": "example_class.py:10",
               "static": false
             }
           ]
@@ -84,8 +68,7 @@
       "static": true,
       "receiver": {
         "class": "class",
-        "value": "example_class.ExampleClass",
-        "object_id": 1
+        "value": "example_class.ExampleClass"
       },
       "parameters": [],
       "id": 2,
@@ -96,8 +79,7 @@
       "parent_id": 2,
       "id": 3,
       "event": "return",
-      "thread_id": 1,
-      "elapsed": 0.0
+      "thread_id": 1
     },
     {
       "defined_class": "example_class.ClassMethodMixin",
@@ -107,8 +89,7 @@
       "static": true,
       "receiver": {
         "class": "class",
-        "value": "example_class.ClassMethodMixin",
-        "object_id": 2
+        "value": "example_class.ClassMethodMixin"
       },
       "parameters": [],
       "id": 4,
@@ -119,8 +100,7 @@
       "parent_id": 4,
       "id": 5,
       "event": "return",
-      "thread_id": 1,
-      "elapsed": 0.0
+      "thread_id": 1
     },
     {
       "defined_class": "example_class.Super",
@@ -130,8 +110,7 @@
       "static": false,
       "receiver": {
         "class": "example_class.Super",
-        "value": "ExampleClass and ExampleClass#another_method",
-        "object_id": 3
+        "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
       "id": 6,
@@ -142,8 +121,7 @@
       "parent_id": 6,
       "id": 7,
       "event": "return",
-      "thread_id": 1,
-      "elapsed": 0.0
+      "thread_id": 1
     },
     {
       "defined_class": "example_class.ExampleClass",
@@ -153,7 +131,6 @@
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
-        "object_id": 4,
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
@@ -166,13 +143,11 @@
       "id": 9,
       "event": "return",
       "thread_id": 1,
-      "elapsed": 0.0,
       "exceptions": [
         {
           "exceptions": {
             "class": "builtins.Exception",
-            "message": "test exception",
-            "object_id": 5
+            "message": "test exception"
           }
         }
       ]

@@ -7,10 +7,6 @@ from functools import partial
 from queue import Queue
 from threading import Thread
 
-import pytest
-
-from .helpers import FIXTURE_DIR
-
 import appmap
 import appmap._implementation
 from appmap._implementation.event import _EventIds
@@ -41,16 +37,12 @@ def test_thread_ids():
     assert len(set(all_tids)) == len(all_tids)  # Should all be unique
 
 
-@pytest.mark.datafiles(
-    os.path.join(FIXTURE_DIR, 'appmap.yml'),
-    os.path.join(FIXTURE_DIR, 'example_class.py'),
-)
-def test_recursion_protection(monkeypatch, datafiles):
+def test_recursion_protection(data_dir, monkeypatch):
     monkeypatch.setenv("APPMAP", "true")
-    monkeypatch.setenv("APPMAP_CONFIG", os.path.join(datafiles, 'appmap.yml'))
+    monkeypatch.setenv("APPMAP_CONFIG", os.path.join(data_dir, 'appmap.yml'))
     monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
-    sys.path.append(str(datafiles))
+    sys.path.append(data_dir)
     appmap._implementation.initialize()  # pylint: disable=protected-access
     r = appmap.Recording()
     with r:

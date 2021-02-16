@@ -15,33 +15,34 @@ def _configure_logging():
     log_stream = os.getenv("APPMAP_LOG_STREAM", "stderr")
     log_stream = f'ext://sys.{log_stream}'
     config_dict = {
-        "version": 1,
+        'version': 1,
+        'disable_existing_loggers': False,
         'formatters': {
             'default': {
-                'class': 'logging.Formatter',
-                'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+                'style': '{',
+                'format': '[{asctime}] {levelname} {name}: {message}'
             }
         },
-        "handlers": {
-            "appmap_log_handler": {
-                "class": "logging.StreamHandler",
-                "stream": log_stream,
-                "formatter": "default"
+        'handlers': {
+            'default': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'default'
             }
         },
-        "root": {
-            "handlers": ["appmap_log_handler"],
-            "level": getattr(logging, log_level)
+        'loggers': {
+            'root': {
+                'level': log_level,
+                'handlers': ['default']
+            }
         }
     }
     if log_config is not None:
         name, level = log_config.split('=', 2)
-        config_dict.update({
-            "loggers": {
-                name: {
-                    "level": level,
-                    "handlers": ["appmap_log_handler"]
-                }
+        config_dict['loggers'].update({
+            name: {
+                'level': level.upper(),
+                'handlers': ['default'],
+                'propagate': False
             }
         })
     logging.config.dictConfig(config_dict)

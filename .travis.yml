@@ -1,5 +1,5 @@
 language: python
-python: '3.9'
+python: "3.9"
 
 stages:
 - lint
@@ -21,7 +21,7 @@ jobs:
     
   - stage: test
     script:
-    - poetry run pytest
+    - poetry run pytest -svv
 
   - stage: deploy
     script: skip

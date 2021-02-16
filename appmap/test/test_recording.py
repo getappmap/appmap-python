@@ -1,37 +1,21 @@
 """Test recording context manager"""
 import json
 import os
-import platform
 import sys
 
-import pytest
-
-from .helpers import FIXTURE_DIR
 from .appmap_test_base import AppMapTestBase
 
 
 class TestRecording(AppMapTestBase):
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml'),
-        os.path.join(FIXTURE_DIR, 'example_class.py'),
-        os.path.join(FIXTURE_DIR, 'expected.appmap.json')
-    )
-    def test_recording_works(self, monkeypatch, datafiles):
-        with open(os.path.join(str(datafiles), 'expected.appmap.json')) as f:
+    def test_recording_works(self, data_dir, monkeypatch):
+        with open(os.path.join(data_dir, 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)
 
-        # Setting these outside the definition of expected_appmap makes it
-        # easier to update when the expected appmap changes
-        py_impl = platform.python_implementation()
-        py_version = platform.python_version()
-        expected_appmap['metadata']['language']['engine'] = py_impl
-        expected_appmap['metadata']['language']['version'] = py_version
-
-        sys.path.append(str(datafiles))
+        sys.path.append(data_dir)
 
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
         import appmap
@@ -48,44 +32,6 @@ class TestRecording(AppMapTestBase):
             except:  # pylint: disable=bare-except  # noqa: E722
                 pass
 
-        # Normalize paths
-        object_id = 1
-
-        def normalize(dct):
-            nonlocal object_id
-            if 'path' in dct:
-                dct['path'] = os.path.basename(dct['path'])
-            if 'elapsed' in dct:
-                assert isinstance(dct['elapsed'], float)
-                dct['elapsed'] = 0.0
-            if 'git' in dct:
-                git = dct['git']
-                if 'repository' in git:
-                    git['repository'] = 'git@github.com:applandinc/appmap-python.git'
-                if 'branch' in git:
-                    git['branch'] = 'master'
-                if 'commit' in git:
-                    git['commit'] = 'xyz'
-                if 'status' in git:
-                    assert isinstance(git['status'], list)
-                    git['status'] = []
-                if 'git_last_tag' in git:
-                    git['git_last_tag'] = ''
-                if 'git_commits_since_last_tag' in git:
-                    assert isinstance(git['git_commits_since_last_tag'], int)
-                    git['git_commits_since_last_tag'] = 0
-                if 'git_last_annotated_tag' in git:
-                    git['git_last_annotated_tag'] = None
-                if 'git_commits_since_last_annotated_tag' in git:
-                    assert isinstance(git['git_commits_since_last_annotated_tag'], int)
-                    git['git_commits_since_last_annotated_tag'] = 0
-            if 'object_id' in dct:
-                assert isinstance(dct['object_id'], int)
-                dct['object_id'] = object_id
-                object_id += 1
-            return dct
-
-        generated_appmap = json.loads(appmap.generation.dump(r),
-                                      object_hook=normalize)
+        generated_appmap = self.normalize_appmap(appmap.generation.dump(r))
 
         assert generated_appmap == expected_appmap

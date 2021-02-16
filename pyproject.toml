@@ -8,7 +8,8 @@ authors = ["Alan Potter <alan@app.land>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 PyYAML = "^5.3.1"
-orjson = "^3.4.6"
+orjson = "=3.4.6"
+inflection = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
@@ -16,11 +17,13 @@ pytest-randomly = "^3.5.0"
 pylint = "^2.6.0"
 flake8 = "^3.8.4"
 pyfakefs = "^4.3.2"
-pytest-datafiles = "^2.0"
 pprintpp = "^0.4.0"
 coverage = "^5.3"
-rope = "^0.18.0"
+pytest-mock = "^3.5.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."pytest11"]
+appmap = "appmap.pytest"
