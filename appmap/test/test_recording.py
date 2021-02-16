@@ -3,27 +3,19 @@ import json
 import os
 import sys
 
-import pytest
-
-from .helpers import FIXTURE_DIR
 from .appmap_test_base import AppMapTestBase
 
 
 class TestRecording(AppMapTestBase):
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml'),
-        os.path.join(FIXTURE_DIR, 'example_class.py'),
-        os.path.join(FIXTURE_DIR, 'expected.appmap.json')
-    )
-    def test_recording_works(self, datafiles, monkeypatch):
-        with open(os.path.join(str(datafiles), 'expected.appmap.json')) as f:
+    def test_recording_works(self, data_dir, monkeypatch):
+        with open(os.path.join(data_dir, 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)
 
-        sys.path.append(str(datafiles))
+        sys.path.append(data_dir)
 
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
         import appmap

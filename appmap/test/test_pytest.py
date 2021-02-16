@@ -7,7 +7,7 @@ from .appmap_test_base import AppMapTestBase
 
 
 class TestPytest(AppMapTestBase):
-    def test_basic_integration(self, pytestconfig, testdir):
+    def test_basic_integration(self, data_dir, testdir):
         testdir.copy_example('pytest')
         testdir.monkeypatch.setenv('APPMAP', 'true')
 
@@ -21,9 +21,8 @@ class TestPytest(AppMapTestBase):
         with open(appmap_json) as appmap:
             generated_appmap = self.normalize_appmap(appmap.read())
 
-        data_dir = os.path.join(pytestconfig.rootpath,
-                                'appmap', 'test', 'data', 'pytest')
-        with open(os.path.join(data_dir, 'expected.appmap.json')) as f:
+        appmap_json = os.path.join(data_dir, 'pytest', 'expected.appmap.json')
+        with open(appmap_json) as f:
             expected_appmap = json.load(f)
 
         assert generated_appmap == expected_appmap

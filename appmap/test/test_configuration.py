@@ -1,13 +1,10 @@
 """Test Configuration"""
 import os
 
-import pytest
-
 import appmap
 from .appmap_test_base import AppMapTestBase
 from appmap._implementation.configuration import ConfigFilter
 from appmap._implementation.recording import NullFilter
-from .helpers import FIXTURE_DIR
 
 
 class TestConfiguration(AppMapTestBase):
@@ -26,13 +23,10 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "false")
         assert not appmap.enabled()
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml')
-    )
-    def test_package_included(self, datafiles, mocker, monkeypatch):
+    def test_package_included(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -41,13 +35,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'cls'
         assert f.filter(c) is True
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap-class.yml')
-    )
-    def test_class_included(self, datafiles, mocker, monkeypatch):
+    def test_class_included(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap-class.yml'))
+                           os.path.join(data_dir, 'appmap-class.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -56,13 +47,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'Mod1Class'
         assert f.filter(c) is True
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap-func.yml')
-    )
-    def test_function_included(self, datafiles, mocker, monkeypatch):
+    def test_function_included(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap-func.yml'))
+                           os.path.join(data_dir, 'appmap-func.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -71,13 +59,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'Mod1Class.func'
         assert f.filter(c) is True
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml')
-    )
-    def test_function_included_by_package(self, datafiles, mocker, monkeypatch):
+    def test_function_included_by_package(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -86,13 +71,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'Mod1Class.func'
         assert f.filter(c) is True
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap-class.yml')
-    )
-    def test_function_included_by_class(self, datafiles, mocker, monkeypatch):
+    def test_function_included_by_class(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap-class.yml'))
+                           os.path.join(data_dir, 'appmap-class.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -101,13 +83,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'Mod1Class.func'
         assert f.filter(c) is True
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml')
-    )
-    def test_class_prefix_doesnt_match(self, datafiles, mocker, monkeypatch):
+    def test_class_prefix_doesnt_match(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
@@ -116,13 +95,10 @@ class TestConfiguration(AppMapTestBase):
         c.__qualname__ = 'cls'
         assert f.filter(c) is False
 
-    @pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'appmap.yml')
-    )
-    def test_fn_prefix_doesnt_match(self, datafiles, mocker, monkeypatch):
+    def test_fn_prefix_doesnt_match(self, data_dir, mocker, monkeypatch):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(str(datafiles), 'appmap.yml'))
+                           os.path.join(data_dir, 'appmap.yml'))
         monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = mocker.Mock()
