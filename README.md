@@ -1,4 +1,39 @@
-# appmap-python
+## About
+`appmap-python` is a Python package for recording
+[AppMaps](https://github.com/applandinc/appmap) of your code. "AppMap" is a data format
+which records code structure (modules, classes, and methods), code execution events
+(function calls and returns), and code metadata (repo name, repo URL, commit SHA, labels,
+etc). It's more granular than a performance profile, but it's less granular than a full
+debug trace. It's designed to be optimal for understanding the design intent and structure
+of code and key data flows.
+
+There are several ways to record AppMaps of your Python program using the `appmap` package:
+
+* Run your tests (pytest, unittest[future work]) with the environment variable
+  `APPMAP=true`. An AppMap will be generated for each test case.
+    
+* Use the `appmap.record` [context manager](#context-manager) to control recording. The context manager takes
+  an instance of an `appmap.Recording`, which can be used to generate the AppMap.
+
+* [future work] Run your application server with AppMap remote recording enabled, and use
+  the [AppLand browser extension](https://github.com/applandinc/appland-browser-extension)
+  to start, stop, and upload recordings.
+  
+Once you have made a recording, there are two ways to view automatically generated
+diagrams of the AppMaps.
+
+The first option is to load the diagrams directly in your IDE, using the [AppMap extension
+for VSCode](https://marketplace.visualstudio.com/items?itemName=appland.appmap).
+
+The second option is to upload them to the [AppLand server](https://app.land) using the
+[AppLand CLI](https://github.com/applandinc/appland-cli/releases).  
+
+### Supported versions
+
+* Python 3.9
+* Pytest 6.2
+
+Support for new versions is added frequently, please check back regularly for updates.
 
 ## Configuration
 Add your modules as `path` entries in `appmap.yml`:
@@ -131,6 +166,65 @@ An app with remote recording enabled supports these routes:
   Returns AppMap as JSON
   200 with AppMap as body
   404 if there's no recording in progress
+
+## Context manager
+You can use `appmap.record` as a context manager to record your code.
+
+With a file called `record_sample.py` like this
+
+```python
+import os
+import sys
+
+import appmap
+
+r = appmap.Recording()
+with r:
+    import sample
+    print(sample.C().hello_world(), file=sys.stderr)
+
+with os.fdopen(sys.stdout.fileno(), "wb", closefd=False) as stdout:
+    stdout.write(appmap.generation.dump(r))
+    stdout.flush()
+```
+
+and a source file called `sample.py` like this
+
+```python
+class C:
+    def make_str(self, s):
+        return s;
+
+    def hello_world(self):
+        return f'{self.make_str("Hello")} {self.make_str("world!")}'
+```
+
+as well as an `appmap.yml`
+
+```yaml
+name: sample
+packages:
+- path: sample
+```
+
+you can generate a recording of the code
+
+```sh
+% APPMAP=true python record_sample.py > record_sample.appmap.json
+% jq '.events | length' record_sample.appmap.json
+6
+% jq < record_sample.appmap.json | head -10
+{
+  "version": "1.4",
+  "metadata": {
+    "language": {
+      "name": "python",
+      "engine": "CPython",
+      "version": "3.9.1"
+    },
+    "client": {
+      "name": "appmap",
+```
 
 ## Development
 

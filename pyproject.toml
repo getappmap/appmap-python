@@ -3,6 +3,7 @@ name = "appmap"
 # @@appmap-python-version@@
 version = "0.0.0"
 description = "Create AppMap files by recording a Python application."
+readme = "README.md"
 authors = ["Alan Potter <alan@app.land>"]
 
 [tool.poetry.dependencies]
