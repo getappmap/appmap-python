@@ -1,5 +1,5 @@
 language: python
-python: '3.9'
+python: "3.9"
 
 stages:
 - lint

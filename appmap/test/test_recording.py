@@ -1,7 +1,6 @@
 """Test recording context manager"""
 import json
 import os
-import platform
 import sys
 
 import pytest
@@ -19,13 +18,6 @@ class TestRecording(AppMapTestBase):
     def test_recording_works(self, datafiles, monkeypatch):
         with open(os.path.join(str(datafiles), 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)
-
-        # Setting these outside the definition of expected_appmap makes it
-        # easier to update when the expected appmap changes
-        py_impl = platform.python_implementation()
-        py_version = platform.python_version()
-        expected_appmap['metadata']['language']['engine'] = py_impl
-        expected_appmap['metadata']['language']['version'] = py_version
 
         sys.path.append(str(datafiles))
 
