@@ -12,6 +12,13 @@ from appmap._implementation.utils import fqname
 
 logger = logging.getLogger(__name__)
 
+try:
+    # Make sure we have hooks installed if we're testing a django app.
+    # pylint: disable=unused-import
+    import appmap.django  # noqa: F401
+except ImportError:
+    pass  # probably no django
+
 
 class FuncItem:
     def __init__(self, pyfuncitem):
@@ -120,8 +127,8 @@ def pytest_pyfunc_call(pyfuncitem):
     path = os.path.join(session.appmap_path, fname)
 
     def write_recording(r):
-        with open(path, 'wb') as appmap:
-            appmap.write(generation.dump(r, metadata))
+        with open(path, 'wb') as appmap_file:
+            appmap_file.write(generation.dump(r, metadata))
         logger.info('wrote recording %s', path)
 
     logger.info('starting recording %s', path)
