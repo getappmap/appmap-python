@@ -130,6 +130,16 @@ class CallEvent(Event):
         self.parameters = parameters
 
 
+class SqlEvent(Event):
+    __slots__ = ['sql_query']
+
+    def __init__(self, sql):
+        super().__init__('call')
+        self.sql_query = {
+            'sql': sql
+        }
+
+
 class ReturnEvent(Event):
     __slots__ = ['parent_id', 'elapsed']
 

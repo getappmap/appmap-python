@@ -42,19 +42,25 @@ class FuncEntry(ClassMapEntry):
 def classmap(recording):
     ret = ClassMapDict()
     for e in recording.events:
-        if e.event != 'call':
-            continue
-        packages, class_ = e.defined_class.rsplit('.', 1)
-        children = ret
-        for p in packages.split('.'):
-            entry = children.setdefault(p, PackageEntry(p))
+        try:
+            if e.event != 'call':
+                continue
+            packages, class_ = e.defined_class.rsplit('.', 1)
+            children = ret
+            for p in packages.split('.'):
+                entry = children.setdefault(p, PackageEntry(p))
+                children = entry.children
+
+            entry = children.setdefault(class_, ClassEntry(class_))
             children = entry.children
 
-        entry = children.setdefault(class_, ClassEntry(class_))
-        children = entry.children
-
-        loc = f'{e.path}:{e.lineno}'
-        children.setdefault(loc, FuncEntry(e))
+            loc = f'{e.path}:{e.lineno}'
+            children.setdefault(loc, FuncEntry(e))
+        except AttributeError:
+            # Event might not have a defined_class attribute;
+            # SQL events for example are calls without it.
+            # Ignore them when building the class map.
+            continue
 
     return ret
 
