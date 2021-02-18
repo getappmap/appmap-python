@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager
-from functools import wraps, cached_property
+from functools import wraps
 import time
 
 import yaml
@@ -49,16 +49,15 @@ class Config:
     def initialize(cls):
         cls._instance = None
 
-    @cached_property
+    @property
     def output_dir(self):
         return os.getenv("APPMAP_OUTPUT_DIR",
                          os.path.join('tmp', 'appmap'))
-
-    @cached_property
+    @property
     def name(self):
         return self._config['name']
 
-    @cached_property
+    @property
     def packages(self):
         return self._config['packages']
 

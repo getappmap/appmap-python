@@ -26,7 +26,7 @@ class TestRecording(AppMapTestBase):
             ExampleClass.static_method()
             ExampleClass.class_method()
             ExampleClass().instance_method()
-            now = ExampleClass.what_time_is_it()
+            ExampleClass.what_time_is_it()
             try:
                 ExampleClass().test_exception()
             except:  # pylint: disable=bare-except  # noqa: E722

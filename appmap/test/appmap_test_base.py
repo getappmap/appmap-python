@@ -1,9 +1,9 @@
-import importlib
 import os
 import platform
 import re
 
 import json
+import pytest
 
 import appmap._implementation
 
@@ -40,7 +40,7 @@ class AppMapTestBase:
             for f in frameworks:
                 if f['name'] == 'pytest':
                     v = f.pop('version')
-                    assert v == importlib.metadata.version('pytest')
+                    assert v == pytest.__version__
 
     def normalize_appmap(self, generated_appmap):
         """
