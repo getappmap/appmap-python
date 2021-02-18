@@ -30,9 +30,10 @@ def _configure_logging():
             }
         },
         'loggers': {
-            'root': {
+            'appmap': {
                 'level': log_level,
-                'handlers': ['default']
+                'handlers': ['default'],
+                'propagate': False
             }
         }
     }
