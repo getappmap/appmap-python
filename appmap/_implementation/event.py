@@ -1,5 +1,7 @@
 import inspect
 import threading
+import re
+import os 
 from itertools import chain
 from functools import partial
 
@@ -70,9 +72,12 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = split_function_name(fn)
+        app_root = os.path.dirname(os.path.realpath(__file__))
 
         try:
             path = inspect.getsourcefile(fn)
+            if path.startswith(app_root):
+                path = re.sub("%s/" % app_root , '', path)
         except TypeError:
             path = '<builtin>'
 
