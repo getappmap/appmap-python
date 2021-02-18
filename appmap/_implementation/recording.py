@@ -200,10 +200,16 @@ class Recorder:
                 isstatic = utils.is_staticmethod(fn)
                 isclass = utils.is_classmethod(fn)
 
+                static = False
                 if isstatic or isclass:
-                    new_fn = self.filter_chain.wrap(fn.__func__, isstatic=True)
-                else:
-                    new_fn = self.filter_chain.wrap(fn, isstatic=False)
+                    # Static methods created with staticmethod will
+                    # have a `__func__` attribute. Other static
+                    # methods (e.g. builtins assigned to an attribute
+                    # of a class) won't. So, use `__func__` if it's
+                    # available, otherwise just wrap fn.
+                    fn = getattr(fn, '__func__', fn)
+                    static = True
+                new_fn = self.filter_chain.wrap(fn, isstatic=static)
 
                 if new_fn != fn:
                     if isstatic:

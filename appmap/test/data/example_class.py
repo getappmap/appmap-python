@@ -1,4 +1,4 @@
-
+import time
 
 class ClassMethodMixin:
     @classmethod
@@ -24,3 +24,5 @@ class ExampleClass(Super, ClassMethodMixin):
 
     def test_exception(self):
         raise Exception('test exception')
+
+    what_time_is_it = time.gmtime
