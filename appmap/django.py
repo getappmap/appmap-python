@@ -1,5 +1,8 @@
-from appmap._implementation.event import SqlEvent, ReturnEvent
+from appmap._implementation.event import SqlEvent, ReturnEvent, HttpRequestEvent, HttpResponseEvent
 from appmap._implementation.recording import Recorder
+
+from django.core.handlers.base import BaseHandler
+from django.conf import settings
 
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
@@ -44,3 +47,52 @@ def connected(sender, connection, **_):
     wrappers = connection.execute_wrappers
     if not any(isinstance(x, ExecuteWrapper) for x in wrappers):
         wrappers.append(ExecuteWrapper())
+
+
+class Middleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.recorder = Recorder()
+
+    def __call__(self, request):
+        if self.recorder.enabled:
+            start = time.monotonic()
+            call_event = HttpRequestEvent(
+                request_method=request.method,
+                path_info=request.path_info,
+                protocol=request.META['SERVER_PROTOCOL']
+            )
+            self.recorder.add_event(call_event)
+
+        response = self.get_response(request)
+
+        if self.recorder.enabled:
+            duration = time.monotonic() - start
+            return_event = HttpResponseEvent(
+                parent_id=call_event.id,
+                elapsed=duration,
+                status_code=response.status_code,
+                mime_type=response['Content-Type']
+            )
+            self.recorder.add_event(return_event)
+
+        return response
+
+
+def inject_middleware():
+    """Make sure AppMap middleware is added to the stack"""
+    if 'appmap.django.Middleware' not in settings.MIDDLEWARE:
+        settings.MIDDLEWARE.insert(0, 'appmap.django.Middleware')
+
+
+original_load_middleware = BaseHandler.load_middleware
+
+
+def load_middleware(*args, **kwargs):
+    """Patched wrapper to inject AppMap middleware first"""
+    inject_middleware()
+    BaseHandler.load_middleware = original_load_middleware
+    return original_load_middleware(*args, **kwargs)
+
+
+BaseHandler.load_middleware = load_middleware

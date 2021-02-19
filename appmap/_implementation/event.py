@@ -140,6 +140,18 @@ class SqlEvent(Event):
         }
 
 
+class HttpRequestEvent(Event):
+    __slots__ = ['http_server_request']
+
+    def __init__(self, request_method, path_info, protocol):
+        super().__init__('call')
+        self.http_server_request = {
+            'request_method': request_method,
+            'path_info': path_info,
+            'protocol': protocol
+        }
+
+
 class ReturnEvent(Event):
     __slots__ = ['parent_id', 'elapsed']
 
@@ -147,6 +159,17 @@ class ReturnEvent(Event):
         super().__init__('return')
         self.parent_id = parent_id
         self.elapsed = elapsed
+
+
+class HttpResponseEvent(ReturnEvent):
+    __slots__ = ['http_server_response']
+
+    def __init__(self, status_code, mime_type, **kwargs):
+        super().__init__(**kwargs)
+        self.http_server_response = {
+            'status_code': status_code,
+            'mime_type': mime_type
+        }
 
 
 class ExceptionEvent(ReturnEvent):
