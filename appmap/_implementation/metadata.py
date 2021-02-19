@@ -1,12 +1,14 @@
 import platform
 import re
+import os
 
-from .utils import subprocess_run
-
+from . import utils
 
 class Metadata:
-    @staticmethod
-    def to_dict():
+    def __init__(self, cwd=None):
+        self._cwd = cwd if cwd else os.getcwd()
+
+    def to_dict(self):
         metadata = {
             'language': {
                 'name': 'python',
@@ -19,49 +21,49 @@ class Metadata:
             }
         }
 
-        if Metadata._git_available():
-            metadata.update({'git': Metadata._git_metadata()})
+        if self._git_available():
+            metadata.update({'git': self._git_metadata()})
 
         return metadata
 
-    @staticmethod
-    def _git_available():
-        ret = subprocess_run(['git', 'status'])
+    def _git_available(self):
+        ret = utils.subprocess_run(['git', 'status'], cwd=self._cwd)
         if not ret.returncode:
             return True
 
         return False
 
-    @staticmethod
-    def _git_metadata():
-        git_repo = subprocess_run(['git', 'config', '--get', 'remote.origin.url']).stdout.strip()
-        git_branch = subprocess_run(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).stdout.strip()
-        git_sha = subprocess_run(['git', 'rev-parse', 'HEAD']).stdout.strip()
-        git_status = list(map(lambda x: x.strip(), subprocess_run(['git', 'status', '-s']).stdout.strip().split('\n')))
-        git_last_annotated_tag = subprocess_run(['git', 'describe', '--abbrev=0']).stdout.strip() or None
-        git_last_tag = subprocess_run(['git', 'describe', '--abbrev=0', '--tags']).stdout.strip() or None
+    def _git_metadata(self):
+        git = utils.git(cwd=self._cwd)
+        repository = git('config --get remote.origin.url')
+        branch = git('rev-parse --abbrev-ref HEAD')
+        commit = git('rev-parse HEAD')
+        status = list(map(lambda x: x.strip(), git('status -s').split('\n')))
+        annotated_tag = git('describe --abbrev=0') or None
+        tag = git('describe --abbrev=0 --tags') or None
 
         pattern = re.compile(r'.*-(\d+)-\w+$')
 
-        git_commits_since_last_annotated_tag = 0
-        if git_last_annotated_tag:
-            result = pattern.search(subprocess_run(['git', 'describe']).stdout.strip())
+        commits_since_annotated_tag = None
+        if annotated_tag:
+            result = pattern.search(git('describe'))
             if result:
-                git_commits_since_last_annotated_tag = int(result[1])
+                commits_since_annotated_tag = int(result[1])
 
-        git_commits_since_last_tag = 0
-        if git_last_tag:
-            result = pattern.search(subprocess_run(['git', 'describe', '--tags']).stdout.strip())
+        commits_since_tag = None
+        if tag:
+            result = pattern.search(git('describe --tags'))
             if result:
-                git_commits_since_last_tag = int(result[1])
+                commits_since_tag = int(result[1])
 
-        return {
-            'repository': git_repo,
-            'branch': git_branch,
-            'commit': git_sha,
-            'status': git_status,
-            'git_last_annotated_tag': git_last_annotated_tag,
-            'git_last_tag': git_last_tag,
-            'git_commits_since_last_annotated_tag': git_commits_since_last_annotated_tag,
-            'git_commits_since_last_tag': git_commits_since_last_tag
+        ret = {
+            'repository': repository,
+            'branch': branch,
+            'commit': commit,
+            'status': status,
+            'tag': tag,
+            'annotated_tag': annotated_tag,
+            'commits_since_tag': commits_since_tag,
+            'commits_since_annotated_tag': commits_since_annotated_tag
         }
+        return { k: v for k,v in ret.items() if v is not None }
