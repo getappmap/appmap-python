@@ -113,13 +113,13 @@ def pytest_runtestloop(session):
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_pyfunc_call(pyfuncitem):
+def pytest_runtest_call(item):
     if not env.enabled():
         yield
         return
 
-    session = pyfuncitem.session
-    item = FuncItem(pyfuncitem)
+    session = item.session
+    item = FuncItem(item)
     metadata = dict(session.appmap_metadata)
     metadata.update(item.metadata)
     logger.debug('pytest_pyfunc_call, metadata %s', repr(metadata))
