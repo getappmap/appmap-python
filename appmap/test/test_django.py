@@ -3,21 +3,29 @@ from appmap._implementation.recording import Recorder
 
 pytest.importorskip('django')
 
+# flake8: noqa: E402
+import django.conf
+import django.db
+import appmap.django  # noqa: F401
 
-def test_sql_capture():
-    # pylint: disable=unused-import
-    import django.conf
-    import django.db
-    import appmap.django  # noqa: F401
+django.conf.settings.configure(
+    DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
+    ROOT_URLCONF=()
+)
 
-    recorder = Recorder()
-    recorder.events().clear()
-    recorder.enabled = True
 
-    django.conf.settings.configure(DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}})
+@pytest.fixture
+def events():
+    rec = Recorder()
+    rec.events().clear()
+    rec.enabled = True
+    yield rec.events()
+    rec.enabled = False
+    rec.events().clear()
 
+
+def test_sql_capture(events):
     conn = django.db.connections['default']
     conn.cursor().execute('SELECT 1').fetchall()
 
-    recorder.enabled = False
-    assert recorder.events()[0].sql_query['sql'] == 'SELECT 1'
+    assert events[0].sql_query['sql'] == 'SELECT 1'
