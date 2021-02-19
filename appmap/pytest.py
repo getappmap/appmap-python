@@ -128,7 +128,7 @@ def pytest_runtest_call(item):
     path = os.path.join(session.appmap_path, fname)
 
     def write_recording(r):
-        with open(path, 'wb') as appmap_file:
+        with open(path, 'w') as appmap_file:
             appmap_file.write(generation.dump(r, metadata))
         logger.info('wrote recording %s', path)
 
