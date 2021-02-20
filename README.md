@@ -30,8 +30,8 @@ The second option is to upload them to the [AppLand server](https://app.land) us
 
 ### Supported versions
 
-* Python 3.9
-* Pytest 6.2
+* Python >=3.5
+* Pytest >=6.1.2
 
 Support for new versions is added frequently, please check back regularly for updates.
 
@@ -239,6 +239,14 @@ you can generate a recording of the code
 ## Development
 
 [![Build Status](https://travis-ci.com/applandinc/appmap-python.svg?branch=master)](https://travis-ci.com/applandinc/appmap-python)
+
+### Python version support
+As a package intended to be installed in as many environments as possible, appmap-python
+needs to avoid using features of python or the standard library that were added after the
+oldest version currently supported (see [above](#supported-version))
+
+While we use `vermin` to try to detect the use of newer features, it's easily
+fooled. When making changes, please respect the version requirement.
 
 ### Dependency management
 

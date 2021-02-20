@@ -1,5 +1,7 @@
 language: python
-python: "3.9"
+python: 
+- "3.5"
+- "3.9"
 
 stages:
 - lint
@@ -18,7 +20,7 @@ jobs:
   - stage: lint
     script:
     - poetry run pylint appmap
-    - poetry run vermin -t=3.7- appmap
+    - poetry run vermin -t=3.5- appmap
   - stage: test
     script:
     - poetry run pytest -svv
