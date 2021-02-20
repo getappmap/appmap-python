@@ -128,7 +128,7 @@ def function_in_set(fn, which):
         return False
 
     ret = (class_in_set(class_name, which)
-           or name_in_set(f'{class_name}.{fn_name}', which))
+           or name_in_set('%s.%s' %(class_name, fn_name), which))
 
     logger.debug(('function_in_set, class_name %s'
                   ' fnname %s'
@@ -180,8 +180,8 @@ class ConfigFilter(Filter):
             if 'exclude' in package:
                 if not isinstance(package['exclude'], list):
                     raise RuntimeError('Excludes for package'
-                                       f' "{path}" must be a list')
-                excludes = [f'{path}.{e}' for e in package['exclude']]
+                                       ' "%s" must be a list' % (path))
+                excludes = ['%s.%s' % (path, e) for e in package['exclude']]
                 self._excludes.update(excludes)
         logger.info('ConfigFilter, includes %s', self._includes)
         logger.info('ConfigFilter, excludes %s', self._excludes)

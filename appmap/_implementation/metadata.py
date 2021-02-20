@@ -48,13 +48,13 @@ class Metadata:
         if annotated_tag:
             result = pattern.search(git('describe'))
             if result:
-                commits_since_annotated_tag = int(result[1])
+                commits_since_annotated_tag = int(result.group(1))
 
         commits_since_tag = None
         if tag:
             result = pattern.search(git('describe --tags'))
             if result:
-                commits_since_tag = int(result[1])
+                commits_since_tag = int(result.group(1))
 
         ret = {
             'repository': repository,

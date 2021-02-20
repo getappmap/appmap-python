@@ -13,7 +13,7 @@ def _configure_logging():
 
     log_config = os.getenv("APPMAP_LOG_CONFIG")
     log_stream = os.getenv("APPMAP_LOG_STREAM", "stderr")
-    log_stream = f'ext://sys.{log_stream}'
+    log_stream = 'ext://sys.%s' % (log_stream)
     config_dict = {
         'version': 1,
         'disable_existing_loggers': False,

@@ -3,7 +3,7 @@ import time
 class ClassMethodMixin:
     @classmethod
     def class_method(cls):
-        return f'ClassMethodMixin#class_method, cls {cls}'
+        return 'ClassMethodMixin#class_method, cls %s' % (cls)
 
 
 class Super:
@@ -13,7 +13,7 @@ class Super:
 
 class ExampleClass(Super, ClassMethodMixin):
     def __repr__(self):
-        return f'ExampleClass and {self.another_method()}'
+        return 'ExampleClass and %s' % (self.another_method())
 
     @staticmethod
     def static_method():

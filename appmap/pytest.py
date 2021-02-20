@@ -52,7 +52,7 @@ class FuncItem:
 
     @property
     def scenario_name(self):
-        name = f'{self.feature[0].lower()}{self.feature[1:]}'
+        name = '%s%s' %(self.feature[0].lower(), self.feature[1:])
         if self.has_feature_group():
             name = ' '.join([self.feature_group, name])
         return name
@@ -66,7 +66,7 @@ class FuncItem:
     def filename(self):
         fname = self.item.name
         if self.item.cls:
-            fname = f'{self.defined_class}_{fname}'
+            fname = '%s_%s' % (self.defined_class, fname)
         fname = re.sub('[^a-zA-Z0-9-_]', '_', fname)
         if fname.endswith('_'):
             fname = fname[:-1]
