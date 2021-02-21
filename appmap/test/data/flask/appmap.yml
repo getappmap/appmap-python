@@ -1,0 +1,3 @@
+name: FlaskTest
+packages:
+- path: app
