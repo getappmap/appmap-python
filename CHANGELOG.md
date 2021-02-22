@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
+### ## [0.1.0.dev8] - 2021-02-22
 - [#27] Capturing HTTP requests and responses when testing Django apps.
 
 ## [0.1.0.dev7] - 2021-02-18
@@ -106,7 +106,8 @@ testing. Also adds a Travis config to run them all.
 - Deploy release to PyPI
 
 
-[Unreleased]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev7...HEAD
+[Unreleased]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev8...HEAD
+[0.1.0.dev8]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev67...0.1.0.dev8
 [0.1.0.dev7]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev6...0.1.0.dev7
 [0.1.0.dev6]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev4...0.1.0.dev6
 [0.1.0.dev4]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev3...0.1.0.dev4
