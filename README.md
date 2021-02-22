@@ -77,8 +77,8 @@ configuration excludes `app.mod2.MyClass`
   `tmp/appmap`.
   
 ## Test Frameworks
-`appmap-python` supports recording [pytest](https://pytest.org) and `unittest`[future
-work] test cases.
+`appmap-python` supports recording [pytest](https://pytest.org) and `unittest`[coming soon]
+test cases.
 
 ### pytest
 `appmap-python` is a `pytest` plugin. When it's installed in a project that uses
