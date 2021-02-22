@@ -1,6 +1,6 @@
 ## About
 `appmap-python` is a Python package for recording
-[AppMaps](https://github.com/applandinc/appmap) of your code. "AppMap" is a data format
+[AppMaps](https://github.com/applandinc/appmap) of your code. `AppMap` is a data format
 which records code structure (modules, classes, and methods), code execution events
 (function calls and returns), and code metadata (repo name, repo URL, commit SHA, labels,
 etc). It's more granular than a performance profile, but it's less granular than a full
@@ -9,13 +9,13 @@ of code and key data flows.
 
 There are several ways to record AppMaps of your Python program using the `appmap` package:
 
-* Run your tests (pytest, unittest[future work]) with the environment variable
+* Run your tests (pytest, unittest[coming soon]) with the environment variable
   `APPMAP=true`. An AppMap will be generated for each test case.
     
 * Use the `appmap.record` [context manager](#context-manager) to control recording. The context manager takes
   an instance of an `appmap.Recording`, which can be used to generate the AppMap.
 
-* [future work] Run your application server with AppMap remote recording enabled, and use
+* [coming soon] Run your application server with AppMap remote recording enabled, and use
   the [AppLand browser extension](https://github.com/applandinc/appland-browser-extension)
   to start, stop, and upload recordings.
   
@@ -34,6 +34,16 @@ The second option is to upload them to the [AppLand server](https://app.land) us
 * Pytest 6.2
 
 Support for new versions is added frequently, please check back regularly for updates.
+
+## Installation
+
+If your project uses `pip` for dependency management, add the `appmap` package to the requirements
+file or install it directly with
+```shell
+pip install appmap
+```
+
+For projects that use `poetry` , add the `appmap` package to `pyproject.toml`.
 
 ## Configuration
 Add your modules as `path` entries in `appmap.yml`:
@@ -108,7 +118,7 @@ PASSED
 ====================================================================== 1 passed in 0.45s ======================================================================
 ```
 
-### unittest [future work]
+### unittest [coming soon]
 `import appmap.unittest`. Instruments subclasses of `unittest.TestCase` and records each
 `test_*` function in the subclasses.
 
@@ -121,17 +131,17 @@ $ APPMAP=true pytest
 ```
 
 
-## Remote Recording [future work]
+## Remote Recording [coming soon]
 `appmap-python` supports remote recording of Django and Flask web applications. Import the
 appropriate remote recording support into your web app.
 
 ### Django
 `import appmap.django`. Adds `/_appmap/record` routes to a Django app.
 
-## Flask
+### Flask
 `import appmap.flask`. Adds `/_appmap/record` routes to a Flask app.
 
-## Run your web app [future work]
+### Run your web app
 Once you've configured your web app to add the remote-recording routes, you can use the
 routes to manage recordings. The browser extension, appland CLI, or just plain cURL will
 all work for this.
