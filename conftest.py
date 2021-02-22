@@ -7,5 +7,5 @@ pytest_plugins = ['pytester']
 
 @pytest.fixture
 def data_dir(pytestconfig):
-    yield str(os.path.join(pytestconfig.rootpath,
+    yield str(os.path.join(str(pytestconfig.rootpath),
                            'appmap', 'test', 'data'))

@@ -67,11 +67,10 @@ def subprocess_run(command_args, cwd=None):
     Ret = namedtuple('Ret', ['returncode', 'stdout'])
     try:
         out = subprocess.check_output(command_args,
-                                      cwd=cwd, universal_newlines=True)
+                                      cwd=str(cwd), universal_newlines=True)
         return Ret(stdout=out, returncode=0)
     except subprocess.CalledProcessError as exc:
         return Ret(stdout=exc.stdout, returncode=exc.returncode)
-
 
 class git:
     def __init__(self, cwd=None):
