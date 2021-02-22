@@ -1,6 +1,6 @@
 ## About
 `appmap-python` is a Python package for recording
-[AppMaps](https://github.com/applandinc/appmap) of your code. `AppMap` is a data format
+[AppMaps](https://github.com/applandinc/appmap) of your code. "AppMap" is a data format
 which records code structure (modules, classes, and methods), code execution events
 (function calls and returns), and code metadata (repo name, repo URL, commit SHA, labels,
 etc). It's more granular than a performance profile, but it's less granular than a full
