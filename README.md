@@ -241,12 +241,14 @@ you can generate a recording of the code
 [![Build Status](https://travis-ci.com/applandinc/appmap-python.svg?branch=master)](https://travis-ci.com/applandinc/appmap-python)
 
 ### Python version support
-As a package intended to be installed in as many environments as possible, appmap-python
-needs to avoid using features of python or the standard library that were added after the
-oldest version currently supported (see [above](#supported-version))
+As a package intended to be installed in as many environments as possible, `appmap-python`
+needs to avoid using features of Python or the standard library that were added after the
+oldest version currently supported (see [above](#supported-version)).
 
-While we use `vermin` to try to detect the use of newer features, it's easily
-fooled. When making changes, please respect the version requirement.
+The Travis build uses [vermin](https://github.com/netromdk/vermin) to help weed out the
+use of some invalid features. Additionally, tests are run using all supported versions of
+Python.
+
 
 ### Dependency management
 
@@ -276,12 +278,26 @@ should be reenabled as soon as possible.]
 
 
 ### Testing
+#### pytest
 [pytest](https://docs.pytest.org/en/stable/) for testing:
 
 ```
 % cd appmap-python
 % poetry run pytest
 ```
+
+#### tox
+Additionally, the `tox` configuration provides the ability to run the tests for all
+supported versions of Python and django:
+
+```sh
+% cd appmap-python
+% poetry run tox
+```
+
+Note that `tox` requires the correct version of Python to be installed before it can
+create a test environment. [pyenv](https://github.com/pyenv/pyenv) is an easy way to
+manage multiple versions of Python. 
 
 ### Code Coverage
 [coverage](https://coverage.readthedocs.io/) for coverage:

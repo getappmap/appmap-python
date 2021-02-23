@@ -5,8 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Use tox for testing multiple versions of Python.
+
 ### Changed
 - Relax the python version requirement to 3.5.
+
+### Fixed
+- Fix handling of builtin functions assigned as attributes of a class. They look like
+  static methods, (i.e. `isinstance(m, (staticmethod, types.BuiltinMethodType))` is
+  `True`), but they don't have a `__func__` attribute.
 
 ### ## [0.1.0.dev8] - 2021-02-22
 - [#27] Capturing HTTP requests and responses when testing Django apps.

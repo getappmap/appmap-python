@@ -20,8 +20,14 @@ pyfakefs = "^4.3.2"
 pprintpp = "^0.4.0"
 coverage = "^5.3"
 pytest-mock = "^3.5.1"
-Django = "^3.1.6"
+Django = [
+  { version = "~2.2", python = "< 3.6"},
+  { version = "^3.1.6", python = "^3.6"}
+]
 vermin = "^1.1.0"
+tox = "^3.22.0"
+tox-pyenv = "^1.1.0"
+tox-travis = "^0.12"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
