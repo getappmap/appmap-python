@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager
-from functools import wraps
+from functools import wraps, WRAPPER_ASSIGNMENTS
 import time
 
 import yaml
@@ -83,7 +83,12 @@ def wrap(fn, isstatic):
     make_call_event = event.CallEvent.make(fn, isstatic)
     make_receiver = event.CallEvent.make_receiver(fn, isstatic)
 
-    @wraps(fn)
+    # django depends on being able to find the cache_clear attribute
+    # on functions. Make sure it gets copied from the original to the
+    # wrapped function.
+    #
+    # Going forward, we should consider how to make this more general.
+    @wraps(fn, assigned = WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
     def wrapped_fn(*args, **kwargs):
         if not Recorder().enabled or is_instrumentation_disabled():
             return fn(*args, **kwargs)
