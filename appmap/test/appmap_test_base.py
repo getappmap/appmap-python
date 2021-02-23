@@ -1,9 +1,10 @@
-import importlib
+from operator import itemgetter
 import os
 import platform
 import re
 
 import json
+import pytest
 
 import appmap._implementation
 
@@ -14,19 +15,24 @@ class AppMapTestBase:
 
     @staticmethod
     def normalize_git(git):
-        git.pop('repository') # = 'git@github.com:applandinc/appmap-python.git'
-        git.pop('branch') # = 'master'
-        git.pop('commit') # = 'xyz'
+        git.pop('repository')
+        git.pop('branch')
+        git.pop('commit')
         status = git.pop('status')
         assert isinstance(status, list)
-        git.pop('git_last_tag') # = ''
-        commits_since_last_tag = git.pop('git_commits_since_last_tag')
-        assert isinstance(commits_since_last_tag, int)
-        git.pop('git_last_annotated_tag') # = None
-        commits_since_last_annotated_tag = git.pop(
-            'git_commits_since_last_annotated_tag'
+        tag = git.pop('tag', None)
+        if tag:
+            assert isinstance(tag, str)
+        commits_since_tag = git.pop('commits_since_tag', None)
+        if commits_since_tag:
+            assert isinstance(commits_since_tag, int)
+        git.pop('annotated_tag', None)
+
+        commits_since_annotated_tag = git.pop(
+            'commits_since_annotated_tag', None
         )
-        assert isinstance(commits_since_last_annotated_tag, int)
+        if commits_since_annotated_tag:
+            assert isinstance(commits_since_annotated_tag, int)
 
     @staticmethod
     def normalize_metadata(metadata):
@@ -40,7 +46,7 @@ class AppMapTestBase:
             for f in frameworks:
                 if f['name'] == 'pytest':
                     v = f.pop('version')
-                    assert v == importlib.metadata.version('pytest')
+                    assert v == pytest.__version__
 
     def normalize_appmap(self, generated_appmap):
         """
@@ -52,6 +58,8 @@ class AppMapTestBase:
         """
 
         def normalize(dct):
+            if 'children' in dct:
+                dct['children'].sort(key=itemgetter('name'))
             if 'elapsed' in dct:
                 elapsed = dct.pop('elapsed')
                 assert isinstance(elapsed, float)

@@ -1,5 +1,3 @@
-
-
 import inspect
 import logging
 import sys
@@ -200,10 +198,16 @@ class Recorder:
                 isstatic = utils.is_staticmethod(fn)
                 isclass = utils.is_classmethod(fn)
 
+                static = False
                 if isstatic or isclass:
-                    new_fn = self.filter_chain.wrap(fn.__func__, isstatic=True)
-                else:
-                    new_fn = self.filter_chain.wrap(fn, isstatic=False)
+                    # Static methods created with staticmethod will
+                    # have a `__func__` attribute. Other static
+                    # methods (e.g. builtins assigned to an attribute
+                    # of a class) won't. So, use `__func__` if it's
+                    # available, otherwise just wrap fn.
+                    fn = getattr(fn, '__func__', fn)
+                    static = True
+                new_fn = self.filter_chain.wrap(fn, isstatic=static)
 
                 if new_fn != fn:
                     if isstatic:
@@ -270,7 +274,24 @@ def initialize():
                 # staticmethod or classmethod)
                 new_fn = wrap_find_spec(fn.__func__)
                 if isstatic:
-                    new_fn = staticmethod(new_fn)
+                    # I don't understand why assigning a new
+                    # staticmethod in a finder doesn't work for older
+                    # versions of python.
+                    #
+                    # After we assign the new staticmethod to the
+                    # class, the code in importlib._bootstrap insists
+                    # on trying to call staticmethod object itself,
+                    # instead of using the descriptor protocol to call
+                    # the function it wraps.  I tried adding some
+                    # prints to importlib._bootstrap to debug, but
+                    # that caused the problem to stop happening(!).
+                    # So, for now, don't wrap new_fn in staticmethod,
+                    # just assign it directly.
+                    #
+                    # (It's possible that this code is never called
+                    # for new versions of python.)
+                    if sys.version_info >= (3,8):
+                        new_fn = staticmethod(new_fn)
                 elif isclass:
                     new_fn = classmethod(new_fn)
                 setattr(new_fn, wrapped_attr, True)

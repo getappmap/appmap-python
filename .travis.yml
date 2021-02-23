@@ -1,5 +1,6 @@
 language: python
-python: "3.9"
+python:
+- "3.9"
 
 stages:
 - lint
@@ -18,10 +19,28 @@ jobs:
   - stage: lint
     script:
     - poetry run pylint appmap
+    - poetry run vermin -t=3.5- appmap
     
   - stage: test
+    python: "3.5"
     script:
-    - poetry run pytest -svv
+    - poetry run tox
+  - stage: test
+    python: "3.6"
+    script:
+    - poetry run tox
+  - stage: test
+    python: "3.7"
+    script:
+    - poetry run tox
+  - stage: test
+    python: "3.8"
+    script:
+    - poetry run tox
+  - stage: test
+    python: "3.9"
+    script:
+    - poetry run tox
 
   - stage: deploy
     script: skip

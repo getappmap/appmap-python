@@ -1,4 +1,3 @@
-import importlib.metadata
 import logging
 import pytest
 import os
@@ -42,9 +41,10 @@ class FuncItem:
 
     @property
     def feature_group(self):
-        return inflection.humanize(
-            inflection.titleize(self.class_name.removeprefix('Test'))
-        )
+        test_name = self.class_name
+        if test_name.startswith('Test'):
+            test_name = test_name[4:]
+        return inflection.humanize(inflection.titleize(test_name))
 
     @property
     def feature(self):
@@ -52,7 +52,7 @@ class FuncItem:
 
     @property
     def scenario_name(self):
-        name = f'{self.feature[0].lower()}{self.feature[1:]}'
+        name = '%s%s' %(self.feature[0].lower(), self.feature[1:])
         if self.has_feature_group():
             name = ' '.join([self.feature_group, name])
         return name
@@ -66,9 +66,11 @@ class FuncItem:
     def filename(self):
         fname = self.item.name
         if self.item.cls:
-            fname = f'{self.defined_class}_{fname}'
+            fname = '%s_%s' % (self.defined_class, fname)
         fname = re.sub('[^a-zA-Z0-9-_]', '_', fname)
-        return fname.removesuffix('_')
+        if fname.endswith('_'):
+            fname = fname[:-1]
+        return fname
 
     @property
     def metadata(self):
@@ -92,7 +94,6 @@ def pytest_runtestloop(session):
         yield
         return
 
-    pytest_version = importlib.metadata.version('pytest')
     session.appmap_path = os.path.join(
         configuration.Config().output_dir, 'pytest'
     )
@@ -102,7 +103,7 @@ def pytest_runtestloop(session):
         'app': configuration.Config().name,
         'frameworks': [{
             'name': 'pytest',
-            'version': pytest_version
+            'version': pytest.__version__
 
         }],
         'recorder': {
@@ -127,7 +128,7 @@ def pytest_runtest_call(item):
     path = os.path.join(session.appmap_path, fname)
 
     def write_recording(r):
-        with open(path, 'wb') as appmap_file:
+        with open(path, 'w') as appmap_file:
             appmap_file.write(generation.dump(r, metadata))
         logger.info('wrote recording %s', path)
 

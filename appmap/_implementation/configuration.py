@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from contextlib import contextmanager
-from functools import wraps, cached_property
+from functools import wraps, WRAPPER_ASSIGNMENTS
 import time
 
 import yaml
@@ -49,16 +49,15 @@ class Config:
     def initialize(cls):
         cls._instance = None
 
-    @cached_property
+    @property
     def output_dir(self):
         return os.getenv("APPMAP_OUTPUT_DIR",
                          os.path.join('tmp', 'appmap'))
-
-    @cached_property
+    @property
     def name(self):
         return self._config['name']
 
-    @cached_property
+    @property
     def packages(self):
         return self._config['packages']
 
@@ -84,7 +83,12 @@ def wrap(fn, isstatic):
     make_call_event = event.CallEvent.make(fn, isstatic)
     make_receiver = event.CallEvent.make_receiver(fn, isstatic)
 
-    @wraps(fn)
+    # django depends on being able to find the cache_clear attribute
+    # on functions. Make sure it gets copied from the original to the
+    # wrapped function.
+    #
+    # Going forward, we should consider how to make this more general.
+    @wraps(fn, assigned = WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
     def wrapped_fn(*args, **kwargs):
         if not Recorder().enabled or is_instrumentation_disabled():
             return fn(*args, **kwargs)
@@ -129,7 +133,7 @@ def function_in_set(fn, which):
         return False
 
     ret = (class_in_set(class_name, which)
-           or name_in_set(f'{class_name}.{fn_name}', which))
+           or name_in_set('%s.%s' %(class_name, fn_name), which))
 
     logger.debug(('function_in_set, class_name %s'
                   ' fnname %s'
@@ -181,8 +185,8 @@ class ConfigFilter(Filter):
             if 'exclude' in package:
                 if not isinstance(package['exclude'], list):
                     raise RuntimeError('Excludes for package'
-                                       f' "{path}" must be a list')
-                excludes = [f'{path}.{e}' for e in package['exclude']]
+                                       ' "%s" must be a list' % (path))
+                excludes = ['%s.%s' % (path, e) for e in package['exclude']]
                 self._excludes.update(excludes)
         logger.info('ConfigFilter, includes %s', self._includes)
         logger.info('ConfigFilter, excludes %s', self._excludes)

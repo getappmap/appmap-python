@@ -16,7 +16,6 @@ class TestRecording(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
 
         import appmap
         # Reinitialize to pick up the environment variables just set
@@ -27,6 +26,7 @@ class TestRecording(AppMapTestBase):
             ExampleClass.static_method()
             ExampleClass.class_method()
             ExampleClass().instance_method()
+            ExampleClass.what_time_is_it()
             try:
                 ExampleClass().test_exception()
             except:  # pylint: disable=bare-except  # noqa: E722

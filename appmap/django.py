@@ -30,7 +30,7 @@ class ExecuteWrapper:
                         times = len(params)
                     except TypeError:
                         times = '?'
-                    sql = f'{times} times {sql}'
+                    sql = '%s times %s' % (times, sql)
                 else:
                     db = context['connection']
                     cursor = context['cursor']

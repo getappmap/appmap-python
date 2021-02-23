@@ -3,7 +3,7 @@ class Simple:
         return 'Hello'
 
     def world(self):
-        return 'world'
+        return 'world!'
 
     def hello_world(self):
-        return f'{self.hello()} {self.world()}!'
+        return '%s %s' % (self.hello(), self.world())

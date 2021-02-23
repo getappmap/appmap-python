@@ -1,41 +1,47 @@
 """Generate an AppMap"""
-import orjson
-from dataclasses import dataclass, field
+import json
 
 from .metadata import Metadata
 from .event import Event
 
 
-class ClassMapDict(dict):
-    pass
+# ClassMapDict needs to quack a little like a dict. If it's actually a
+# subclass of dict, though, json tries to process it without calling
+# our encoder. So, just implement the methods we need.
+class ClassMapDict:
+    def __init__(self):
+        self._dict = dict()
+
+    def setdefault(self, k, default):
+        return self._dict.setdefault(k, default)
+
+    def values(self):
+        return self._dict.values()
 
 
-@dataclass
 class ClassMapEntry:
-    name: str
-    type: str
+    # pylint: disable=redefined-builtin
+    def __init__(self, name, type):
+        self.name = name
+        # `type` is a builtin, but the appmap attribute is named
+        # `type`. So, ignore this warning, unless it turns out to
+        # actually be a problem, of course.
+        self.type = type
 
-
-@dataclass
 class PackageEntry(ClassMapEntry):
-    children: ClassMapDict = field(default_factory=ClassMapDict)
-    type: str = 'package'
+    def __init__(self, name):
+        super().__init__(name, 'package')
+        self.children = ClassMapDict()
 
-
-@dataclass
 class ClassEntry(ClassMapEntry):
-    children: ClassMapDict = field(default_factory=ClassMapDict)
-    type: str = 'class'
+    def __init__(self, name):
+        super().__init__(name, 'class')
+        self.children = ClassMapDict()
 
-
-@dataclass
 class FuncEntry(ClassMapEntry):
-    location: str
-    static: bool
-
     def __init__(self, e):
         super().__init__(e.method_id, 'function')
-        self.location = f'{e.path}:{e.lineno}'
+        self.location = '%s:%s' % (e.path, e.lineno)
         self.static = e.static
 
 
@@ -54,7 +60,7 @@ def classmap(recording):
             entry = children.setdefault(class_, ClassEntry(class_))
             children = entry.children
 
-            loc = f'{e.path}:{e.lineno}'
+            loc = '%s:%s' % (e.path, e.lineno)
             children.setdefault(loc, FuncEntry(e))
         except AttributeError:
             # Event might not have a defined_class attribute;
@@ -66,7 +72,7 @@ def classmap(recording):
 
 
 def appmap(recording, metadata):
-    appmap_metadata = Metadata.to_dict()
+    appmap_metadata = Metadata().to_dict()
     if metadata:
         appmap_metadata.update(metadata)
 
@@ -78,20 +84,18 @@ def appmap(recording, metadata):
     }
 
 
-class AppMapEncoder:
-    @staticmethod
-    def default(o):
+class AppMapEncoder(json.JSONEncoder):
+    def default(self, o):
         if isinstance(o, Event):
             return o.to_dict()
         elif isinstance(o, ClassMapDict):
             return list(o.values())
         elif isinstance(o, ClassMapEntry):
             return vars(o)
-        raise TypeError
+
+        return json.JSONEncoder.default(self, o)
 
 
 def dump(recording, metadata=None):
     a = appmap(recording, metadata)
-    return orjson.dumps(a, default=AppMapEncoder.default,
-                        option=(orjson.OPT_PASSTHROUGH_SUBCLASS |
-                                orjson.OPT_PASSTHROUGH_DATACLASS))
+    return json.dumps(a, cls=AppMapEncoder)

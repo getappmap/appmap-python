@@ -110,7 +110,7 @@ class CallEvent(Event):
                 try:
                     value = repr(slf)
                 except Exception:  # pylint: disable=broad-except
-                    value = f'<{defined_class} object at {object_id:#02x}>'
+                    value = '<%s object at %#x>' % (defined_class, object_id)
             return {
                 "class": cls,
                 "value": value,

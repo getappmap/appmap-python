@@ -95,15 +95,15 @@
           "type": "class",
           "children": [
             {
-              "name": "hello_world",
-              "type": "function",
-              "location": "simple.py:8",
-              "static": false
-            },
-            {
               "name": "hello",
               "type": "function",
               "location": "simple.py:2",
+              "static": false
+            },
+            {
+              "name": "hello_world",
+              "type": "function",
+              "location": "simple.py:8",
               "static": false
             },
             {
