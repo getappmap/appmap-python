@@ -43,6 +43,9 @@ class Config:
             self._config = yaml.load(file, Loader=yaml.BaseLoader)
             logger.debug('self._config %s', self._config)
 
+        out_dir = os.getenv("APPMAP_OUTPUT_DIR", os.path.join('tmp', 'appmap'))
+        self._output_dir = os.path.abspath(out_dir)
+
         self._initialized = True
 
     @classmethod
@@ -51,8 +54,8 @@ class Config:
 
     @property
     def output_dir(self):
-        return os.getenv("APPMAP_OUTPUT_DIR",
-                         os.path.join('tmp', 'appmap'))
+        return self._output_dir
+
     @property
     def name(self):
         return self._config['name']
