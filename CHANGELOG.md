@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- [#5] *unittest* integration.
+
 ### ## [0.1.0.dev10] - 2021-02-24
 ### Fixed
 - Choose the output directory on startup, make sure it's an absolute path.
@@ -47,13 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   works properly for flaskbb, and seems more correct in general.
 
   Also, add Event.__repr__.
-    
+
 - Simplify (and fix) logging configuration
-    
+
   The code that configured logging was overly complex, and also buggy.  These changes
   simplify it, keep duplicate messages from being emitted, and properly allow per-module
   configuration of log level.
-  
+
 - Don't use inspect.isclass
 
   When testing to see if an object is a class, use type() instead of inpect.isclass. See
