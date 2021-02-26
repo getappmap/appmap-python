@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#5] *unittest* integration.
 
+### Fixed
+- [#50] Make sure we protect against rewrapping a metapath finder's exec_module function.
+
 ### ## [0.1.0.dev10] - 2021-02-24
 ### Fixed
 - Choose the output directory on startup, make sure it's an absolute path.

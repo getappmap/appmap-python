@@ -218,6 +218,11 @@ class Recorder:
 
 
 def wrap_exec_module(exec_module):
+    marker = '_appmap_exec_module_'
+    if getattr(exec_module, marker, None):
+        logger.debug('%s already wrapped', exec_module)
+        return exec_module
+
     @wraps(exec_module)
     def wrapped_exec_module(*args, **kwargs):
         logger.debug(('exec_module %s'
@@ -230,6 +235,7 @@ def wrap_exec_module(exec_module):
                      kwargs)
         exec_module(*args, **kwargs)
         Recorder().do_import(*args, **kwargs)
+    setattr(wrapped_exec_module, marker, True)
     return wrapped_exec_module
 
 
@@ -255,6 +261,7 @@ def initialize():
     Recorder.initialize()
     if env.enabled():
         wrapped_attr = '_appmap_find_spec'
+        logger.debug('sys.metapath: %s', sys.meta_path)
         for h in sys.meta_path:
             fn = inspect.getattr_static(h, 'find_spec', None)
             if fn is None:
