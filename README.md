@@ -9,16 +9,16 @@ of code and key data flows.
 
 There are several ways to record AppMaps of your Python program using the `appmap` package:
 
-* Run your tests (pytest, unittest[coming soon]) with the environment variable
+* Run your tests (pytest, unittest) with the environment variable
   `APPMAP=true`. An AppMap will be generated for each test case.
-    
+
 * Use the `appmap.record` [context manager](#context-manager) to control recording. The context manager takes
   an instance of an `appmap.Recording`, which can be used to generate the AppMap.
 
 * [coming soon] Run your application server with AppMap remote recording enabled, and use
   the [AppLand browser extension](https://github.com/applandinc/appland-browser-extension)
   to start, stop, and upload recordings.
-  
+
 Once you have made a recording, there are two ways to view automatically generated
 diagrams of the AppMaps.
 
@@ -26,7 +26,7 @@ The first option is to load the diagrams directly in your IDE, using the [AppMap
 for VSCode](https://marketplace.visualstudio.com/items?itemName=appland.appmap).
 
 The second option is to upload them to the [AppLand server](https://app.land) using the
-[AppLand CLI](https://github.com/applandinc/appland-cli/releases).  
+[AppLand CLI](https://github.com/applandinc/appland-cli/releases).
 
 ### Supported versions
 
@@ -69,16 +69,16 @@ configuration excludes `app.mod2.MyClass`
 
 * `APPMAP_CONFIG` specifies the configuration file to use. Defaults to `appmap.yml` in the
   current directory
-  
+
 * `APPMAP_LOG_LEVEL` specifies log level to use, from the set `CRITICAL`, `ERROR`,
   `WARNING`, `INFO`, `DEBUG`. Not case-sensitive, defaults to `WARNING`.
-  
+
 * `APPMAP_OUTPUT_DIR` specifies the root directory for writing AppMaps. Defaults to
   `tmp/appmap`.
-  
+
 ## Test Frameworks
-`appmap-python` supports recording [pytest](https://pytest.org) and `unittest`[coming soon]
-test cases.
+`appmap-python` supports recording [pytest](https://pytest.org) and
+[unittest](https://docs.python.org/3/library/unittest.html) test cases.
 
 ### pytest
 `appmap-python` is a `pytest` plugin. When it's installed in a project that uses
@@ -118,9 +118,11 @@ PASSED
 ====================================================================== 1 passed in 0.45s ======================================================================
 ```
 
-### unittest [coming soon]
+### unittest
 `import appmap.unittest`. Instruments subclasses of `unittest.TestCase` and records each
-`test_*` function in the subclasses.
+`test_*` function in the subclasses. You can also use `python -m appmap.unittest` exactly like
+`python -m unittest` and leave your code unmodified (just remember to set the `APPMAP=true`
+environment variable).
 
 ### Run your tests
 Once you've configured your tests to generate AppMaps, run the tests with the
@@ -297,7 +299,7 @@ supported versions of Python and django:
 
 Note that `tox` requires the correct version of Python to be installed before it can
 create a test environment. [pyenv](https://github.com/pyenv/pyenv) is an easy way to
-manage multiple versions of Python. 
+manage multiple versions of Python.
 
 ### Code Coverage
 [coverage](https://coverage.readthedocs.io/) for coverage:
