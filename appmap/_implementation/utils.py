@@ -1,7 +1,6 @@
 import threading
 import types
 from collections.abc import MutableMapping
-from collections import namedtuple
 import shlex
 import subprocess
 import os
@@ -61,16 +60,35 @@ def split_function_name(fn):
     return (class_name, fn_name)
 
 
+class ProcRet:
+    def __init__(self, returncode=0, stdout='', stderr=''):
+        self._returncode = returncode
+        self._stdout = stdout
+        self._stderr = stderr
+
+    @property
+    def returncode(self):
+        return self._returncode
+
+    @property
+    def stdout(self):
+        return self._stdout
+
+    @property
+    def stderr(self):
+        return self._stderr
+
 def subprocess_run(command_args, cwd=None):
     if not cwd:
         cwd = os.getcwd()
-    Ret = namedtuple('Ret', ['returncode', 'stdout'])
     try:
         out = subprocess.check_output(command_args,
+                                      stderr=subprocess.STDOUT,
                                       cwd=str(cwd), universal_newlines=True)
-        return Ret(stdout=out, returncode=0)
+        return ProcRet(stdout=out, returncode=0)
     except subprocess.CalledProcessError as exc:
-        return Ret(stdout=exc.stdout, returncode=exc.returncode)
+        return ProcRet(stderr=exc.stdout, returncode=exc.returncode)
+
 
 class git:
     def __init__(self, cwd=None):
