@@ -1,12 +1,35 @@
 # pylint: disable=protected-access
 
 """Test Metadata"""
+import pytest
+
+from appmap._implementation import utils
 from appmap._implementation.metadata import Metadata
 
+
 class TestMetadata:
+    @pytest.fixture
+    def tmp_git(self, tmp_path):
+        g = utils.git(cwd=tmp_path)
+        g('init')
+        utils.subprocess_run(['touch', 'README.md'], cwd=tmp_path)
+        g('add README.md')
+        g('commit -m "initial commit"')
+        g('remote add origin https://www.example.com/repo.git')
+        utils.subprocess_run(['touch', 'new_file'], cwd=tmp_path)
+        return g
+
+    def test_missing_git(self, tmp_git, monkeypatch):
+        monkeypatch.setenv('PATH', '')
+        try:
+            md = Metadata(cwd=tmp_git.cwd)
+            assert not md._git_available()
+        except FileNotFoundError:
+            assert False, "_git_available didn't handle missing git"
+
     def test_fixture(self, tmp_git):
         md = Metadata(cwd=tmp_git.cwd)
-        assert md._git_available() # sanity check
+        assert md._git_available()  # sanity check
 
     def test_git_metadata(self, tmp_git):
         md = Metadata(cwd=tmp_git.cwd)
@@ -19,7 +42,7 @@ class TestMetadata:
                 '?? new_file'
             ]
         }
-        for k,v in expected.items():
+        for k, v in expected.items():
             assert git_md[k] == v
         missing = ('tag', 'annotated_tag',
                    'commits_since_tag', 'commit_since_annotated_tag')

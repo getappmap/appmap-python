@@ -1,8 +1,12 @@
+import logging
 import platform
 import re
 import os
 
 from . import utils
+
+logger = logging.getLogger(__name__)
+
 
 class Metadata:
     def __init__(self, cwd=None):
@@ -27,9 +31,22 @@ class Metadata:
         return metadata
 
     def _git_available(self):
-        ret = utils.subprocess_run(['git', 'status'], cwd=self._cwd)
-        if not ret.returncode:
-            return True
+        try:
+            ret = utils.subprocess_run(['git', 'status'], cwd=self._cwd)
+            if not ret.returncode:
+                return True
+            logger.warning("Failed running 'git status', %s", ret.stderr)
+        except FileNotFoundError as exc:
+            msg = """
+    Couldn't find git executable, repository information
+    will not be included in the AppMap.
+
+    Make sure git is installed and that your PATH is set
+    correctly.
+
+    Error: %s
+    """
+            logger.warning(msg, str(exc))
 
         return False
 
