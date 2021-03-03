@@ -13,6 +13,7 @@ import yaml
 
 from . import env
 from . import event
+from .event import CallEvent
 from .recording import Recorder, Filter
 from .utils import appmap_tls, split_function_name, fqname
 
@@ -79,12 +80,12 @@ def is_instrumentation_disabled():
     return appmap_tls().setdefault('instrumentation_disabled', False)
 
 
-def wrap(fn, isstatic):
+def wrap(fn, fntype):
     """return a wrapped function"""
     logger.debug('hooking %s', '.'.join(split_function_name(fn)))
 
-    make_call_event = event.CallEvent.make(fn, isstatic)
-    make_receiver = event.CallEvent.make_receiver(fn, isstatic)
+    make_call_event = event.CallEvent.make(fn, fntype)
+    params = CallEvent.make_params(fn)
 
     # django depends on being able to find the cache_clear attribute
     # on functions. Make sure it gets copied from the original to the
@@ -98,8 +99,8 @@ def wrap(fn, isstatic):
 
         with recording_disabled():
             logger.debug('%s args %s kwargs %s', fn, args, kwargs)
-            call_event = make_call_event(receiver=make_receiver(args, kwargs),
-                                         parameters=[])
+            call_event = make_call_event(
+                parameters=CallEvent.set_params(params, args, kwargs))
         call_event_id = call_event.id
         Recorder().add_event(call_event)
         start_time = time.time()
@@ -216,7 +217,7 @@ class ConfigFilter(Filter):
         logger.debug('  undecided')
         return self.next_filter.filter(class_)
 
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         logger.debug('ConfigFilter.wrap, fn %s', fn)
 
         fn_name = '.'.join(split_function_name(fn))
@@ -230,13 +231,13 @@ class ConfigFilter(Filter):
             logger.debug('  wrapped %s', wrapped)
             if wrapped is None:
                 logger.debug('  wrapping %s', fn)
-                ret = wrap(fn, isstatic)
+                ret = wrap(fn, fntype)
             else:
                 logger.debug('  already wrapped %s', fn)
                 ret = fn
             return ret
 
-        return self.next_filter.wrap(fn, isstatic)
+        return self.next_filter.wrap(fn, fntype)
 
 
 class BuiltinFilter(Filter):
@@ -257,10 +258,10 @@ class BuiltinFilter(Filter):
             return True
         return self.next_filter.filter(class_)
 
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         if self.included(fn):
-            return wrap(fn, isstatic)
-        return self.next_filter.wrap(fn, isstatic)
+            return wrap(fn, fntype)
+        return self.next_filter.wrap(fn, fntype)
 
 
 def initialize():

@@ -66,10 +66,6 @@
       "path": "example_class.py",
       "lineno": 18,
       "static": true,
-      "receiver": {
-        "class": "class",
-        "value": "example_class.ExampleClass"
-      },
       "parameters": [],
       "id": 2,
       "event": "call",
@@ -88,8 +84,10 @@
       "lineno": 4,
       "static": true,
       "receiver": {
-        "class": "class",
-        "value": "example_class.ClassMethodMixin"
+        "class": "builtins.type",
+        "kind": "req",
+        "name": "cls",
+        "value": "<class 'example_class.ExampleClass'>"
       },
       "parameters": [],
       "id": 4,
@@ -109,7 +107,9 @@
       "lineno": 10,
       "static": false,
       "receiver": {
-        "class": "example_class.Super",
+        "class": "example_class.ExampleClass",
+        "kind": "req",
+        "name": "self",
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
@@ -131,6 +131,8 @@
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
+        "kind": "req",
+        "name": "self",
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],

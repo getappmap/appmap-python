@@ -27,7 +27,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -39,7 +38,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap-class.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -51,7 +49,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap-func.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -63,7 +60,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -75,7 +71,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap-class.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -87,7 +82,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = ConfigFilter(NullFilter())
         c = mocker.Mock()
@@ -99,7 +93,6 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "true")
         monkeypatch.setenv("APPMAP_CONFIG",
                            os.path.join(data_dir, 'appmap.yml'))
-        monkeypatch.setenv("APPMAP_LOG_LEVEL", 'debug')
 
         f = mocker.Mock()
         f.__module__ = 'package1_prefix'

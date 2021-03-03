@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 
 from . import env
-from . import utils
+from .utils import FnType
 
 logger = logging.getLogger(__name__)
 
@@ -58,14 +58,17 @@ class Filter(ABC):
         """
 
     @abstractmethod
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         """
-        Determine whether the given method should be instrumented.  If
-        so, return a new function that wraps the old.  If not, return
-        the original function.  isstatic is True if fn is a static or
-        class method, False otherwise.
-        """
+        Determine whether the given function with the given type
+        should be instrumented.  If so, return a new function that
+        wraps the old.  If not, return the original function.
 
+        NB: fntype is the type of the function based on its
+        declaration.  It's not necessarily the same as
+        FnType.classify(fn), e.g. if fn is a staticmethod or a
+        classmethod.
+        """
 
 class NullFilter(Filter):
     def __init__(self, next_filter=None):
@@ -74,7 +77,7 @@ class NullFilter(Filter):
     def filter(self, class_):
         return False
 
-    def wrap(self, fn, isstatic):
+    def wrap(self, fn, fntype):
         return fn
 
 
@@ -107,8 +110,7 @@ def get_members(class_):
     def is_member_func(m):
         return (inspect.isfunction(m)
                 or inspect.ismethod(m)
-                or utils.is_staticmethod(m)
-                or utils.is_classmethod(m))
+                or FnType.classify(m) in FnType.STATIC | FnType.CLASS)
 
     ret = []
     for key in dir(class_):
@@ -195,24 +197,20 @@ class Recorder:
             functions = get_members(class_)
             logger.debug('  functions %s', functions)
             for fn_name, fn in functions:
-                isstatic = utils.is_staticmethod(fn)
-                isclass = utils.is_classmethod(fn)
-
-                static = False
-                if isstatic or isclass:
+                fntype = FnType.classify(fn)
+                if fntype in FnType.STATIC | FnType.CLASS:
                     # Static methods created with staticmethod will
                     # have a `__func__` attribute. Other static
                     # methods (e.g. builtins assigned to an attribute
                     # of a class) won't. So, use `__func__` if it's
                     # available, otherwise just wrap fn.
                     fn = getattr(fn, '__func__', fn)
-                    static = True
-                new_fn = self.filter_chain.wrap(fn, isstatic=static)
+                new_fn = self.filter_chain.wrap(fn, fntype)
 
                 if new_fn != fn:
-                    if isstatic:
+                    if fntype & FnType.STATIC:
                         new_fn = staticmethod(new_fn)
-                    elif isclass:
+                    elif fntype & FnType.CLASS:
                         new_fn = classmethod(new_fn)
                     setattr(class_, fn_name, new_fn)
 
@@ -234,7 +232,11 @@ def wrap_exec_module(exec_module):
                      args,
                      kwargs)
         exec_module(*args, **kwargs)
-        Recorder().do_import(*args, **kwargs)
+        # Only process imports if we're currently enabled. This
+        # handles the case where we previously hooked the finders, but
+        # were subsequently disabled (e.g. during testing).
+        if env.enabled():
+            Recorder().do_import(*args, **kwargs)
     setattr(wrapped_exec_module, marker, True)
     return wrapped_exec_module
 
@@ -259,6 +261,7 @@ def wrap_find_spec(find_spec):
 
 def initialize():
     Recorder.initialize()
+    # If we're not enabled, there's no reason to hook the finders.
     if env.enabled():
         wrapped_attr = '_appmap_find_spec'
         logger.debug('sys.metapath: %s', sys.meta_path)
@@ -274,13 +277,12 @@ def initialize():
             # similar to the processing of instrumented functions
             # above. At some point, we should see if we can DRY them
             # up.
-            isstatic = utils.is_staticmethod(fn)
-            isclass = utils.is_classmethod(fn)
-            if isstatic or isclass:
+            fntype = FnType.classify(fn)
+            if fntype in FnType.STATIC | FnType.CLASS:
                 # Wrap the function that was decorated (by
                 # staticmethod or classmethod)
                 new_fn = wrap_find_spec(fn.__func__)
-                if isstatic:
+                if fntype & FnType.STATIC:
                     # I don't understand why assigning a new
                     # staticmethod in a finder doesn't work for older
                     # versions of python.
@@ -299,7 +301,7 @@ def initialize():
                     # for new versions of python.)
                     if sys.version_info >= (3,8):
                         new_fn = staticmethod(new_fn)
-                elif isclass:
+                elif fntype & FnType.CLASS:
                     new_fn = classmethod(new_fn)
                 setattr(new_fn, wrapped_attr, True)
             else:

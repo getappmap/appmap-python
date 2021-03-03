@@ -34,6 +34,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
@@ -49,6 +51,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
@@ -70,6 +74,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
