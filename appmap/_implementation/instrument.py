@@ -38,7 +38,7 @@ def instrument(fn, fntype):
     # wrapped function.
     #
     # Going forward, we should consider how to make this more general.
-    @wraps(fn, assigned = WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
+    @wraps(fn, assigned=WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
     def instrumented_fn(*args, **kwargs):
         if not Recorder().enabled or is_instrumentation_disabled():
             return fn(*args, **kwargs)
@@ -54,7 +54,9 @@ def instrument(fn, fntype):
             ret = fn(*args, **kwargs)
             elapsed_time = time.time() - start_time
 
-            return_event = event.ReturnEvent(parent_id=call_event_id, elapsed=elapsed_time)
+            return_event = event.FuncReturnEvent(return_value=ret,
+                                                 parent_id=call_event_id,
+                                                 elapsed=elapsed_time)
             Recorder().add_event(return_event)
             return ret
         except Exception:  # noqa: E722

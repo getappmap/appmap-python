@@ -45,6 +45,23 @@ class _EventIds:
         cls._next_thread_id = 0
 
 
+def display_string(val):
+    # Make a best-effort attempt to get a string value for the
+    # parameter. If str() and repr() raise, formulate a value from
+    # the class and id.
+    try:
+        value = str(val)
+    except Exception:  # pylint: disable=broad-except
+        try:
+            value = repr(val)
+        except Exception:  # pylint: disable=broad-except
+            class_name = fqname(type(val))
+            object_id = id(val)
+            value = '<%s object at %#02x>' % (class_name, object_id)
+
+    return value
+
+
 class Event:
     __slots__ = ['id', 'event', 'thread_id']
 
@@ -88,24 +105,14 @@ class Param:
     def __repr__(self):
         return '<Param name: %s kind: %s>' % (self.name, self.kind)
 
-    def to_dict(self, val):
-        class_name = fqname(type(val))
-        object_id = id(val)
+    def to_dict(self, value):
+        class_name = fqname(type(value))
+        object_id = id(value)
 
-        # Make a best-effort attempt to get a string value for the
-        # parameter. If str() and repr() raise, formulate a value from
-        # the class and id.
-        try:
-            value = str(val)
-        except Exception:  # pylint: disable=broad-except
-            try:
-                value = repr(val)
-            except Exception:  # pylint: disable=broad-except
-                value = '<%s object at %#02x>' % (class_name, object_id)
         return {
             "name": self.name,
             "class": class_name,
-            "value": value,
+            "value": display_string(value),
             "object_id": object_id,
             "kind": self.kind
         }
@@ -217,6 +224,14 @@ class ReturnEvent(Event):
         super().__init__('return')
         self.parent_id = parent_id
         self.elapsed = elapsed
+
+
+class FuncReturnEvent(ReturnEvent):
+    __slots__ = ['return_value']
+
+    def __init__(self, parent_id, elapsed, return_value):
+        super().__init__(parent_id, elapsed)
+        self.return_value = display_string(return_value)
 
 
 class HttpResponseEvent(ReturnEvent):
