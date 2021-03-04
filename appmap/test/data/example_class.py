@@ -8,6 +8,9 @@ class ClassMethodMixin:
 
 class Super:
     def instance_method(self):
+        return self.method_not_called_directly()
+
+    def method_not_called_directly(self):
         return 'Super#instance_method'
 
 

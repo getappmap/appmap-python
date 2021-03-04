@@ -36,7 +36,7 @@ class Config:
 
         config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
         with open(config_file) as file:
-            self._config = yaml.load(file, Loader=yaml.BaseLoader)
+            self._config = yaml.safe_load(file)
             logger.debug('self._config %s', self._config)
 
         self._initialized = True
@@ -70,10 +70,11 @@ def startswith(prefix, sequence):
 
 
 class PathMatcher:
-    def __init__(self, prefix, excludes=None):
+    def __init__(self, prefix, excludes=None, shallow=False):
         excludes = excludes or []
         self.prefix = prefix.split('.')
         self.excludes = [x.split('.') for x in excludes]
+        self.shallow = shallow
 
     def matches(self, obj):
         name = splitname(obj)
@@ -86,7 +87,11 @@ class PathMatcher:
         return result
 
     def __repr__(self):
-        return 'PathMatcher(%r, %r)' % ('.'.join(self.prefix), ['.'.join(ex) for ex in self.excludes])
+        return 'PathMatcher(%r, %r, shallow=%r)' % (
+            '.'.join(self.prefix),
+            ['.'.join(ex) for ex in self.excludes],
+            self.shallow
+        )
 
 
 class MatcherFilter(Filter):
@@ -100,12 +105,15 @@ class MatcherFilter(Filter):
         return result
 
     def wrap(self, fn, fntype):
-        if self.included(fn):
+        rule = self.match(fn)
+        if rule:
             wrapped = getattr(fn, '_appmap_wrapped', None)
             logger.debug('  wrapped %s', wrapped)
             if wrapped is None:
                 logger.debug('  wrapping %s', fn)
                 ret = instrument(fn, fntype)
+                if rule.shallow:
+                    setattr(ret, '_appmap_shallow', rule)
             else:
                 logger.debug('  already wrapped %s', fn)
                 ret = fn
@@ -114,14 +122,20 @@ class MatcherFilter(Filter):
         return self.next_filter.wrap(fn, fntype)
 
     def included(self, fn):
-        return any(m.matches(fn) for m in self.matchers)
+        return self.match(fn) is not None
+
+    def match(self, fn):
+        return next((m for m in self.matchers if m.matches(fn)), None)
 
 
 class ConfigFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [PathMatcher(p['path'], p.get('exclude', [])) for p in Config().packages]
+            matchers = [PathMatcher(
+                p['path'], p.get('exclude', []),
+                shallow=p.get('shallow', False)
+            ) for p in Config().packages]
         super().__init__(matchers, *args, **kwargs)
 
 

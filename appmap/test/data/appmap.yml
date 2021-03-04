@@ -1,4 +1,7 @@
 name: TestApp
 packages:
+# note: this rule needs to go first, before the more general rule
+- path: example_class.Super
+  shallow: true
 - path: example_class
 - path: package1
