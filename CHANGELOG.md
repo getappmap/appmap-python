@@ -5,13 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Packages in config file can now be set for 'shallow' tracking. This eliminates most of
+  the intrapackage execution flow from tracking and produces lighter appmaps where we're
+  only interested in surface interaction with a third-party piece of code.
+
 ## [0.1.0.dev12] - 2021-03-05
 ### Fixed
 - [#29] `call` events now show the parameters the function was called with.
 - `return` events show the function's return value.
 - The `exceptions` attribute of a `return` event now has the correct structure.
 - [#46] Source file locations in an AppMap are now relative to the starting directory.
-- [#54] Write metadata even if `git` can't be found on `PATH`. 
+- [#54] Write metadata even if `git` can't be found on `PATH`.
 
 ## [0.1.0.dev11] - 2021-02-28
 ### Added

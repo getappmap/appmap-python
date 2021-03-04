@@ -33,13 +33,13 @@
             {
               "name": "static_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:18",
+              "location": "appmap/test/data/example_class.py:21",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:25",
+              "location": "appmap/test/data/example_class.py:28",
               "static": false
             }
           ]
@@ -64,7 +64,7 @@
       "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 18,
+      "lineno": 21,
       "static": true,
       "parameters": [],
       "id": 2,
@@ -130,7 +130,7 @@
       "defined_class": "example_class.ExampleClass",
       "method_id": "test_exception",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 25,
+      "lineno": 28,
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
