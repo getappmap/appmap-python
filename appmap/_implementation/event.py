@@ -5,6 +5,7 @@ from itertools import chain
 import logging
 import threading
 
+from .env import Env
 from .utils import appmap_tls, split_function_name, fqname, FnType
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,8 @@ class CallEvent(Event):
 
         try:
             path = inspect.getsourcefile(fn)
+            if path.startswith(Env.current.root_dir):
+                path = path[Env.current.root_dir_len:]
         except TypeError:
             path = '<builtin>'
 
