@@ -5,7 +5,7 @@ import sys
 from abc import ABC, abstractmethod
 from functools import wraps
 
-from . import env
+from .env import Env
 from .utils import FnType
 
 logger = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ class Recording:
 
     def start(self):
 
-        if not env.enabled():
+        if not Env.current.enabled:
             return
 
         Recorder().start_recording()
 
     def stop(self):
-        if not env.enabled():
+        if not Env.current.enabled:
             return False
 
         self.events = Recorder().stop_recording()
@@ -235,7 +235,7 @@ def wrap_exec_module(exec_module):
         # Only process imports if we're currently enabled. This
         # handles the case where we previously hooked the finders, but
         # were subsequently disabled (e.g. during testing).
-        if env.enabled():
+        if Env.current.enabled:
             Recorder().do_import(*args, **kwargs)
     setattr(wrapped_exec_module, marker, True)
     return wrapped_exec_module
@@ -262,7 +262,7 @@ def wrap_find_spec(find_spec):
 def initialize():
     Recorder.initialize()
     # If we're not enabled, there's no reason to hook the finders.
-    if env.enabled():
+    if Env.current.enabled:
         wrapped_attr = '_appmap_find_spec'
         logger.debug('sys.metapath: %s', sys.meta_path)
         for h in sys.meta_path:

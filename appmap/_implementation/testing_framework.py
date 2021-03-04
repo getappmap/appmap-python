@@ -92,11 +92,11 @@ class session:
 
     @contextmanager
     def record(self, klass, method, **kwds):
-        if not env.enabled():
+        if not env.Env.current.enabled:
             yield
             return
 
-        self.appmap_path = Path(configuration.Config().output_dir) / self.name
+        self.appmap_path = Path(env.Env.current.output_dir) / self.name
         self.appmap_path.mkdir(parents=True, exist_ok=True)
 
         framework = {'name': self.name}

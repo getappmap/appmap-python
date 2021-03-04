@@ -3,19 +3,15 @@ Manage Configuration AppMap recorder for Python.
 """
 
 import logging
-import os
-import sys
-from contextlib import contextmanager
-from functools import wraps, WRAPPER_ASSIGNMENTS
-import time
+import os.path
 
 import yaml
 
-from . import env
-from . import event
-from .event import CallEvent
+from .env import Env
+from .instrument import instrument
+
 from .recording import Recorder, Filter
-from .utils import appmap_tls, split_function_name, fqname
+from .utils import split_function_name, fqname
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +27,7 @@ class Config:
 
             # If we're not enabled, no more initialization needs to be
             # done.
-            cls._instance._initialized = not env.enabled()
+            cls._instance._initialized = not Env.current.enabled
 
         return cls._instance
 
@@ -44,18 +40,11 @@ class Config:
             self._config = yaml.load(file, Loader=yaml.BaseLoader)
             logger.debug('self._config %s', self._config)
 
-        out_dir = os.getenv("APPMAP_OUTPUT_DIR", os.path.join('tmp', 'appmap'))
-        self._output_dir = os.path.abspath(out_dir)
-
         self._initialized = True
 
     @classmethod
     def initialize(cls):
         cls._instance = None
-
-    @property
-    def output_dir(self):
-        return self._output_dir
 
     @property
     def name(self):
@@ -64,61 +53,6 @@ class Config:
     @property
     def packages(self):
         return self._config['packages']
-
-
-@contextmanager
-def recording_disabled():
-    tls = appmap_tls()
-    tls['instrumentation_disabled'] = True
-    try:
-        yield
-    finally:
-        tls['instrumentation_disabled'] = False
-
-
-def is_instrumentation_disabled():
-    return appmap_tls().setdefault('instrumentation_disabled', False)
-
-
-def wrap(fn, fntype):
-    """return a wrapped function"""
-    logger.debug('hooking %s', '.'.join(split_function_name(fn)))
-
-    make_call_event = event.CallEvent.make(fn, fntype)
-    params = CallEvent.make_params(fn)
-
-    # django depends on being able to find the cache_clear attribute
-    # on functions. Make sure it gets copied from the original to the
-    # wrapped function.
-    #
-    # Going forward, we should consider how to make this more general.
-    @wraps(fn, assigned = WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
-    def wrapped_fn(*args, **kwargs):
-        if not Recorder().enabled or is_instrumentation_disabled():
-            return fn(*args, **kwargs)
-
-        with recording_disabled():
-            logger.debug('%s args %s kwargs %s', fn, args, kwargs)
-            call_event = make_call_event(
-                parameters=CallEvent.set_params(params, args, kwargs))
-        call_event_id = call_event.id
-        Recorder().add_event(call_event)
-        start_time = time.time()
-        try:
-            ret = fn(*args, **kwargs)
-            elapsed_time = time.time() - start_time
-
-            return_event = event.ReturnEvent(parent_id=call_event_id, elapsed=elapsed_time)
-            Recorder().add_event(return_event)
-            return ret
-        except Exception:  # noqa: E722
-            elapsed_time = time.time() - start_time
-            Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
-                                                      elapsed=elapsed_time,
-                                                      exc_info=sys.exc_info()))
-            raise
-    setattr(wrapped_fn, '_appmap_wrapped', True)
-    return wrapped_fn
 
 
 def name_in_set(name, which):
@@ -180,7 +114,7 @@ class ConfigFilter(Filter):
         self._includes = set()
         self._excludes = set()
 
-        if not env.enabled():
+        if not Env.current.enabled:
             return
 
         for package in Config().packages:
@@ -231,7 +165,7 @@ class ConfigFilter(Filter):
             logger.debug('  wrapped %s', wrapped)
             if wrapped is None:
                 logger.debug('  wrapping %s', fn)
-                ret = wrap(fn, fntype)
+                ret = instrument(fn, fntype)
             else:
                 logger.debug('  already wrapped %s', fn)
                 ret = fn
@@ -243,7 +177,7 @@ class ConfigFilter(Filter):
 class BuiltinFilter(Filter):
     def __init__(self, *args):
         super().__init__(*args)
-        if not env.enabled():
+        if not Env.current.enabled:
             self._includes = set()
             return
 
@@ -260,7 +194,7 @@ class BuiltinFilter(Filter):
 
     def wrap(self, fn, fntype):
         if self.included(fn):
-            return wrap(fn, fntype)
+            return instrument(fn, fntype)
         return self.next_filter.wrap(fn, fntype)
 
 

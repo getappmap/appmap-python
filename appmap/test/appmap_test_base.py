@@ -1,5 +1,4 @@
 from operator import itemgetter
-import os
 import platform
 import re
 
