@@ -2,6 +2,8 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+import importlib_metadata
+import inspect
 import logging
 import os.path
 
@@ -72,7 +74,9 @@ def startswith(prefix, sequence):
 class PathMatcher:
     def __init__(self, prefix, excludes=None, shallow=False):
         excludes = excludes or []
-        self.prefix = prefix.split('.')
+        self.prefix = []
+        if prefix:
+            self.prefix = prefix.split('.')
         self.excludes = [x.split('.') for x in excludes]
         self.shallow = shallow
 
@@ -83,11 +87,36 @@ class PathMatcher:
             result = not any(startswith(x, name) for x in self.excludes)
         else:
             result = False
-        logger.debug('PathMatcher.matches(%r, %r) -> %r', self, obj, result)
+        logger.debug('%r.matches(%r) -> %r', self, obj, result)
         return result
 
     def __repr__(self):
         return 'PathMatcher(%r, %r, shallow=%r)' % (
+            '.'.join(self.prefix),
+            ['.'.join(ex) for ex in self.excludes],
+            self.shallow
+        )
+
+
+class DistMatcher(PathMatcher):
+    def __init__(self, dist, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dist = dist
+        self.files = [str(pp.locate()) for pp in importlib_metadata.files(dist)]
+
+    def matches(self, obj):
+        try:
+            logger.debug('%r.matches(%r): %s in %r', self, obj, inspect.getfile(obj), self.files)
+            if inspect.getfile(obj) not in self.files:
+                return False
+        except TypeError:
+            # builtins don't have file associated
+            return False
+        return super().matches(obj)
+
+    def __repr__(self):
+        return 'DistMatcher(%r, %r, %r, shallow=%r)' % (
+            self.dist,
             '.'.join(self.prefix),
             ['.'.join(ex) for ex in self.excludes],
             self.shallow
@@ -128,14 +157,27 @@ class MatcherFilter(Filter):
         return next((m for m in self.matchers if m.matches(fn)), None)
 
 
+def matcher_of_config(package):
+    dist = package.get('dist', None)
+    if dist:
+        return DistMatcher(
+            dist,
+            package.get('path', None),
+            package.get('exclude', []),
+            shallow=package.get('shallow', True)
+        )
+    return PathMatcher(
+        package['path'],
+        package.get('exclude', []),
+        shallow=package.get('shallow', False)
+    )
+
+
 class ConfigFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [PathMatcher(
-                p['path'], p.get('exclude', []),
-                shallow=p.get('shallow', False)
-            ) for p in Config().packages]
+            matchers = [matcher_of_config(p) for p in Config().packages]
         super().__init__(matchers, *args, **kwargs)
 
 

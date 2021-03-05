@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packages in config file can now be set for 'shallow' tracking. This eliminates most of
   the intrapackage execution flow from tracking and produces lighter appmaps where we're
   only interested in surface interaction with a third-party piece of code.
+- [#48] Allow specifying distributions (aka. packages) as filters in appmap.yml.
 
 ## [0.1.0.dev12] - 2021-03-05
 ### Fixed
