@@ -3,7 +3,7 @@ import time
 class ClassMethodMixin:
     @classmethod
     def class_method(cls):
-        return 'ClassMethodMixin#class_method, cls %s' % (cls)
+        return 'ClassMethodMixin#class_method, cls %s' % (cls.__name__)
 
 
 class Super:

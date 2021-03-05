@@ -85,29 +85,31 @@ class FuncItem:
 
 class session:
     def __init__(self, name, version=None):
-        if not env.enabled():
+        self.name = name
+        self.version = version
+        self.appmap_path = None
+        self.metadata = None
+
+    @contextmanager
+    def record(self, klass, method, **kwds):
+        if not env.Env.current.enabled:
+            yield
             return
 
-        self.appmap_path = Path(configuration.Config().output_dir) / name
+        self.appmap_path = Path(env.Env.current.output_dir) / self.name
         self.appmap_path.mkdir(parents=True, exist_ok=True)
 
-        framework = {'name': name}
-        if version is not None:
-            framework['version'] = version
+        framework = {'name': self.name}
+        if self.version is not None:
+            framework['version'] = self.version
 
         self.metadata = {
             'app': configuration.Config().name,
             'frameworks': [framework],
             'recorder': {
-                'name': name
+                'name': self.name
             }
         }
-
-    @contextmanager
-    def record(self, klass, method, **kwds):
-        if not env.enabled():
-            yield
-            return
 
         rec = recording.Recording()
         with rec:

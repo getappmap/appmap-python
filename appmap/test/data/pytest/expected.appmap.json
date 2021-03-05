@@ -29,6 +29,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
@@ -44,6 +46,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
@@ -55,6 +59,7 @@
       "parent_id": 3,
       "id": 4,
       "event": "return",
+      "return_value": "Hello",
       "thread_id": 1
     },
     {
@@ -65,6 +70,8 @@
       "static": false,
       "receiver": {
         "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
@@ -76,12 +83,14 @@
       "parent_id": 5,
       "id": 6,
       "event": "return",
+      "return_value": "world!",
       "thread_id": 1
     },
     {
       "parent_id": 2,
       "id": 7,
       "event": "return",
+      "return_value": "Hello world!",
       "thread_id": 1
     }
   ],

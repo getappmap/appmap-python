@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Write metadata even if `git` can't be found on `PATH`. 
+- [#29] `call` events now show the parameters the function was called with.
+- `return` events show the function's return value.
+- The `exceptions` attribute of a `return` event now has the correct structure.
+- [#46] Source file locations in an AppMap are now relative to the starting directory.
+- [#54] Write metadata even if `git` can't be found on `PATH`. 
 
 ## [0.1.0.dev11] - 2021-02-28
 ### Added

@@ -1,5 +1,4 @@
 from operator import itemgetter
-import os
 import platform
 import re
 
@@ -65,17 +64,11 @@ class AppMapTestBase:
                 assert isinstance(elapsed, float)
             if 'git' in dct:
                 self.normalize_git(dct.pop('git'))
-            if 'location' in dct:
-                path, line = dct['location'].split(':')
-                path = os.path.basename(path)
-                dct['location'] = ':'.join([path, line])
             if 'metadata' in dct:
                 self.normalize_metadata(dct['metadata'])
             if 'object_id' in dct:
                 object_id = dct.pop('object_id')
                 assert isinstance(object_id, int)
-            if 'path' in dct:
-                dct['path'] = os.path.basename(dct['path'])
             if 'value' in dct:
                 # This maps all object references to the same
                 # location. We don't actually need to verify that the

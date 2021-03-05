@@ -21,7 +21,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "location": "example_class.py:4",
+              "location": "appmap/test/data/example_class.py:4",
               "static": true
             }
           ]
@@ -33,13 +33,13 @@
             {
               "name": "static_method",
               "type": "function",
-              "location": "example_class.py:18",
+              "location": "appmap/test/data/example_class.py:18",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "location": "example_class.py:25",
+              "location": "appmap/test/data/example_class.py:25",
               "static": false
             }
           ]
@@ -51,7 +51,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "location": "example_class.py:10",
+              "location": "appmap/test/data/example_class.py:10",
               "static": false
             }
           ]
@@ -63,13 +63,9 @@
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
-      "path": "example_class.py",
+      "path": "appmap/test/data/example_class.py",
       "lineno": 18,
       "static": true,
-      "receiver": {
-        "class": "class",
-        "value": "example_class.ExampleClass"
-      },
       "parameters": [],
       "id": 2,
       "event": "call",
@@ -79,17 +75,20 @@
       "parent_id": 2,
       "id": 3,
       "event": "return",
+      "return_value": "ExampleClass.static_method",
       "thread_id": 1
     },
     {
       "defined_class": "example_class.ClassMethodMixin",
       "method_id": "class_method",
-      "path": "example_class.py",
+      "path": "appmap/test/data/example_class.py",
       "lineno": 4,
       "static": true,
       "receiver": {
-        "class": "class",
-        "value": "example_class.ClassMethodMixin"
+        "class": "builtins.type",
+        "kind": "req",
+        "name": "cls",
+        "value": "<class 'example_class.ExampleClass'>"
       },
       "parameters": [],
       "id": 4,
@@ -100,16 +99,19 @@
       "parent_id": 4,
       "id": 5,
       "event": "return",
+      "return_value": "ClassMethodMixin#class_method, cls ExampleClass",
       "thread_id": 1
     },
     {
       "defined_class": "example_class.Super",
       "method_id": "instance_method",
-      "path": "example_class.py",
+      "path": "appmap/test/data/example_class.py",
       "lineno": 10,
       "static": false,
       "receiver": {
-        "class": "example_class.Super",
+        "class": "example_class.ExampleClass",
+        "kind": "req",
+        "name": "self",
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
@@ -121,16 +123,19 @@
       "parent_id": 6,
       "id": 7,
       "event": "return",
+      "return_value": "Super#instance_method",
       "thread_id": 1
     },
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "test_exception",
-      "path": "example_class.py",
+      "path": "appmap/test/data/example_class.py",
       "lineno": 25,
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
+        "kind": "req",
+        "name": "self",
         "value": "ExampleClass and ExampleClass#another_method"
       },
       "parameters": [],
@@ -145,10 +150,8 @@
       "thread_id": 1,
       "exceptions": [
         {
-          "exceptions": {
-            "class": "builtins.Exception",
-            "message": "test exception"
-          }
+          "class": "builtins.Exception",
+          "message": "test exception"
         }
       ]
     }

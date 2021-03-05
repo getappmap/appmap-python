@@ -5,6 +5,31 @@ import shlex
 import subprocess
 import os
 
+from ._intflag import _IntFlag
+
+
+# FnType can inherit from IntFlag instead once we drop support for 3.5
+class FnType(_IntFlag):
+    STATIC = 1
+    CLASS = 2
+    INSTANCE = 4
+
+    # Don't use these. They're only here so we don't have to implement
+    # something like enum.IntFlag._create_pseudo_member_.
+    _zero = 0
+    _three = STATIC | CLASS
+    _six = CLASS | INSTANCE
+
+    @staticmethod
+    def classify(fn):
+        if isinstance(fn, (staticmethod, types.BuiltinMethodType)):
+            return FnType.STATIC
+        elif isinstance(fn, (classmethod, types.BuiltinMethodType)):
+            return FnType.CLASS
+        else:
+            return FnType.INSTANCE
+
+
 class ThreadLocalDict(threading.local, MutableMapping):
     def __init__(self):
         super().__init__()
@@ -31,14 +56,6 @@ _appmap_tls = ThreadLocalDict()
 
 def appmap_tls():
     return _appmap_tls
-
-
-def is_staticmethod(m):
-    return isinstance(m, (staticmethod, types.BuiltinMethodType))
-
-
-def is_classmethod(m):
-    return isinstance(m, (classmethod, types.BuiltinMethodType))
 
 
 def fqname(cls):

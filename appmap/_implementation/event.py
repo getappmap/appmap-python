@@ -1,9 +1,14 @@
-import inspect
-import threading
-from itertools import chain
 from functools import partial
+import inspect
+from inspect import Parameter, Signature
+from itertools import chain
+import logging
+import threading
 
-from .utils import appmap_tls, split_function_name, fqname
+from .env import Env
+from .utils import appmap_tls, split_function_name, fqname, FnType
+
+logger = logging.getLogger(__name__)
 
 
 class _EventIds:
@@ -40,6 +45,23 @@ class _EventIds:
         cls._next_thread_id = 0
 
 
+def display_string(val):
+    # Make a best-effort attempt to get a string value for the
+    # parameter. If str() and repr() raise, formulate a value from
+    # the class and id.
+    try:
+        value = str(val)
+    except Exception:  # pylint: disable=broad-except
+        try:
+            value = repr(val)
+        except Exception:  # pylint: disable=broad-except
+            class_name = fqname(type(val))
+            object_id = id(val)
+            value = '<%s object at %#02x>' % (class_name, object_id)
+
+    return value
+
+
 class Event:
     __slots__ = ['id', 'event', 'thread_id']
 
@@ -49,14 +71,51 @@ class Event:
         self.thread_id = _EventIds.get_thread_id()
 
     def to_dict(self):
-        return {
-            k: getattr(self, k, None)
-            for k in chain.from_iterable(getattr(cls, '__slots__', [])
-                                         for cls in type(self).__mro__)
-        }
+        ret = {}
+        for k in chain.from_iterable(getattr(cls, '__slots__', [])
+                                     for cls in type(self).__mro__):
+            a = getattr(self, k, None)
+            if a is not None:
+                ret[k] = a
+        return ret
 
     def __repr__(self):
         return repr(self.to_dict())
+
+
+class Param:
+    __slots__ = ['name', 'kind', 'default', 'default_class']
+
+    def __init__(self, sigp):
+        self.name = sigp.name
+        has_default = sigp.default is not Signature.empty
+        if (sigp.kind == Parameter.POSITIONAL_ONLY
+            or sigp.kind == Parameter.POSITIONAL_OR_KEYWORD):  # noqa: E129
+            self.kind = 'opt' if has_default else 'req'
+        elif sigp.kind == Parameter.VAR_POSITIONAL:
+            self.kind = 'rest'
+        elif sigp.kind == Parameter.KEYWORD_ONLY:
+            self.kind = 'key' if has_default else 'keyreq'
+        elif sigp.kind == Parameter.VAR_KEYWORD:
+            self.kind = 'keyrest'
+        if has_default:
+            self.default = sigp.default
+            self.default_class = fqname(type(self.default))
+
+    def __repr__(self):
+        return '<Param name: %s kind: %s>' % (self.name, self.kind)
+
+    def to_dict(self, value):
+        class_name = fqname(type(value))
+        object_id = id(value)
+
+        return {
+            "name": self.name,
+            "class": class_name,
+            "value": display_string(value),
+            "object_id": object_id,
+            "kind": self.kind
+        }
 
 
 class CallEvent(Event):
@@ -64,7 +123,7 @@ class CallEvent(Event):
                  'static', 'receiver', 'parameters']
 
     @staticmethod
-    def make(fn, isstatic):
+    def make(fn, fntype):
         """
         Return a factory for creating new CallEvents based on
         introspecting the given function.
@@ -73,6 +132,8 @@ class CallEvent(Event):
 
         try:
             path = inspect.getsourcefile(fn)
+            if path.startswith(Env.current.root_dir):
+                path = path[Env.current.root_dir_len:]
         except TypeError:
             path = '<builtin>'
 
@@ -82,51 +143,55 @@ class CallEvent(Event):
             lineno = 0
 
         return partial(CallEvent, defined_class,
-                       method_id, path, lineno, isstatic)
+                       method_id, path, lineno, fntype)
 
     @staticmethod
-    def make_receiver(fn, isstatic):
-        """
-        Create the receiver object that should be part of the call
-        event for the given function.
-        """
-        defined_class, __ = split_function_name(fn)
-        if isstatic:
-            cls = "class"
-            value = defined_class
-            object_id = id(defined_class)
-        else:
-            cls = defined_class
-            value = None
-            object_id = None
+    def make_params(fn):
+        sig = inspect.signature(fn)
+        return [Param(p) for p in sig.parameters.values()]
 
-        def make(cls, value, object_id, *args):
-            if not isstatic:
-                object_id = id(args[0][0])
-                slf = args[0][0]
-                # Make a best-effort attempt to get a string value for
-                # the receiver. If repr() raises, formulate a
-                # value from the class and id.
-                try:
-                    value = repr(slf)
-                except Exception:  # pylint: disable=broad-except
-                    value = '<%s object at %#x>' % (defined_class, object_id)
-            return {
-                "class": cls,
-                "value": value,
-                "object_id": object_id
-            }
-        return partial(make, cls, value, object_id)
+    @staticmethod
+    def set_params(params, args, kwargs):
+        # Note that set_params expects args and kwargs as a tuple and
+        # dict, respectively. It operates on them as collections, so
+        # it doesn't unpack them.
+        ret = []
+        for p in params:
+            if p.kind == 'req':
+                # A 'req' argument can be either keyword or
+                # positional.
+                if p.name in kwargs:
+                    value = kwargs.pop(p.name)
+                else:
+                    value = args[0]
+                    args = args[1:]
+            elif p.kind == 'keyreq':
+                value = kwargs.pop(p.name)
+            elif p.kind == 'opt' or p.kind == 'key':
+                value = kwargs.pop(p.name, p.default)
+            elif p.kind == 'rest':
+                value = args
+            elif p.kind == 'keyrest':
+                value = kwargs
+            else:
+                # If all the parameter types are handled, this
+                # shouldn't ever happen...
+                raise RuntimeError('Unknown parameter with desc %s' % (repr(p)))
+            ret.append(p.to_dict(value))
+        return ret
 
     def __init__(self, defined_class, method_id, path, lineno,
-                 static, receiver, parameters):
+                 fntype, parameters):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
         self.path = path
         self.lineno = lineno
-        self.static = static
-        self.receiver = receiver
+        self.static = fntype in FnType.STATIC | FnType.CLASS
+        self.receiver = None
+        if fntype in FnType.CLASS | FnType.INSTANCE:
+            self.receiver = parameters[0]
+            parameters = parameters[1:]
         self.parameters = parameters
 
 
@@ -161,6 +226,14 @@ class ReturnEvent(Event):
         self.elapsed = elapsed
 
 
+class FuncReturnEvent(ReturnEvent):
+    __slots__ = ['return_value']
+
+    def __init__(self, parent_id, elapsed, return_value):
+        super().__init__(parent_id, elapsed)
+        self.return_value = display_string(return_value)
+
+
 class HttpResponseEvent(ReturnEvent):
     __slots__ = ['http_server_response']
 
@@ -179,11 +252,9 @@ class ExceptionEvent(ReturnEvent):
         super().__init__(parent_id, elapsed)
         class_, exc, __ = exc_info
         self.exceptions = [{
-            'exceptions': {
-                'class': fqname(class_),
-                'message': str(exc),
-                'object_id': id(exc),
-            }
+            'class': fqname(class_),
+            'message': str(exc),
+            'object_id': id(exc)
         }]
 
 
