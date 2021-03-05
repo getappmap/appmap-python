@@ -266,49 +266,12 @@ def initialize():
         wrapped_attr = '_appmap_find_spec'
         logger.debug('sys.metapath: %s', sys.meta_path)
         for h in sys.meta_path:
-            fn = inspect.getattr_static(h, 'find_spec', None)
+            fn = getattr(h, 'find_spec', None)
             if fn is None:
                 continue
             if getattr(fn, wrapped_attr, None) is not None:
                 logger.debug('meta path finder find_spec, already wrapped')
                 continue
-
-            # XXX This processing of the find_spec method is very
-            # similar to the processing of instrumented functions
-            # above. At some point, we should see if we can DRY them
-            # up.
-            fntype = FnType.classify(fn)
-            if fntype in FnType.STATIC | FnType.CLASS:
-                # Wrap the function that was decorated (by
-                # staticmethod or classmethod)
-                new_fn = wrap_find_spec(fn.__func__)
-                if fntype & FnType.STATIC:
-                    # I don't understand why assigning a new
-                    # staticmethod in a finder doesn't work for older
-                    # versions of python.
-                    #
-                    # After we assign the new staticmethod to the
-                    # class, the code in importlib._bootstrap insists
-                    # on trying to call staticmethod object itself,
-                    # instead of using the descriptor protocol to call
-                    # the function it wraps.  I tried adding some
-                    # prints to importlib._bootstrap to debug, but
-                    # that caused the problem to stop happening(!).
-                    # So, for now, don't wrap new_fn in staticmethod,
-                    # just assign it directly.
-                    #
-                    # (It's possible that this code is never called
-                    # for new versions of python.)
-                    if sys.version_info >= (3,8):
-                        new_fn = staticmethod(new_fn)
-                elif fntype & FnType.CLASS:
-                    new_fn = classmethod(new_fn)
-                setattr(new_fn, wrapped_attr, True)
-            else:
-                # Wrap the function, bind it to the finder instance
-                # that's on sys.meta_path.
-                new_fn = wrap_find_spec(fn)
-                setattr(new_fn, wrapped_attr, True)
-                new_fn = new_fn.__get__(h)
-
+            new_fn = wrap_find_spec(fn)
+            setattr(new_fn, wrapped_attr, True)
             h.find_spec = new_fn
