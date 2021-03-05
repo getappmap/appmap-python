@@ -8,6 +8,13 @@ import pytest
 import appmap._implementation
 
 
+def normalize_path(path):
+    """
+    Normalize absolute path to a file in a package down to a package path.
+    Not foolproof, but good enough for the tests.
+    """
+    return re.sub(r"^.*site-packages/", "", path)
+
 class AppMapTestBase:
     def setup_method(self, _):
         appmap._implementation.initialize()  # pylint: disable=protected-access
@@ -64,6 +71,10 @@ class AppMapTestBase:
                 assert isinstance(elapsed, float)
             if 'git' in dct:
                 self.normalize_git(dct.pop('git'))
+            if 'location' in dct:
+                dct['location'] = normalize_path(dct['location'])
+            if 'path' in dct:
+                dct['path'] = normalize_path(dct['path'])
             if 'metadata' in dct:
                 self.normalize_metadata(dct['metadata'])
             if 'object_id' in dct:

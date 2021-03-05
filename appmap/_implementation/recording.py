@@ -275,3 +275,12 @@ def initialize():
             new_fn = wrap_find_spec(fn)
             setattr(new_fn, wrapped_attr, True)
             h.find_spec = new_fn
+
+
+def instrument_module(module):
+    """
+    Force (re-)instrumentation of a module.
+    This can be useful if a module was already loaded before appmap hooks
+    were set up or configured to instrument that module.
+    """
+    Recorder().do_import(module)

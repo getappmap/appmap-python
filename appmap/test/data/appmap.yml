@@ -5,3 +5,4 @@ packages:
   shallow: true
 - path: example_class
 - path: package1
+- dist: PyYAML

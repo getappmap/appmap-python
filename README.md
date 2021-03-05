@@ -46,21 +46,38 @@ pip install appmap
 For projects that use `poetry` , add the `appmap` package to `pyproject.toml`.
 
 ## Configuration
-Add your modules as `path` entries in `appmap.yml`:
+Add your modules as `path` entries in `appmap.yml`, and external packages
+(distributions) as `dist`:
 
 ```yaml
 name: my_python_app
 packages:
 - path: app.mod1
+  shallow: true
 - path: app.mod2
   exclude:
   - MyClass
   - MyOtherClass.my_instance_method
   - MyOtherClass.my_class_method
+- dist: Django
+  exclude:
+  - django.db
 ```
 
 Note that `exclude`s are resolved relative to the associated path. So, for example, this
-configuration excludes `app.mod2.MyClass`
+configuration excludes `app.mod2.MyClass`.
+
+For external [distribution packages](https://packaging.python.org/glossary/#term-Distribution-Package)
+use the `dist` specifier; the names are looked up in the
+[database of installed Python distributions](https://www.python.org/dev/peps/pep-0376/).
+This is generally the same package name as you'd give to `pip install` or put
+in `pyproject.toml`. You can additionally use `path` and `exclude` on `dist`
+entries to limit the capture to specific patterns.
+
+Note by default shallow capture is enabled on `dist` packages, supressing tracking
+of most internal execution flow, which allows you to capture the interaction without
+getting bogged down with detail. If this isn't what you want, use `shallow: false`.
+You can also use `shallow: true` on `path` entries.
 
 ## Environment Variables
 

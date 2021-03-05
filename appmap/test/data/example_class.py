@@ -1,4 +1,5 @@
 import time
+import yaml
 
 class ClassMethodMixin:
     @classmethod
@@ -20,7 +21,7 @@ class ExampleClass(Super, ClassMethodMixin):
 
     @staticmethod
     def static_method():
-        return 'ExampleClass.static_method'
+        return yaml.dump('ExampleClass.static_method')
 
     def another_method(self):
         return "ExampleClass#another_method"
