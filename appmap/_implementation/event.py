@@ -252,11 +252,9 @@ class ExceptionEvent(ReturnEvent):
         super().__init__(parent_id, elapsed)
         class_, exc, __ = exc_info
         self.exceptions = [{
-            'exceptions': {
-                'class': fqname(class_),
-                'message': str(exc),
-                'object_id': id(exc),
-            }
+            'class': fqname(class_),
+            'message': str(exc),
+            'object_id': id(exc)
         }]
 
 

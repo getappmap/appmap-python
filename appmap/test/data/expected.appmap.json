@@ -150,10 +150,8 @@
       "thread_id": 1,
       "exceptions": [
         {
-          "exceptions": {
-            "class": "builtins.Exception",
-            "message": "test exception"
-          }
+          "class": "builtins.Exception",
+          "message": "test exception"
         }
       ]
     }
