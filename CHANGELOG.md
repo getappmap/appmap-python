@@ -5,15 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## Fixed
-- Fixed a problem where some entry points were missed in shallowly traced packages.
-- Subsequent Recording()s now don't contain previously recorded events.
 
+## [0.5.0] - 2021-03-08
 ### Added
 - Packages in config file can now be set for 'shallow' tracking. This eliminates most of
   the intrapackage execution flow from tracking and produces lighter appmaps where we're
   only interested in surface interaction with a third-party piece of code.
 - [#48] Allow specifying distributions (aka. packages) as filters in appmap.yml.
+
+## Fixed
+- Fixed a problem where some entry points were missed in shallowly traced packages.
+- Subsequent Recording()s now don't contain previously recorded events.
 
 ## [0.1.0.dev12] - 2021-03-05
 ### Fixed
@@ -147,7 +149,8 @@ testing. Also adds a Travis config to run them all.
 - Deploy release to PyPI
 
 
-[Unreleased]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev12...HEAD
+[Unreleased]: https://github.com/applandinc/appmap-python/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev12...0.5.0
 [0.1.0.dev12]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev11...0.1.0.dev12
 [0.1.0.dev11]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev10...0.1.0.dev11
 [0.1.0.dev10]: https://github.com/applandinc/appmap-python/compare/0.1.0.dev9...0.1.0.dev10
