@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ## Fixed
+- Fixed a problem where some entry points were missed in shallowly traced packages.
 - Subsequent Recording()s now don't contain previously recorded events.
 
 ### Added
