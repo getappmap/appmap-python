@@ -26,13 +26,15 @@ class Recording:
         if not Env.current.enabled:
             return
 
-        Recorder().start_recording()
+        r = Recorder()
+        r.clear()
+        r.start_recording()
 
     def stop(self):
         if not Env.current.enabled:
             return False
 
-        self.events = Recorder().stop_recording()
+        self.events += Recorder().stop_recording()
 
     def __enter__(self):
         self.start()
@@ -152,6 +154,9 @@ class Recorder:
 
     def use_filter(self, filter_class):
         self.filter_stack.append(filter_class)
+
+    def clear(self):
+        self._events = []
 
     def start_recording(self):
         logger.debug('AppMap recording started')

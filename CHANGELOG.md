@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## Fixed
+- Subsequent Recording()s now don't contain previously recorded events.
+
 ### Added
 - Packages in config file can now be set for 'shallow' tracking. This eliminates most of
   the intrapackage execution flow from tracking and produces lighter appmaps where we're
