@@ -56,6 +56,18 @@ class TestRecording(AppMapTestBase):
 
         assert rec.events[2].method_id == 'instance_method'
 
+    @pytest.mark.usefixtures('appmap_enabled')
+    def test_recording_shallow(self):
+        from example_class import ExampleClass  # pylint: disable=import-error
+        rec = appmap.Recording()
+        with rec:
+            ExampleClass.class_method()
+            ExampleClass().instance_method()
+            ExampleClass.class_method()
+            ExampleClass().instance_method()
+
+        assert len(rec.events) == 8
+
     def test_exec_module_protection(self, monkeypatch):
         """
         Test that recording.wrap_exec_module properly protects against

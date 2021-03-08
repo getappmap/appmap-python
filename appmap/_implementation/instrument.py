@@ -57,17 +57,12 @@ def track_shallow(fn):
     more complicated and can take the performance hit, your best bet is to
     record without shallow and postprocess the appmap to your liking.
     """
+    tls = appmap_tls()
     rule = getattr(fn, '_appmap_shallow', None)
     logger.debug('track_shallow(%r) [%r]', fn, rule)
-    if not rule:
-        return False
-
-    tls = appmap_tls()
-    if tls.get('last_rule', None) == rule:
-        return True
-
+    result = rule and tls.get('last_rule', None) == rule
     tls['last_rule'] = rule
-    return False
+    return result
 
 
 def instrument(fn, fntype):
