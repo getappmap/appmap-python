@@ -64,6 +64,8 @@ class AppMapTestBase:
         """
 
         def normalize(dct):
+            if 'classMap' in dct:
+                dct['classMap'].sort(key=itemgetter('name'))
             if 'children' in dct:
                 dct['children'].sort(key=itemgetter('name'))
             if 'elapsed' in dct:
