@@ -61,7 +61,12 @@ def splitname(obj):
     Given an object that has a __module__ and __qualname__,
     return a list of name components from both.
     """
-    return obj.__module__.split('.') + obj.__qualname__.split('.')
+    if getattr(obj, '__module__', None):
+        modname = obj.__module__
+    else:
+        modname = 'builtins'
+
+    return modname.split('.') + obj.__qualname__.split('.')
 
 
 def startswith(prefix, sequence):

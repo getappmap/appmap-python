@@ -3,7 +3,7 @@ import os
 
 import appmap
 from .appmap_test_base import AppMapTestBase
-from appmap._implementation.configuration import ConfigFilter
+from appmap._implementation.configuration import ConfigFilter, splitname
 from appmap._implementation.recording import NullFilter
 
 
@@ -99,3 +99,7 @@ class TestConfiguration(AppMapTestBase):
         f.__qualname__ = 'cls.func'
         fltr = ConfigFilter(NullFilter())
         assert not fltr.included(f)
+
+    def test_splitname_works_with_builtins(self):
+        name = '.'.join(splitname(str.maketrans))
+        assert name == 'builtins.str.maketrans'
