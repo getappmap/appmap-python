@@ -1,6 +1,9 @@
 import time
 import yaml
 
+import appmap
+
+
 class ClassMethodMixin:
     @classmethod
     def class_method(cls):
@@ -30,3 +33,7 @@ class ExampleClass(Super, ClassMethodMixin):
         raise Exception('test exception')
 
     what_time_is_it = time.gmtime
+
+    @appmap.labels('super', 'important')
+    def labeled_method(self):
+        return 'super important'

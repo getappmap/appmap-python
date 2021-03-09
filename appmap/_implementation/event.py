@@ -120,7 +120,7 @@ class Param:
 
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
-                 'static', 'receiver', 'parameters']
+                 'static', 'receiver', 'parameters', 'labels']
 
     @staticmethod
     def make(fn, fntype):
@@ -129,7 +129,6 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = split_function_name(fn)
-
         try:
             path = inspect.getsourcefile(fn)
             if path.startswith(Env.current.root_dir):
@@ -142,8 +141,13 @@ class CallEvent(Event):
         except OSError:
             lineno = 0
 
+        # Delete the labels so the app doesn't see them.
+        labels = getattr(fn, '_appmap_labels', None)
+        if labels:
+            del fn._appmap_labels
+
         return partial(CallEvent, defined_class,
-                       method_id, path, lineno, fntype)
+                       method_id, path, lineno, fntype, labels=labels)
 
     @staticmethod
     def make_params(fn):
@@ -181,7 +185,7 @@ class CallEvent(Event):
         return ret
 
     def __init__(self, defined_class, method_id, path, lineno,
-                 fntype, parameters):
+                 fntype, parameters, labels):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
@@ -193,7 +197,7 @@ class CallEvent(Event):
             self.receiver = parameters[0]
             parameters = parameters[1:]
         self.parameters = parameters
-
+        self.labels = labels
 
 class SqlEvent(Event):
     __slots__ = ['sql_query']
