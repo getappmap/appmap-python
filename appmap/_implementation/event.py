@@ -62,6 +62,13 @@ def display_string(val):
     return value
 
 
+def describe_value(val):
+    return {
+        "class": fqname(type(val)),
+        "object_id": id(val),
+        "value": display_string(val)
+    }
+
 class Event:
     __slots__ = ['id', 'event', 'thread_id']
 
@@ -106,16 +113,12 @@ class Param:
         return '<Param name: %s kind: %s>' % (self.name, self.kind)
 
     def to_dict(self, value):
-        class_name = fqname(type(value))
-        object_id = id(value)
-
-        return {
+        ret = {
             "name": self.name,
-            "class": class_name,
-            "value": display_string(value),
-            "object_id": object_id,
             "kind": self.kind
         }
+        ret.update(describe_value(value))
+        return ret
 
 
 class CallEvent(Event):
@@ -235,7 +238,7 @@ class FuncReturnEvent(ReturnEvent):
 
     def __init__(self, parent_id, elapsed, return_value):
         super().__init__(parent_id, elapsed)
-        self.return_value = display_string(return_value)
+        self.return_value = describe_value(return_value)
 
 
 class HttpResponseEvent(ReturnEvent):

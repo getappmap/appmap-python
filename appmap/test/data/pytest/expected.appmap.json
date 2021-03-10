@@ -59,7 +59,11 @@
       "parent_id": 3,
       "id": 4,
       "event": "return",
-      "return_value": "Hello",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "Hello"
+      },
+
       "thread_id": 1
     },
     {
@@ -83,14 +87,20 @@
       "parent_id": 5,
       "id": 6,
       "event": "return",
-      "return_value": "world!",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "world!"
+      },
       "thread_id": 1
     },
     {
       "parent_id": 2,
       "id": 7,
       "event": "return",
-      "return_value": "Hello world!",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "Hello world!"
+      },
       "thread_id": 1
     }
   ],

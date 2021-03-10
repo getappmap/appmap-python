@@ -116,14 +116,20 @@
       "parent_id": 3,
       "id": 4,
       "event": "return",
-      "return_value": "None",
-      "thread_id": 1
+      "return_value": {
+        "class": "builtins.NoneType",
+        "value": "None"
+      },
+       "thread_id": 1
     },
     {
       "parent_id": 2,
       "id": 5,
       "event": "return",
-      "return_value": "ExampleClass.static_method\n...\n",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "ExampleClass.static_method\n...\n"
+      },
       "thread_id": 1
     },
     {
@@ -147,7 +153,10 @@
       "parent_id": 6,
       "id": 7,
       "event": "return",
-      "return_value": "ClassMethodMixin#class_method, cls ExampleClass",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "ClassMethodMixin#class_method, cls ExampleClass"
+      },
       "thread_id": 1
     },
     {
@@ -171,7 +180,10 @@
       "parent_id": 8,
       "id": 9,
       "event": "return",
-      "return_value": "Super#instance_method",
+      "return_value": {
+        "class": "builtins.str",
+        "value": "Super#instance_method"
+      },
       "thread_id": 1
     },
     {
