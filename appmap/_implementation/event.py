@@ -165,14 +165,14 @@ class CallEvent(Event):
                 # A 'req' argument can be either keyword or
                 # positional.
                 if p.name in kwargs:
-                    value = kwargs.pop(p.name)
+                    value = kwargs[p.name]
                 else:
                     value = args[0]
                     args = args[1:]
             elif p.kind == 'keyreq':
-                value = kwargs.pop(p.name)
+                value = kwargs[p.name]
             elif p.kind == 'opt' or p.kind == 'key':
-                value = kwargs.pop(p.name, p.default)
+                value = kwargs.get(p.name, p.default)
             elif p.kind == 'rest':
                 value = args
             elif p.kind == 'keyrest':

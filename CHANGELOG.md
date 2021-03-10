@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `appmap.labels` decorator can now be applied to a function to specify labels that
   should appear in the AppMap.
   
+### Fixed
+- [#61] Don't modify an instrumented function's parameters when rendering them.
 ## [0.5.0] - 2021-03-08
 ### Added
 - Packages in config file can now be set for 'shallow' tracking. This eliminates most of
