@@ -62,6 +62,13 @@ def display_string(val):
     return value
 
 
+def describe_value(val):
+    return {
+        "class": fqname(type(val)),
+        "object_id": id(val),
+        "value": display_string(val)
+    }
+
 class Event:
     __slots__ = ['id', 'event', 'thread_id']
 
@@ -106,21 +113,17 @@ class Param:
         return '<Param name: %s kind: %s>' % (self.name, self.kind)
 
     def to_dict(self, value):
-        class_name = fqname(type(value))
-        object_id = id(value)
-
-        return {
+        ret = {
             "name": self.name,
-            "class": class_name,
-            "value": display_string(value),
-            "object_id": object_id,
             "kind": self.kind
         }
+        ret.update(describe_value(value))
+        return ret
 
 
 class CallEvent(Event):
     __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
-                 'static', 'receiver', 'parameters']
+                 'static', 'receiver', 'parameters', 'labels']
 
     @staticmethod
     def make(fn, fntype):
@@ -129,7 +132,6 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = split_function_name(fn)
-
         try:
             path = inspect.getsourcefile(fn)
             if path.startswith(Env.current.root_dir):
@@ -142,8 +144,13 @@ class CallEvent(Event):
         except OSError:
             lineno = 0
 
+        # Delete the labels so the app doesn't see them.
+        labels = getattr(fn, '_appmap_labels', None)
+        if labels:
+            del fn._appmap_labels
+
         return partial(CallEvent, defined_class,
-                       method_id, path, lineno, fntype)
+                       method_id, path, lineno, fntype, labels=labels)
 
     @staticmethod
     def make_params(fn):
@@ -161,14 +168,14 @@ class CallEvent(Event):
                 # A 'req' argument can be either keyword or
                 # positional.
                 if p.name in kwargs:
-                    value = kwargs.pop(p.name)
+                    value = kwargs[p.name]
                 else:
                     value = args[0]
                     args = args[1:]
             elif p.kind == 'keyreq':
-                value = kwargs.pop(p.name)
+                value = kwargs[p.name]
             elif p.kind == 'opt' or p.kind == 'key':
-                value = kwargs.pop(p.name, p.default)
+                value = kwargs.get(p.name, p.default)
             elif p.kind == 'rest':
                 value = args
             elif p.kind == 'keyrest':
@@ -181,7 +188,7 @@ class CallEvent(Event):
         return ret
 
     def __init__(self, defined_class, method_id, path, lineno,
-                 fntype, parameters):
+                 fntype, parameters, labels):
         super().__init__('call')
         self.defined_class = defined_class
         self.method_id = method_id
@@ -193,7 +200,7 @@ class CallEvent(Event):
             self.receiver = parameters[0]
             parameters = parameters[1:]
         self.parameters = parameters
-
+        self.labels = labels
 
 class SqlEvent(Event):
     __slots__ = ['sql_query']
@@ -231,7 +238,7 @@ class FuncReturnEvent(ReturnEvent):
 
     def __init__(self, parent_id, elapsed, return_value):
         super().__init__(parent_id, elapsed)
-        self.return_value = display_string(return_value)
+        self.return_value = describe_value(return_value)
 
 
 class HttpResponseEvent(ReturnEvent):

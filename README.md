@@ -1,4 +1,27 @@
-## About
+- [About](#about)
+  - [Supported versions](#supported-versions)
+- [Installation](#installation)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+- [Labels](#labels)
+- [Test Frameworks](#test-frameworks)
+  - [pytest](#pytest)
+  - [unittest](#unittest)
+  - [Run your tests](#run-your-tests)
+- [Remote Recording [coming soon]](#remote-recording-coming-soon)
+  - [Django](#django)
+  - [Flask](#flask)
+  - [Run your web app](#run-your-web-app)
+- [Context manager](#context-manager)
+- [Development](#development)
+  - [Python version support](#python-version-support)
+  - [Dependency management](#dependency-management)
+  - [Linting](#linting)
+  - [Testing](#testing)
+    - [pytest](#pytest-1)
+    - [tox](#tox)
+  - [Code Coverage](#code-coverage)
+# About
 `appmap-python` is a Python package for recording
 [AppMaps](https://github.com/applandinc/appmap) of your code. "AppMap" is a data format
 which records code structure (modules, classes, and methods), code execution events
@@ -28,14 +51,14 @@ for VSCode](https://marketplace.visualstudio.com/items?itemName=appland.appmap).
 The second option is to upload them to the [AppLand server](https://app.land) using the
 [AppLand CLI](https://github.com/applandinc/appland-cli/releases).
 
-### Supported versions
+## Supported versions
 
 * Python >=3.5
 * Pytest >=6.1.2
 
 Support for new versions is added frequently, please check back regularly for updates.
 
-## Installation
+# Installation
 
 If your project uses `pip` for dependency management, add the `appmap` package to the requirements
 file or install it directly with
@@ -45,7 +68,7 @@ pip install appmap
 
 For projects that use `poetry` , add the `appmap` package to `pyproject.toml`.
 
-## Configuration
+# Configuration
 Add your modules as `path` entries in `appmap.yml`, and external packages
 (distributions) as `dist`:
 
@@ -93,11 +116,42 @@ You can also use `shallow: true` on `path` entries.
 * `APPMAP_OUTPUT_DIR` specifies the root directory for writing AppMaps. Defaults to
   `tmp/appmap`.
 
-## Test Frameworks
+
+# Labels
+
+The [AppMap data format](https://github.com/applandinc/appmap) provides for class and
+function `labels`, which can be used to enhance the AppMap visualizations, and to
+programatically analyze the data.
+
+You can apply function labels using the `appmap.labels` decorator in your Python code. To
+apply a labels to a function, decorate the function with `@appmap.labels`.
+
+For example
+
+```python
+import appmap.labels
+
+class ApiKey
+  @appmap.labels('provider.authentication', 'security')
+  def authenticate(self, key):
+      # logic to verify the key here...
+```
+
+Then the AppMap metadata section for this function will include:
+
+```json
+  {
+    "name": "authenticate",
+    "type": "function",
+    "labels": [ "provider.authentication", "security" ]
+  }
+```
+
+# Test Frameworks
 `appmap-python` supports recording [pytest](https://pytest.org) and
 [unittest](https://docs.python.org/3/library/unittest.html) test cases.
 
-### pytest
+## pytest
 `appmap-python` is a `pytest` plugin. When it's installed in a project that uses
 `pytest`, it will be available to generate AppMaps.
 
@@ -135,13 +189,13 @@ PASSED
 ====================================================================== 1 passed in 0.45s ======================================================================
 ```
 
-### unittest
+## unittest
 `import appmap.unittest`. Instruments subclasses of `unittest.TestCase` and records each
 `test_*` function in the subclasses. You can also use `python -m appmap.unittest` exactly like
 `python -m unittest` and leave your code unmodified (just remember to set the `APPMAP=true`
 environment variable).
 
-### Run your tests
+## Run your tests
 Once you've configured your tests to generate AppMaps, run the tests with the
 `APPMAP=true` in the environment. For example, to run a pytest test suite:
 
@@ -150,17 +204,17 @@ $ APPMAP=true pytest
 ```
 
 
-## Remote Recording [coming soon]
+# Remote Recording [coming soon]
 `appmap-python` supports remote recording of Django and Flask web applications. Import the
 appropriate remote recording support into your web app.
 
-### Django
+## Django
 `import appmap.django`. Adds `/_appmap/record` routes to a Django app.
 
-### Flask
+## Flask
 `import appmap.flask`. Adds `/_appmap/record` routes to a Flask app.
 
-### Run your web app
+## Run your web app
 Once you've configured your web app to add the remote-recording routes, you can use the
 routes to manage recordings. The browser extension, appland CLI, or just plain cURL will
 all work for this.
@@ -196,7 +250,7 @@ An app with remote recording enabled supports these routes:
   200 with AppMap as body
   404 if there's no recording in progress
 
-## Context manager
+# Context manager
 You can use `appmap.record` as a context manager to record your code.
 
 With a file called `record_sample.py` like this
@@ -255,11 +309,11 @@ you can generate a recording of the code
       "name": "appmap",
 ```
 
-## Development
+# Development
 
 [![Build Status](https://travis-ci.com/applandinc/appmap-python.svg?branch=master)](https://travis-ci.com/applandinc/appmap-python)
 
-### Python version support
+## Python version support
 As a package intended to be installed in as many environments as possible, `appmap-python`
 needs to avoid using features of Python or the standard library that were added after the
 oldest version currently supported (see [above](#supported-version)).
@@ -269,7 +323,7 @@ use of some invalid features. Additionally, tests are run using all supported ve
 Python.
 
 
-### Dependency management
+## Dependency management
 
 [poetry](https://https://python-poetry.org/) for dependency management:
 
@@ -279,7 +333,7 @@ Python.
 % poetry install
 ```
 
-### Linting
+## Linting
 [pylint](https://www.pylint.org/) for linting:
 
 ```
@@ -296,8 +350,8 @@ this easier to achieve, convention and refactoring checks have both been disable
 should be reenabled as soon as possible.]
 
 
-### Testing
-#### pytest
+## Testing
+### pytest
 [pytest](https://docs.pytest.org/en/stable/) for testing:
 
 ```
@@ -305,7 +359,7 @@ should be reenabled as soon as possible.]
 % poetry run pytest
 ```
 
-#### tox
+### tox
 Additionally, the `tox` configuration provides the ability to run the tests for all
 supported versions of Python and django:
 
@@ -318,7 +372,7 @@ Note that `tox` requires the correct version of Python to be installed before it
 create a test environment. [pyenv](https://github.com/pyenv/pyenv) is an easy way to
 manage multiple versions of Python.
 
-### Code Coverage
+## Code Coverage
 [coverage](https://coverage.readthedocs.io/) for coverage:
 
 ```

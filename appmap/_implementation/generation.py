@@ -28,21 +28,28 @@ class ClassMapEntry:
         # actually be a problem, of course.
         self.type = type
 
+    def to_dict(self):
+        return {k: v for k, v in vars(self).items() if v is not None}
+
+
 class PackageEntry(ClassMapEntry):
     def __init__(self, name):
         super().__init__(name, 'package')
         self.children = ClassMapDict()
+
 
 class ClassEntry(ClassMapEntry):
     def __init__(self, name):
         super().__init__(name, 'class')
         self.children = ClassMapDict()
 
+
 class FuncEntry(ClassMapEntry):
     def __init__(self, e):
         super().__init__(e.method_id, 'function')
         self.location = '%s:%s' % (e.path, e.lineno)
         self.static = e.static
+        self.labels = e.labels
 
 
 def classmap(recording):
@@ -91,7 +98,7 @@ class AppMapEncoder(json.JSONEncoder):
         elif isinstance(o, ClassMapDict):
             return list(o.values())
         elif isinstance(o, ClassMapEntry):
-            return vars(o)
+            return o.to_dict()
 
         return json.JSONEncoder.default(self, o)
 
