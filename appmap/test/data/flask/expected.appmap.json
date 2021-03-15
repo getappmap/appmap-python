@@ -1,0 +1,78 @@
+{
+    "classMap": [],
+    "events": [
+        {
+            "event": "call",
+            "http_server_request": {
+                "normalized_path_info": "/",
+                "path_info": "/",
+                "protocol": "HTTP/1.1",
+                "request_method": "GET"
+            },
+            "id": 2,
+            "thread_id": 1
+        },
+        {
+            "event": "return",
+            "http_server_response": {
+                "mime_type": "text/html; charset=utf-8",
+                "status_code": 200
+            },
+            "id": 3,
+            "parent_id": 2,
+            "thread_id": 1
+        },
+        {
+            "event": "call",
+            "http_server_request": {
+                "normalized_path_info": "/user/<username>",
+                "path_info": "/user/test_user",
+                "protocol": "HTTP/1.1",
+                "request_method": "GET"
+            },
+            "id": 4,
+            "thread_id": 1
+        },
+        {
+            "event": "return",
+            "http_server_response": {
+                "mime_type": "text/html; charset=utf-8",
+                "status_code": 200
+            },
+            "id": 5,
+            "parent_id": 4,
+            "thread_id": 1
+        },
+        {
+            "event": "call",
+            "http_server_request": {
+                "normalized_path_info": "/post/<int:post_id>",
+                "path_info": "/post/123",
+                "protocol": "HTTP/1.1",
+                "request_method": "GET"
+            },
+            "id": 6,
+            "thread_id": 1
+        },
+        {
+            "event": "return",
+            "http_server_response": {
+                "mime_type": "text/html; charset=utf-8",
+                "status_code": 200
+            },
+            "id": 7,
+            "parent_id": 6,
+            "thread_id": 1
+        }
+    ],
+    "metadata": {
+        "client": {
+            "name": "appmap",
+            "url": "https://github.com/applandinc/appmap-python"
+        },
+        "language": {
+            "name": "python"
+        }
+    },
+    "version": "1.4"
+}

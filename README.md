@@ -204,26 +204,48 @@ $ APPMAP=true pytest
 ```
 
 
-# Remote Recording [coming soon]
+# Remote Recording
 `appmap-python` supports remote recording of Django and Flask web applications. Import the
 appropriate remote recording support into your web app.
 
-## Django
+## Django [coming soon]
 `import appmap.django`. Adds `/_appmap/record` routes to a Django app.
 
 ## Flask
-`import appmap.flask`. Adds `/_appmap/record` routes to a Flask app.
+For projects that use a [Flask application
+factory](https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/), installing
+`appmap-python` automatically configures the project for remote recording. No further
+modifications are required. When the application initializes, `appmap-python` adds
+middleware that handles the `/_appmap/record` routes.
+
+For projects that don't provide an application factory, `appmap-python` can be used as a
+[Flask extension](https://flask.palletsprojects.com/en/1.1.x/extensions/#extensions). 
+
+For example:
+```python
+from flask import Flask
+
+from appmap.flask import AppmapFlask
+
+app = Flask(__name__)
+
+appmap_flask = AppmapFlask(app)
+```
+
+This will add the `/_appmap/record` routes your app.
 
 ## Run your web app
 Once you've configured your web app to add the remote-recording routes, you can use the
-routes to manage recordings. The browser extension, appland CLI, or just plain cURL will
-all work for this.
+routes to manage recordings. The [AppLand browser
+extension](https://github.com/applandinc/appland-browser-extension),
+[CLI](https://github.com/applandinc/appland-cli/), or just plain [cURL](https://curl.se/)
+will all work for this.
 
 As when running tests, start the web server with `APPMAP=true` in the environment. For
-example, to start a Django app:
+example, to start a Flask app:
 
 ```sh
-$ APPMAP=true python manage.py runserver
+$ APPMAP=true flask run
 ```
 
 An app with remote recording enabled supports these routes:

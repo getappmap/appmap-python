@@ -25,6 +25,7 @@ classifiers = [
         'Topic :: Software Development :: Debuggers',
         'Topic :: Software Development :: Documentation'
 ]
+include = ['appmap.pth']
 
 [tool.poetry.dependencies]
 python = "^3.5"
@@ -45,6 +46,7 @@ Django = [
   { version = "~2.2", python = "< 3.6"},
   { version = "^3.1.6", python = "^3.6"}
 ]
+flask = "^1.1.2"
 vermin = "^1.1.0"
 tox = "^3.22.0"
 tox-pyenv = "^1.1.0"

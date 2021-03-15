@@ -20,3 +20,11 @@ def data_dir(pytestconfig):
 
     if added:
         sys.path.remove(dir)
+
+
+@pytest.fixture
+def appmap_enabled(monkeypatch):
+    monkeypatch.setenv("APPMAP", "true")
+    monkeypatch.setenv("APPMAP_LOG_LEVEL", "debug")
+
+    yield monkeypatch
