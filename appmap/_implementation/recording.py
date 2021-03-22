@@ -207,6 +207,7 @@ class Recorder:
             logger.debug('  looking for members')
             functions = get_members(class_)
             logger.debug('  functions %s', functions)
+
             for fn_name, fn in functions:
                 fntype = FnType.classify(fn)
                 if fntype in FnType.STATIC | FnType.CLASS:
@@ -265,7 +266,7 @@ def wrap_find_spec(find_spec):
                 logger.debug("  after loader.exec_module %s",
                              loader.exec_module)
             else:
-                logger.warning("%s doesn't have exec_module", spec.loader)
+                logger.debug("%s doesn't have exec_module", spec.loader)
         return spec
     return wrapped_find_spec
 

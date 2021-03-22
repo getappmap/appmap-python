@@ -21,7 +21,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:8",
+              "location": "appmap/test/data/example_class.py:9",
               "static": true
             }
           ]
@@ -33,13 +33,13 @@
             {
               "name": "static_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:25",
+              "location": "appmap/test/data/example_class.py:38",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:32",
+              "location": "appmap/test/data/example_class.py:45",
               "static": false
             }
           ]
@@ -51,7 +51,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:14",
+              "location": "appmap/test/data/example_class.py:15",
               "static": false
             }
           ]
@@ -88,7 +88,7 @@
       "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 25,
+      "lineno": 38,
       "static": true,
       "parameters": [],
       "id": 2,
@@ -136,7 +136,7 @@
       "defined_class": "example_class.ClassMethodMixin",
       "method_id": "class_method",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 8,
+      "lineno": 9,
       "static": true,
       "receiver": {
         "class": "builtins.type",
@@ -163,7 +163,7 @@
       "defined_class": "example_class.Super",
       "method_id": "instance_method",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 14,
+      "lineno": 15,
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",
@@ -190,7 +190,7 @@
       "defined_class": "example_class.ExampleClass",
       "method_id": "test_exception",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 32,
+      "lineno": 45,
       "static": false,
       "receiver": {
         "class": "example_class.ExampleClass",

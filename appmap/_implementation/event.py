@@ -141,7 +141,7 @@ class CallEvent(Event):
 
         try:
             __, lineno = inspect.getsourcelines(fn)
-        except OSError:
+        except (OSError, TypeError):
             lineno = 0
 
         # Delete the labels so the app doesn't see them.
@@ -154,7 +154,17 @@ class CallEvent(Event):
 
     @staticmethod
     def make_params(fn):
-        sig = inspect.signature(fn)
+        sig = inspect.signature(fn, follow_wrapped=False)
+        if logger.isEnabledFor(logging.DEBUG):
+            # inspect.signature is relatively expensive, and signature
+            # mismatches are frequent. Only compare them if we're
+            # going to log a message about a mismatch.
+            wrapped_sig = inspect.signature(fn, follow_wrapped=True)
+            if sig != wrapped_sig:
+                logger.debug(
+                    "signature of wrapper %s.%s doesn't match wrapped",
+                    *split_function_name(fn))
+
         return [Param(p) for p in sig.parameters.values()]
 
     @staticmethod
