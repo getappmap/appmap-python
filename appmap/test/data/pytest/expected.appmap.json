@@ -17,6 +17,9 @@
     "recorder": {
       "name": "pytest"
     },
+    "recording": {
+      "source_location": "test_simple.py:3"
+    },
     "name": "hello world",
     "feature": "Hello world"
   },

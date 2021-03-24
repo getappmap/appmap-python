@@ -11,7 +11,7 @@ class TestPytest(AppMapTestBase):
         testdir.copy_example('pytest')
         testdir.monkeypatch.setenv('APPMAP', 'true')
 
-        result = testdir.runpytest('-svv', '-k', 'test_hello_world')
+        result = testdir.runpytest('-vv', '-k', 'test_hello_world')
         result.assert_outcomes(passed=1)
 
         appmap_json = os.path.join(

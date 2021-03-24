@@ -5,8 +5,13 @@ from itertools import chain
 import logging
 import threading
 
-from .env import Env
-from .utils import appmap_tls, split_function_name, fqname, FnType
+from .utils import (
+    appmap_tls,
+    get_function_location,
+    split_function_name,
+    fqname,
+    FnType
+)
 
 logger = logging.getLogger(__name__)
 
@@ -132,17 +137,7 @@ class CallEvent(Event):
         introspecting the given function.
         """
         defined_class, method_id = split_function_name(fn)
-        try:
-            path = inspect.getsourcefile(fn)
-            if path.startswith(Env.current.root_dir):
-                path = path[Env.current.root_dir_len:]
-        except TypeError:
-            path = '<builtin>'
-
-        try:
-            __, lineno = inspect.getsourcelines(fn)
-        except (OSError, TypeError):
-            lineno = 0
+        path, lineno = get_function_location(fn)
 
         # Delete the labels so the app doesn't see them.
         labels = getattr(fn, '_appmap_labels', None)

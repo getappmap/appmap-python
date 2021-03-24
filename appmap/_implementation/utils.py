@@ -1,10 +1,12 @@
+from collections.abc import MutableMapping
+import inspect
 import threading
 import types
-from collections.abc import MutableMapping
 import shlex
 import subprocess
 import os
 
+from .env import Env
 from ._intflag import _IntFlag
 
 
@@ -76,6 +78,20 @@ def split_function_name(fn):
         fn_name = qualname
     return (class_name, fn_name)
 
+def get_function_location(fn):
+    fn = inspect.unwrap(fn)
+    try:
+        path = inspect.getsourcefile(fn)
+        if path.startswith(Env.current.root_dir):
+            path = path[Env.current.root_dir_len:]
+    except TypeError:
+        path = '<builtin>'
+
+    try:
+        __, lineno = inspect.getsourcelines(fn)
+    except (OSError, TypeError):
+        lineno = 0
+    return (path, lineno)
 
 class ProcRet:
     def __init__(self, returncode=0, stdout='', stderr=''):

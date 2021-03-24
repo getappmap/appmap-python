@@ -17,10 +17,11 @@ except ImportError:
 
 
 class FuncItem:
-    def __init__(self, cls, name, method_id=None):
+    def __init__(self, cls, name, method_id=None, location=None):
         self.cls = cls
         self.name = name
         self.method_id = method_id or name
+        self.location = location
 
     @property
     def class_name(self):
@@ -76,6 +77,10 @@ class FuncItem:
                 'defined_class': self.defined_class,
                 'method_id': self.method_id
             }
+        if self.location:
+            ret.setdefault('recording', {}).update({
+                'source_location': '%s:%d' % self.location[0:2]
+            })
         ret.update({
             'name': self.scenario_name,
             'feature': self.feature
