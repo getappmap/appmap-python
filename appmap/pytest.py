@@ -14,5 +14,9 @@ if appmap.enabled():
     # They are recorded separately by appmap.unittest instead.
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
-        with pyfuncitem.session.appmap.record(pyfuncitem.cls, pyfuncitem.name, method_id=pyfuncitem.originalname):
+        with pyfuncitem.session.appmap.record(
+                pyfuncitem.cls,
+                pyfuncitem.name,
+                method_id=pyfuncitem.originalname,
+                location=pyfuncitem.location):
             yield

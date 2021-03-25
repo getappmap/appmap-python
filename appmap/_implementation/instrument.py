@@ -73,8 +73,9 @@ def instrument(fn, fntype):
     params = CallEvent.make_params(fn)
 
     # django depends on being able to find the cache_clear attribute
-    # on functions. Make sure it gets copied from the original to the
-    # wrapped function.
+    # on functions. (You can see this by trying to map
+    # https://github.com/chicagopython/chypi.org.) Make sure it gets
+    # copied from the original to the wrapped function.
     #
     # Going forward, we should consider how to make this more general.
     @wraps(fn, assigned=WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))

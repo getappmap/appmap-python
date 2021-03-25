@@ -1,6 +1,5 @@
 import os
 import os.path
-from pathlib import Path
 
 import json
 
@@ -12,7 +11,7 @@ class TestPytest(AppMapTestBase):
         testdir.copy_example('pytest')
         testdir.monkeypatch.setenv('APPMAP', 'true')
 
-        result = testdir.runpytest('-svv', '-k', 'test_hello_world')
+        result = testdir.runpytest('-vv', '-k', 'test_hello_world')
         result.assert_outcomes(passed=1)
 
         appmap_json = os.path.join(
@@ -27,15 +26,3 @@ class TestPytest(AppMapTestBase):
             expected_appmap = json.load(f)
 
         assert generated_appmap == expected_appmap
-
-    def test_unittest_cases(self, testdir):
-        testdir.copy_example('pytest')
-        testdir.monkeypatch.setenv('APPMAP', 'true')
-
-        result = testdir.runpytest('-svv')
-        result.assert_outcomes(passed=2)
-
-        # unittest cases ran by pytest should get recorded as pytest tests
-        path = Path(str(testdir.tmpdir))
-        assert len(list(path.glob('tmp/appmap/pytest/*'))) == 2
-        assert len(list(path.glob('tmp/appmap/unittest/*'))) == 0
