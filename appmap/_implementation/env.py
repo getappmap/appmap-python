@@ -34,6 +34,9 @@ class Env(metaclass=_EnvMeta):
 
         _configure_logging()
 
+        self._display_params = (
+            os.getenv("APPMAP_DISPLAY_PARAMS", "true").lower() == "true")
+
     @property
     def root_dir(self):
         return self._root_dir
@@ -52,6 +55,10 @@ class Env(metaclass=_EnvMeta):
         # toggle the state of enabled by changing the value of APPMAP
         # in environment. So, don't cache it for now.
         return os.getenv("APPMAP", "false") == "true"
+
+    @property
+    def display_params(self):
+        return self._display_params
 
 
 def _configure_logging():

@@ -116,6 +116,9 @@ You can also use `shallow: true` on `path` entries.
 * `APPMAP_OUTPUT_DIR` specifies the root directory for writing AppMaps. Defaults to
   `tmp/appmap`.
 
+* `APPMAP_DISPLAY_PARAMS` enables rendering of parameters as strings. If `true` (the
+  default, not case-sensitive), parameters are rendered using `str` and/or `repr`. If
+  `false`, a generic string is used instead.
 
 # Labels
 

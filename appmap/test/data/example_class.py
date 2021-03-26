@@ -64,3 +64,6 @@ class ExampleClass(Super, ClassMethodMixin):
     @wrap_fn
     def wrapped_instance_method(self):
         return 'wrapped_instance_method'
+
+    def instance_with_param(self, p):
+        return p

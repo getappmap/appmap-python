@@ -26,5 +26,5 @@ script:
 - export PATH="$HOME/.pyenv/bin:$PATH"
 - eval "$(pyenv init -)"
 - eval "$(pyenv virtualenv-init -)"
-- tox -e py39 pylint appmap
+- tox -e py39 pylint appmap || travis_terminate 1
 - tox
