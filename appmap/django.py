@@ -72,7 +72,7 @@ class Middleware:
                 parent_id=call_event.id,
                 elapsed=duration,
                 status_code=response.status_code,
-                mime_type=response['Content-Type']
+                mime_type=response.get('Content-Type', None) or 'unknown'
             )
             self.recorder.add_event(return_event)
 

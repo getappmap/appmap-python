@@ -3,6 +3,7 @@ Test event functionality
 """
 from functools import partial
 from queue import Queue
+import re
 from threading import Thread
 
 import pytest
@@ -13,7 +14,7 @@ from appmap._implementation.event import _EventIds
 
 from .appmap_test_base import AppMapTestBase
 
-
+# pylint: disable=import-error
 class TestEvents(AppMapTestBase):
     def test_per_thread_id(self):
         """ thread ids should be constant for a  thread """
@@ -42,9 +43,63 @@ class TestEvents(AppMapTestBase):
     def test_recursion_protection(self):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass  # pylint: disable=import-error
+            from example_class import ExampleClass
             ExampleClass().instance_method()
 
         # If we get here, recursion protection for rendering the receiver
         # is working
         assert True
+
+
+@pytest.mark.usefixtures('appmap_enabled')
+class TestParams(AppMapTestBase):
+    def test_when_str_raises(self, mocker):
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass
+            param = mocker.Mock()
+            param.__str__ = mocker.Mock(side_effect=Exception)
+            param.__repr__ = mocker.Mock(return_value='param.__repr__')
+
+            ExampleClass().instance_with_param(param)
+
+        expected_value = 'param.__repr__'
+        actual_value = r.events[0].parameters[0]['value']
+        assert expected_value == actual_value
+
+    def test_when_both_raise(self, mocker):
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass
+            param = mocker.Mock()
+            param.__str__ = mocker.Mock(side_effect=Exception)
+            param.__repr__ = mocker.Mock(side_effect=Exception)
+
+            ExampleClass().instance_with_param(param)
+
+        expected_re = r'<.*? object at .*?>'
+        actual_value = r.events[0].parameters[0]['value']
+        assert re.fullmatch(expected_re, actual_value)
+
+    def test_when_display_disabled(self, mocker, monkeypatch):
+        monkeypatch.setenv("APPMAP_DISPLAY_PARAMS", "false")
+        self.setup_method(None)
+
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass
+            param = mocker.MagicMock()
+
+            # unittest.mock.MagicMock doesn't mock __repr__ by default
+            param.__repr__ = mocker.Mock()
+
+            ExampleClass().instance_with_param(param)
+
+            param.__str__.assert_not_called()
+
+            # The reason MagicMock doesn't mock __repr__ is because it
+            # uses it. If APPMAP_DISPLAY_PARAMS is functioning
+            # correctly, __repr__ will only be called once, by
+            # MagicMock. (If it's broken, we may not get here at all,
+            # because the assertion above may fail.)
+            param.__repr__.assert_called_once_with()

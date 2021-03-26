@@ -1,60 +1,30 @@
 language: python
-python:
-- "3.9"
+python: 3.9
 
-stages:
-- lint
-- test
-- deploy
+env:
+- PYENV_ROOT="$HOME/.pyenv"
+
+install: |
+  if [[ ! -d "$PYENV_ROOT/versions" ]]; then
+    rmdir "$PYENV_ROOT"
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+  fi
+  export PATH="$PYENV_ROOT/bin:$PATH"
+  pyenv update
+  git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
+  for v in {5..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
+  pyenv latest local 3.{9,{5..8}}
+  pip install --upgrade pip
+  pip install poetry tox
+
+
 cache:
-  pip: true
-  
-install:
-- pip install --upgrade pip
-- pip install poetry
-- poetry install
+- $PYENV_ROOT
+- $HOME/build/applandinc/appmap-python/.tox/
 
-jobs:
-  include:
-  - stage: lint
-    script:
-    - poetry run pylint appmap
-    - poetry run vermin -t=3.5- appmap
-    
-  - stage: test
-    python: "3.5"
-    script:
-    - poetry run tox
-  - stage: test
-    python: "3.6"
-    script:
-    - poetry run tox
-  - stage: test
-    python: "3.7"
-    script:
-    - poetry run tox
-  - stage: test
-    python: "3.8"
-    script:
-    - poetry run tox
-  - stage: test
-    python: "3.9"
-    script:
-    - poetry run tox
-
-  - stage: deploy
-    script: skip
-    before_deploy:
-    - awk -i inplace -v travis_tag=$TRAVIS_TAG '/# @@appmap-python-version@@/ {getline; printf("version = \"%s\"\n", travis_tag)}; !/version = "0.0.0"/ {print $0}' pyproject.toml
-    # Note publishing this way requires the PyPI credentials to be
-    # present in the environment. Travis doesn't currently support
-    # providing environment variables to deploy providers through
-    # the build config (i.e. in this file). So, they must be
-    # provided through the build settings instead.
-    deploy:
-      # Don't undo the changes we just made to pyproject.toml
-      skip_cleanup: true
-      provider: script
-      script: poetry publish --build
-      on:
-        tags: true
+script:
+- export PATH="$HOME/.pyenv/bin:$PATH"
+- eval "$(pyenv init -)"
+- eval "$(pyenv virtualenv-init -)"
+- tox -e py39 pylint appmap || travis_terminate 1
+- tox

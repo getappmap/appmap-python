@@ -5,6 +5,7 @@ from itertools import chain
 import logging
 import threading
 
+from .env import Env
 from .utils import (
     appmap_tls,
     get_function_location,
@@ -51,18 +52,24 @@ class _EventIds:
 
 
 def display_string(val):
-    # Make a best-effort attempt to get a string value for the
-    # parameter. If str() and repr() raise, formulate a value from
-    # the class and id.
-    try:
-        value = str(val)
-    except Exception:  # pylint: disable=broad-except
+    # If we're asked to display parameters, make a best-effort attempt
+    # to get a string value for the parameter using str() and
+    # repr(). If parameter display is disabled, or str() and repr()
+    # both raised, just formulate a value from the class and id.
+    value = None
+    if Env.current.display_params:
         try:
-            value = repr(val)
+            value = str(val)
         except Exception:  # pylint: disable=broad-except
-            class_name = fqname(type(val))
-            object_id = id(val)
-            value = '<%s object at %#02x>' % (class_name, object_id)
+            try:
+                value = repr(val)
+            except Exception:  # pylint: disable=broad-except
+                pass
+
+    if value is None:
+        class_name = fqname(type(val))
+        object_id = id(val)
+        value = '<%s object at %#02x>' % (class_name, object_id)
 
     return value
 
