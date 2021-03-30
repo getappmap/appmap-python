@@ -1,6 +1,6 @@
 from functools import wraps
 import time
-import yaml
+
 
 import appmap
 
@@ -35,9 +35,9 @@ class ExampleClass(Super, ClassMethodMixin):
     def __repr__(self):
         return 'ExampleClass and %s' % (self.another_method())
 
-    @staticmethod
-    def static_method():
-        return yaml.dump('ExampleClass.static_method')
+    # Include some lines so the line numbers in the expected appmap
+    # don't change:
+    # <blank>
 
     def another_method(self):
         return "ExampleClass#another_method"
@@ -67,3 +67,26 @@ class ExampleClass(Super, ClassMethodMixin):
 
     def instance_with_param(self, p):
         return p
+
+    @staticmethod
+    def static_method():
+        import yaml
+        return yaml.dump('ExampleClass.static_method')
+
+    @staticmethod
+    def call_yaml():
+        return ExampleClass.dump_yaml('ExampleClass.call_yaml')
+
+    @staticmethod
+    def dump_yaml(data):
+        import io
+        from yaml import Dumper
+        stream = io.StringIO()
+        dumper = Dumper(stream)
+        try:
+            dumper.open()
+            dumper.represent(data)
+            dumper.close()
+        finally:
+            dumper.dispose()
+        return stream.getvalue()

@@ -31,9 +31,21 @@
           "type": "class",
           "children": [
             {
+              "name": "call_yaml",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:76",
+              "static": true
+            },
+            {
+              "name": "dump_yaml",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:80",
+              "static": true
+            },
+            {
               "name": "static_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py:38",
+              "location": "appmap/test/data/example_class.py:71",
               "static": true
             },
             {
@@ -88,7 +100,7 @@
       "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
       "path": "appmap/test/data/example_class.py",
-      "lineno": 38,
+      "lineno": 71,
       "static": true,
       "parameters": [],
       "id": 2,
@@ -214,6 +226,82 @@
           "message": "test exception"
         }
       ]
+    },
+    {
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "call_yaml",
+      "path": "appmap/test/data/example_class.py",
+      "lineno": 76,
+      "static": true,
+      "parameters": [],
+      "id": 12,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "dump_yaml",
+      "path": "appmap/test/data/example_class.py",
+      "lineno": 80,
+      "static": true,
+      "parameters": [
+        {
+          "name": "data",
+          "kind": "req",
+          "class": "builtins.str",
+          "value": "ExampleClass.call_yaml"
+        }
+      ],
+      "id": 13,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "yaml.serializer.Serializer",
+      "method_id": "open",
+      "path": "yaml/serializer.py",
+      "lineno": 27,
+      "static": false,
+      "receiver": {
+        "name": "self",
+        "kind": "req",
+        "class": "yaml.dumper.Dumper",
+        "value": "<yaml.dumper.Dumper object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 14,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.NoneType",
+        "value": "None"
+      },
+      "parent_id": 14,
+      "id": 15,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.str",
+        "value": "ExampleClass.call_yaml\n...\n"
+      },
+      "parent_id": 13,
+      "id": 16,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.str",
+        "value": "ExampleClass.call_yaml\n...\n"
+      },
+      "parent_id": 12,
+      "id": 17,
+      "event": "return",
+      "thread_id": 1
     }
   ]
 }
