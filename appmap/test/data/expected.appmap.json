@@ -75,6 +75,42 @@
       "type": "package",
       "children": [
         {
+          "name": "emitter",
+          "type": "package",
+          "children": [
+            {
+              "name": "Emitter",
+              "type": "class",
+              "children": [
+                {
+                  "name": "dispose",
+                  "type": "function",
+                  "location": "yaml/emitter.py:106",
+                  "static": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "representer",
+          "type": "package",
+          "children": [
+            {
+              "name": "BaseRepresenter",
+              "type": "class",
+              "children": [
+                {
+                  "name": "represent",
+                  "type": "function",
+                  "location": "yaml/representer.py:26",
+                  "static": false
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "serializer",
           "type": "package",
           "children": [
@@ -82,6 +118,12 @@
               "name": "Serializer",
               "type": "class",
               "children": [
+                {
+                  "name": "close",
+                  "type": "function",
+                  "location": "yaml/serializer.py:36",
+                  "static": false
+                },
                 {
                   "name": "open",
                   "type": "function",
@@ -284,12 +326,100 @@
       "thread_id": 1
     },
     {
+      "defined_class": "yaml.representer.BaseRepresenter",
+      "method_id": "represent",
+      "path": "yaml/representer.py",
+      "lineno": 26,
+      "static": false,
+      "receiver": {
+        "name": "self",
+        "kind": "req",
+        "class": "yaml.dumper.Dumper",
+        "value": "<yaml.dumper.Dumper object at 0xabcdef>"
+      },
+      "parameters": [
+        {
+          "name": "data",
+          "kind": "req",
+          "class": "builtins.str",
+          "value": "ExampleClass.call_yaml"
+        }
+      ],
+      "id": 16,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.NoneType",
+        "value": "None"
+      },
+      "parent_id": 16,
+      "id": 17,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "yaml.serializer.Serializer",
+      "method_id": "close",
+      "path": "yaml/serializer.py",
+      "lineno": 36,
+      "static": false,
+      "receiver": {
+        "name": "self",
+        "kind": "req",
+        "class": "yaml.dumper.Dumper",
+        "value": "<yaml.dumper.Dumper object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 18,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.NoneType",
+        "value": "None"
+      },
+      "parent_id": 18,
+      "id": 19,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "yaml.emitter.Emitter",
+      "method_id": "dispose",
+      "path": "yaml/emitter.py",
+      "lineno": 106,
+      "static": false,
+      "receiver": {
+        "name": "self",
+        "kind": "req",
+        "class": "yaml.dumper.Dumper",
+        "value": "<yaml.dumper.Dumper object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 20,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.NoneType",
+        "value": "None"
+      },
+      "parent_id": 20,
+      "id": 21,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
       "return_value": {
         "class": "builtins.str",
         "value": "ExampleClass.call_yaml\n...\n"
       },
       "parent_id": 13,
-      "id": 16,
+      "id": 22,
       "event": "return",
       "thread_id": 1
     },
@@ -299,7 +429,7 @@
         "value": "ExampleClass.call_yaml\n...\n"
       },
       "parent_id": 12,
-      "id": 17,
+      "id": 23,
       "event": "return",
       "thread_id": 1
     }

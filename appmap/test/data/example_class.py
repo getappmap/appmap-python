@@ -70,8 +70,8 @@ class ExampleClass(Super, ClassMethodMixin):
 
     @staticmethod
     def static_method():
-        import yaml
-        return yaml.dump('ExampleClass.static_method')
+        import yaml, io # Formatting is funky to minimize changes to expected appmap
+        yaml.Dumper(io.StringIO()).open(); return 'ExampleClass.static_method\n...\n'
 
     @staticmethod
     def call_yaml():
