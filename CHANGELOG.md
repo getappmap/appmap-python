@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - [#72] Multiple calls into a shallow-tracked package are now recorded.
+- [#74] pytest integration works again
 
 ## [0.8.0.dev2] - 2021-03-26
 ### Added

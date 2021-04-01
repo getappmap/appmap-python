@@ -3,7 +3,7 @@ import logging
 import sys
 
 from abc import ABC, abstractmethod
-from functools import wraps
+import wrapt
 
 from .env import Env
 from .utils import FnType
@@ -227,66 +227,68 @@ class Recorder:
                     setattr(class_, fn_name, new_fn)
 
 
-def wrap_exec_module(exec_module):
-    marker = '_appmap_exec_module_'
-    if getattr(exec_module, marker, None):
-        logger.debug('%s already wrapped', exec_module)
-        return exec_module
+def wrap_finder_function(fn, decorator):
+    ret = fn
+    marker = '_appmap_wrapped_%s' % fn.__name__
 
-    @wraps(exec_module)
-    def wrapped_exec_module(*args, **kwargs):
-        logger.debug(('exec_module %s'
-                      ' exec_module.__name__ %s'
-                      ' args %s'
-                      ' kwargs %s'),
-                     exec_module,
-                     exec_module.__name__,
-                     args,
-                     kwargs)
-        exec_module(*args, **kwargs)
-        # Only process imports if we're currently enabled. This
-        # handles the case where we previously hooked the finders, but
-        # were subsequently disabled (e.g. during testing).
-        if Env.current.enabled:
-            Recorder().do_import(*args, **kwargs)
-    setattr(wrapped_exec_module, marker, True)
-    return wrapped_exec_module
+    # Figure out which object should get the marker attribute. If fn
+    # is a bound function, put it on the object it's bound to,
+    # otherwise put it on the function itself.
+    obj = fn.__self__ if hasattr(fn, '__self__') else fn
+
+    if getattr(obj, marker, None) is None:
+        logger.debug('wrapping %r', fn)
+        ret = decorator(fn)
+        setattr(obj, marker, True)
+    else:
+        logger.debug('already wrapped, %r', fn)
+
+    return ret
+
+
+@wrapt.decorator
+def wrapped_exec_module(exec_module, _, args, kwargs):
+    logger.debug('exec_module %r args %s kwargs %s',
+                 exec_module, args, kwargs)
+    exec_module(*args, **kwargs)
+    # Only process imports if we're currently enabled. This
+    # handles the case where we previously hooked the finders, but
+    # were subsequently disabled (e.g. during testing).
+    if Env.current.enabled:
+        Recorder().do_import(*args, **kwargs)
+
+
+def wrap_exec_module(exec_module):
+    return wrap_finder_function(exec_module, wrapped_exec_module)
+
+
+@wrapt.decorator
+def wrapped_find_spec(find_spec, _, args, kwargs):
+    spec = find_spec(*args, **kwargs)
+    if spec is not None:
+        if getattr(spec.loader, "exec_module", None) is not None:
+            loader = spec.loader
+            loader.exec_module = wrap_exec_module(loader.exec_module)
+        else:
+            logger.debug("no exec_module for loader %r", spec.loader)
+    return spec
 
 
 def wrap_find_spec(find_spec):
-    @wraps(find_spec)
-    def wrapped_find_spec(*args, **kwargs):
-        spec = find_spec(*args, **kwargs)
-        if spec is not None:
-            if getattr(spec.loader, "exec_module", None) is not None:
-                loader = spec.loader
-                logger.debug("wrap_find_spec, before loader.exec_module %s",
-                             loader.exec_module)
-                loader.exec_module = wrap_exec_module(loader.exec_module)
-                logger.debug("  after loader.exec_module %s",
-                             loader.exec_module)
-            else:
-                logger.debug("%s doesn't have exec_module", spec.loader)
-        return spec
-    return wrapped_find_spec
+    return wrap_finder_function(find_spec, wrapped_find_spec)
 
 
 def initialize():
     Recorder.initialize()
     # If we're not enabled, there's no reason to hook the finders.
     if Env.current.enabled:
-        wrapped_attr = '_appmap_find_spec'
         logger.debug('sys.metapath: %s', sys.meta_path)
-        for h in sys.meta_path:
-            fn = getattr(h, 'find_spec', None)
-            if fn is None:
+        for finder in sys.meta_path:
+            find_spec = getattr(finder, 'find_spec', None)
+            if find_spec is None:
+                logger.debug('no find_spec for finder %r', finder)
                 continue
-            if getattr(fn, wrapped_attr, None) is not None:
-                logger.debug('meta path finder find_spec, already wrapped')
-                continue
-            new_fn = wrap_find_spec(fn)
-            setattr(new_fn, wrapped_attr, True)
-            h.find_spec = new_fn
+            finder.find_spec = wrap_find_spec(finder.find_spec)
 
 
 def instrument_module(module):
