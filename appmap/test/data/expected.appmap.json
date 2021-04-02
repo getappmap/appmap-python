@@ -9,134 +9,6 @@
       "url": "https://github.com/applandinc/appmap-python"
     }
   },
-  "classMap": [
-    {
-      "name": "example_class",
-      "type": "package",
-      "children": [
-        {
-          "name": "ClassMethodMixin",
-          "type": "class",
-          "children": [
-            {
-              "name": "class_method",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:9",
-              "static": true
-            }
-          ]
-        },
-        {
-          "name": "ExampleClass",
-          "type": "class",
-          "children": [
-            {
-              "name": "call_yaml",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:76",
-              "static": true
-            },
-            {
-              "name": "dump_yaml",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:80",
-              "static": true
-            },
-            {
-              "name": "static_method",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:71",
-              "static": true
-            },
-            {
-              "name": "test_exception",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:45",
-              "static": false
-            }
-          ]
-        },
-        {
-          "name": "Super",
-          "type": "class",
-          "children": [
-            {
-              "name": "instance_method",
-              "type": "function",
-              "location": "appmap/test/data/example_class.py:15",
-              "static": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "yaml",
-      "type": "package",
-      "children": [
-        {
-          "name": "emitter",
-          "type": "package",
-          "children": [
-            {
-              "name": "Emitter",
-              "type": "class",
-              "children": [
-                {
-                  "name": "dispose",
-                  "type": "function",
-                  "location": "yaml/emitter.py:106",
-                  "static": false
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "representer",
-          "type": "package",
-          "children": [
-            {
-              "name": "BaseRepresenter",
-              "type": "class",
-              "children": [
-                {
-                  "name": "represent",
-                  "type": "function",
-                  "location": "yaml/representer.py:26",
-                  "static": false
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "serializer",
-          "type": "package",
-          "children": [
-            {
-              "name": "Serializer",
-              "type": "class",
-              "children": [
-                {
-                  "name": "close",
-                  "type": "function",
-                  "location": "yaml/serializer.py:36",
-                  "static": false
-                },
-                {
-                  "name": "open",
-                  "type": "function",
-                  "location": "yaml/serializer.py:27",
-                  "static": false
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  ],
   "events": [
     {
       "defined_class": "example_class.ExampleClass",
@@ -432,6 +304,134 @@
       "id": 23,
       "event": "return",
       "thread_id": 1
+    }
+  ],
+  "classMap": [
+    {
+      "name": "example_class",
+      "type": "package",
+      "children": [
+        {
+          "name": "ClassMethodMixin",
+          "type": "class",
+          "children": [
+            {
+              "name": "class_method",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:9",
+              "static": true
+            }
+          ]
+        },
+        {
+          "name": "ExampleClass",
+          "type": "class",
+          "children": [
+            {
+              "name": "call_yaml",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:76",
+              "static": true
+            },
+            {
+              "name": "dump_yaml",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:80",
+              "static": true
+            },
+            {
+              "name": "static_method",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:71",
+              "static": true
+            },
+            {
+              "name": "test_exception",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:45",
+              "static": false
+            }
+          ]
+        },
+        {
+          "name": "Super",
+          "type": "class",
+          "children": [
+            {
+              "name": "instance_method",
+              "type": "function",
+              "location": "appmap/test/data/example_class.py:15",
+              "static": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "yaml",
+      "type": "package",
+      "children": [
+        {
+          "name": "emitter",
+          "type": "package",
+          "children": [
+            {
+              "name": "Emitter",
+              "type": "class",
+              "children": [
+                {
+                  "name": "dispose",
+                  "type": "function",
+                  "location": "yaml/emitter.py:106",
+                  "static": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "representer",
+          "type": "package",
+          "children": [
+            {
+              "name": "BaseRepresenter",
+              "type": "class",
+              "children": [
+                {
+                  "name": "represent",
+                  "type": "function",
+                  "location": "yaml/representer.py:26",
+                  "static": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "serializer",
+          "type": "package",
+          "children": [
+            {
+              "name": "Serializer",
+              "type": "class",
+              "children": [
+                {
+                  "name": "close",
+                  "type": "function",
+                  "location": "yaml/serializer.py:36",
+                  "static": false
+                },
+                {
+                  "name": "open",
+                  "type": "function",
+                  "location": "yaml/serializer.py:27",
+                  "static": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
