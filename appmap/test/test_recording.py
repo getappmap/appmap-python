@@ -31,6 +31,7 @@ class TestRecordingWhenEnabled(AppMapTestBase):
                 ExampleClass().test_exception()
             except:  # pylint: disable=bare-except  # noqa: E722
                 pass
+            ExampleClass.call_yaml()
 
         generated_appmap = self.normalize_appmap(appmap.generation.dump(r))
 
