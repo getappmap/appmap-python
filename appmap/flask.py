@@ -3,7 +3,14 @@ import json
 import time
 
 import flask.cli
-from flask import g, request
+from flask import g, request, signals
+
+sqlalchemy_available = False
+try:
+    import sqlalchemy
+    sqlalchemy_available = True
+except ImportError:
+    pass
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
@@ -35,6 +42,12 @@ class AppmapFlask:
 
         app.before_request(self.before_request)
         app.after_request(self.after_request)
+
+        if not signals.signals_available:
+            print("""WARN: Signals is not enabled. https://flask.palletsprojects.com/en/1.1.x/api/#flask.signals.signals_available""")
+        else:
+            #print(signals._signals)
+            pass
 
     def record_get(self):
         return {'enabled': self.recording.is_running()}
@@ -82,7 +95,6 @@ class AppmapFlask:
 
         return response
 
-
 def wrap_cli_fn(fn):
     @wraps(fn)
     def install_middleware(*args, **kwargs):
@@ -97,3 +109,14 @@ def wrap_cli_fn(fn):
 if Env.current.enabled:
     flask.cli.call_factory = wrap_cli_fn(flask.cli.call_factory)
     flask.cli.locate_app = wrap_cli_fn(flask.cli.locate_app)
+
+    def sqlalchemy_do_connect(dialect, conn_rec, *cargs, **cparams):
+        print('dialect', dialect)
+        print('conn_rec', conn_rec)
+        print('cargs', cargs)
+        print('cparams', cparams)
+
+    if sqlalchemy_available:
+        sqlalchemy.event.listen(sqlalchemy.engine.Engine, "connect", sqlalchemy_do_connect)
+        sqlalchemy.event.listen(sqlalchemy.pool.Pool, 'connect', sqlalchemy_do_connect)
+
