@@ -59,6 +59,7 @@ class AppmapFlask:
             call_event = HttpRequestEvent(
                 request_method=request.method,
                 path_info=request.path,
+                message_parameters={},
                 normalized_path_info=request.url_rule.rule,
                 protocol=request.environ.get('SERVER_PROTOCOL')
             )

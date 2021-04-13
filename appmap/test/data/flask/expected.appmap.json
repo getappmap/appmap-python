@@ -9,6 +9,7 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
+            "message": [],
             "id": 2,
             "thread_id": 1
         },
@@ -30,6 +31,7 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
+            "message": [],
             "id": 4,
             "thread_id": 1
         },
@@ -51,6 +53,7 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
+            "message": [],
             "id": 6,
             "thread_id": 1
         },
