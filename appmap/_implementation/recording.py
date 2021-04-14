@@ -1,6 +1,9 @@
+from abc import ABC, abstractmethod
+from collections import namedtuple
 import inspect
 import logging
 import sys
+import types
 
 import appmap.wrapt as wrapt
 
@@ -52,12 +55,51 @@ class Recording:
         return False
 
 
+Filterable = namedtuple('Filterable', 'fqname obj')
+
+
+class FilterableMod(Filterable):
+    __slots__ = ()
+
+    def __new__(c, mod):
+        fqname = mod.__name__
+        return super(FilterableMod, c).__new__(c, fqname, mod)
+
+    def classify_fn(self, _):
+        return FnType.MODULE
+
+
+class FilterableCls(Filterable):
+    __slots__ = ()
+
+    def __new__(c, cls):
+        fqname = '%s.%s' % (cls.__module__, cls.__qualname__)
+        return super(FilterableCls, c).__new__(c, fqname, cls)
+
+    def classify_fn(self, static_fn):
+        return FnType.classify(static_fn)
+
+
+class FilterableFn(
+        namedtuple('FilterableFn', Filterable._fields + ('scope', 'static_fn',))):
+    __slots__ = ()
+
+    def __new__(c, scope, fn, static_fn):
+        fqname = '%s.%s' % (scope.fqname, fn.__qualname__)
+        self = super(FilterableFn, c).__new__(c, fqname, fn, scope, static_fn)
+        return self
+
+    @property
+    def fntype(self):
+        return self.scope.classify_fn(self.static_fn)
+
+
 class Filter(ABC):
     def __init__(self, next_filter):
         self.next_filter = next_filter
 
     @abstractmethod
-    def filter(self, class_):
+    def filter(self, filterable):
         """
         Determine whether the given class should have its methods
         instrumented.  Return True if it should be, False if it should
@@ -65,27 +107,23 @@ class Filter(ABC):
         """
 
     @abstractmethod
-    def wrap(self, fn, fntype):
+    def wrap(self, filterable):
         """
-        Determine whether the given function with the given type
-        should be instrumented.  If so, return a new function that
-        wraps the old.  If not, return the original function.
+        Determine whether the given filterable function should be
+        instrumented.  If so, return a new function that wraps the
+        old.  If not, return the original function.
+        """
 
-        NB: fntype is the type of the function based on its
-        declaration.  It's not necessarily the same as
-        FnType.classify(fn), e.g. if fn is a staticmethod or a
-        classmethod.
-        """
 
 class NullFilter(Filter):
     def __init__(self, next_filter=None):
         super().__init__(next_filter)
 
-    def filter(self, class_):
+    def filter(self, filterable):
         return False
 
-    def wrap(self, fn, fntype):
-        return fn
+    def wrap(self, filterable):
+        return filterable.obj
 
 
 def is_class(c):
@@ -94,16 +132,14 @@ def is_class(c):
     # bound to __class__. (For example, celery.local.Proxy uses this
     # mechanism to return the class of the proxied object.)
     #
-    # We want the *real* class of c, not whatever it wants to claim as
-    # its class. type() give us that.
-    return type(c) == type
+    return inspect._is_type(c)  # pylint: disable=protected-access
 
 
 def get_classes(module):
     return [v for __, v in module.__dict__.items() if is_class(v)]
 
 
-def get_members(class_):
+def get_members(cls):
     """
     Get the function members of the given class.  Unlike
     inspect.getmembers, this function only calls getattr on functions,
@@ -111,22 +147,37 @@ def get_members(class_):
 
     Returns a list of tuples of the form (key, dict_value, attr_value):
       * key is the attribute name
-      * dict_value is class_.__dict__[key]
-      * and attr_value is getattr(class_, key)
+      * dict_value is cls.__dict__[key]
+      * and attr_value is getattr(cls, key)
     """
     def is_member_func(m):
-        return (inspect.isfunction(m)
-                or inspect.ismethod(m)
+        t = type(m)
+        if (t == types.BuiltinFunctionType or  # noqa: E721
+            t == types.BuiltinMethodType):  # noqa: E129
+            return False
+
+        return (t == types.FunctionType  # noqa: E721
+                or t == types.MethodType
                 or FnType.classify(m) in FnType.STATIC | FnType.CLASS)
 
+    # Note that we only want to instrument the functions that are
+    # defined within the class itself, i.e. those which get added to
+    # the class' __dict__ when the class is created. If we were to
+    # instead iterate over dir(cls), we would see functions from
+    # superclasses, too. Those don't need to be instrumented here,
+    # they'll get taken care of when the superclass is imported.
     ret = []
-    for key in dir(class_):
+    modname = cls.__module__ if hasattr(cls, '__module__') else cls.__name__
+    for key in cls.__dict__:
         if key.startswith('__'):
             continue
-        value = inspect.getattr_static(class_, key)
-        if not is_member_func(value):
+        static_value = inspect.getattr_static(cls, key)
+        if not is_member_func(static_value):
             continue
-        ret.append((key, value))
+        value = getattr(cls, key)
+        if value.__module__ != modname:
+            continue
+        ret.append((key, static_value, value))
     return ret
 
 
@@ -197,33 +248,25 @@ class Recorder:
         if mod.__name__.startswith('appmap'):
             return
 
-        classes = get_classes(mod)
-        logger.debug('  classes %s', classes)
-        for class_ in classes:
-            if not self.filter_chain.filter(class_):
-                continue
+        def instrument_functions(filterable):
+            if not self.filter_chain.filter(filterable):
+                return
 
-            logger.debug('  looking for members')
-            functions = get_members(class_)
+            logger.info('  looking for members of %s', filterable.obj)
+            functions = get_members(filterable.obj)
             logger.debug('  functions %s', functions)
 
-            for fn_name, fn in functions:
-                fntype = FnType.classify(fn)
-                if fntype in FnType.STATIC | FnType.CLASS:
-                    # Static methods created with staticmethod will
-                    # have a `__func__` attribute. Other static
-                    # methods (e.g. builtins assigned to an attribute
-                    # of a class) won't. So, use `__func__` if it's
-                    # available, otherwise just wrap fn.
-                    fn = getattr(fn, '__func__', fn)
-                new_fn = self.filter_chain.wrap(fn, fntype)
+            for fn_name, static_fn, fn in functions:
+                new_fn = self.filter_chain.wrap(
+                    FilterableFn(filterable, fn, static_fn))
+                if fn != new_fn:
+                    wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
-                if new_fn != fn:
-                    if fntype & FnType.STATIC:
-                        new_fn = staticmethod(new_fn)
-                    elif fntype & FnType.CLASS:
-                        new_fn = classmethod(new_fn)
-                    setattr(class_, fn_name, new_fn)
+        instrument_functions(FilterableMod(mod))
+        classes = get_classes(mod)
+        logger.debug('  classes %s', classes)
+        for c in classes:
+            instrument_functions(FilterableCls(c))
 
 
 def wrap_finder_function(fn, decorator):

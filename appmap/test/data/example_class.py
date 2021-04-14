@@ -79,14 +79,8 @@ class ExampleClass(Super, ClassMethodMixin):
 
     @staticmethod
     def dump_yaml(data):
-        import io
-        from yaml import Dumper
-        stream = io.StringIO()
-        dumper = Dumper(stream)
-        try:
-            dumper.open()
-            dumper.represent(data)
-            dumper.close()
-        finally:
-            dumper.dispose()
-        return stream.getvalue()
+        import yaml
+
+        # Call twice, to make sure both show up in the recording
+        yaml.dump(data)
+        yaml.dump(data)

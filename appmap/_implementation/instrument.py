@@ -1,6 +1,5 @@
 from collections import namedtuple
 from contextlib import contextmanager
-from functools import wraps, WRAPPER_ASSIGNMENTS
 import logging
 import sys
 import time
@@ -8,7 +7,7 @@ import time
 from . import event
 from .event import CallEvent
 from .recording import Recorder
-from .utils import appmap_tls, split_function_name
+from .utils import appmap_tls
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +69,10 @@ def saved_shallow_rule():
 
 
 _InstrumentedFn = namedtuple('_InstrumentedFn',
-                             'fn, instrumented_fn, make_call_event, params')
+                             'fn fntype instrumented_fn make_call_event params')
 
 
-def call_instrumented(f, *args, **kwargs):
+def call_instrumented(f, instance, args, kwargs):
     if (
         (not Recorder().enabled)
         or is_instrumentation_disabled()
@@ -83,8 +82,8 @@ def call_instrumented(f, *args, **kwargs):
 
     with recording_disabled():
         logger.debug('%s args %s kwargs %s', f.fn, args, kwargs)
-        call_event = f.make_call_event(
-            parameters=CallEvent.set_params(f.params, args, kwargs))
+        params = CallEvent.set_params(f.params, instance, args, kwargs)
+        call_event = f.make_call_event(parameters=params)
     call_event_id = call_event.id
     Recorder().add_event(call_event)
     start_time = time.time()
@@ -105,12 +104,13 @@ def call_instrumented(f, *args, **kwargs):
         raise
 
 
-def instrument(fn, fntype):
+def instrument(filterable):
     """return an instrumented function"""
-    logger.debug('hooking %s', '.'.join(split_function_name(fn)))
+    logger.info('hooking %s', filterable.fqname)
+    fn = filterable.obj
 
-    make_call_event = event.CallEvent.make(fn, fntype)
-    params = CallEvent.make_params(fn)
+    make_call_event = event.CallEvent.make(fn, filterable.fntype)
+    params = CallEvent.make_params(filterable)
 
     # django depends on being able to find the cache_clear attribute
     # on functions. (You can see this by trying to map
@@ -118,11 +118,11 @@ def instrument(fn, fntype):
     # copied from the original to the wrapped function.
     #
     # Going forward, we should consider how to make this more general.
-    @wraps(fn, assigned=WRAPPER_ASSIGNMENTS + tuple(['cache_clear']))
-    def instrumented_fn(*args, **kwargs):
+    def instrumented_fn(wrapped, instance, args, kwargs):
         with saved_shallow_rule():
-            f = _InstrumentedFn(fn, instrumented_fn, make_call_event, params)
-            return call_instrumented(f, *args, **kwargs)
+            f = _InstrumentedFn(wrapped, filterable.fntype, instrumented_fn, make_call_event, params)
+            return call_instrumented(f, instance, args, kwargs)
 
-    setattr(instrumented_fn, '_appmap_wrapped', True)
-    return instrumented_fn
+    ret = instrumented_fn
+    setattr(ret, '_appmap_wrapped', True)
+    return ret
