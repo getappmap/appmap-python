@@ -39,7 +39,7 @@ class Config:
         config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
         with open(config_file) as file:
             self._config = yaml.safe_load(file)
-            logger.debug('self._config %s', self._config)
+            logger.info('self._config %s', self._config)
 
         self._initialized = True
 
@@ -54,17 +54,6 @@ class Config:
     @property
     def packages(self):
         return self._config['packages']
-
-
-def splitname(obj):
-    """
-    Given an object that has a __module__ and __qualname__,
-    return a list of name components from both.
-    If __module__ is None, 'builtins' is used.
-    """
-    modname = obj.__module__ or 'builtins'
-
-    return modname.split('.') + obj.__qualname__.split('.')
 
 
 def startswith(prefix, sequence):
@@ -83,14 +72,14 @@ class PathMatcher:
         self.excludes = [x.split('.') for x in excludes]
         self.shallow = shallow
 
-    def matches(self, obj):
-        name = splitname(obj)
+    def matches(self, filterable):
+        fqname = name = filterable.fqname.split('.')
         if startswith(self.prefix, name):
             name = name[len(self.prefix):]
             result = not any(startswith(x, name) for x in self.excludes)
         else:
             result = False
-        logger.debug('%r.matches(%r) -> %r', self, obj, result)
+        logger.debug('%r.matches(%r) -> %r', self, fqname, result)
         return result
 
     def __repr__(self):
@@ -107,15 +96,16 @@ class DistMatcher(PathMatcher):
         self.dist = dist
         self.files = [str(pp.locate()) for pp in importlib_metadata.files(dist)]
 
-    def matches(self, obj):
+    def matches(self, filterable):
         try:
+            obj = filterable.obj
             logger.debug('%r.matches(%r): %s in %r', self, obj, inspect.getfile(obj), self.files)
             if inspect.getfile(obj) not in self.files:
                 return False
         except TypeError:
             # builtins don't have file associated
             return False
-        return super().matches(obj)
+        return super().matches(filterable)
 
     def __repr__(self):
         return 'DistMatcher(%r, %r, %r, shallow=%r)' % (
@@ -131,33 +121,29 @@ class MatcherFilter(Filter):
         super().__init__(*args, **kwargs)
         self.matchers = matchers
 
-    def filter(self, class_):
-        result = any(m.matches(class_) for m in self.matchers) or self.next_filter.filter(class_)
-        logger.debug('ConfigFilter.filter(%r) -> %r', class_, result)
+    def filter(self, filterable):
+        result = any(m.matches(filterable) for m in self.matchers) or self.next_filter.filter(filterable)
+        logger.debug('ConfigFilter.filter(%r) -> %r', filterable.fqname, result)
         return result
 
-    def wrap(self, fn, fntype):
-        rule = self.match(fn)
+    def wrap(self, filterable):
+        rule = self.match(filterable)
         if rule:
-            wrapped = getattr(fn, '_appmap_wrapped', None)
-            logger.debug('  wrapped %s', wrapped)
+            wrapped = getattr(filterable.obj, '_appmap_wrapped', None)
             if wrapped is None:
-                logger.debug('  wrapping %s', fn)
-                ret = instrument(fn, fntype)
+                logger.debug('  wrapping %s', filterable.fqname)
+                ret = instrument(filterable)
                 if rule.shallow:
                     setattr(ret, '_appmap_shallow', rule)
             else:
-                logger.debug('  already wrapped %s', fn)
-                ret = fn
+                logger.debug('  already wrapped %s', filterable.fqname)
+                ret = filterable.obj
             return ret
 
-        return self.next_filter.wrap(fn, fntype)
+        return self.next_filter.wrap(filterable)
 
-    def included(self, fn):
-        return self.match(fn) is not None
-
-    def match(self, fn):
-        return next((m for m in self.matchers if m.matches(fn)), None)
+    def match(self, filterable):
+        return next((m for m in self.matchers if m.matches(filterable)), None)
 
 
 def matcher_of_config(package):

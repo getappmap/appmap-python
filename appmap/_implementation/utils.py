@@ -15,18 +15,23 @@ class FnType(_IntFlag):
     STATIC = 1
     CLASS = 2
     INSTANCE = 4
+    MODULE = 8
 
     # Don't use these. They're only here so we don't have to implement
     # something like enum.IntFlag._create_pseudo_member_.
     _zero = 0
     _three = STATIC | CLASS
     _six = CLASS | INSTANCE
+    _eleven = STATIC | CLASS | MODULE
 
     @staticmethod
     def classify(fn):
-        if isinstance(fn, (staticmethod, types.BuiltinMethodType)):
+        fn_type = type(fn)
+        if (fn_type == staticmethod
+            or fn_type == types.BuiltinMethodType):
             return FnType.STATIC
-        elif isinstance(fn, (classmethod, types.BuiltinMethodType)):
+        elif (fn_type == classmethod
+              or fn_type == types.BuiltinMethodType):
             return FnType.CLASS
         else:
             return FnType.INSTANCE

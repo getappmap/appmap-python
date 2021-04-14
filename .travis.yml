@@ -1,6 +1,9 @@
 language: python
 python: 3.9
 
+services:
+- docker
+
 env:
 - PYENV_ROOT="$HOME/.pyenv"
 
@@ -28,6 +31,8 @@ script:
 - eval "$(pyenv virtualenv-init -)"
 - tox -e py39 pylint appmap || travis_terminate 1
 - tox
+- poetry build
+- ci/test_install.sh
 
 before_deploy:
 - awk -i inplace -v travis_tag=$TRAVIS_TAG '/# @@appmap-python-version@@/ {getline; printf("version = \"%s\"\n", travis_tag)}; !/version = "0.0.0"/ {print $0}' pyproject.toml

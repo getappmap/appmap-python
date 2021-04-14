@@ -1,13 +1,13 @@
 """Test Configuration"""
-import os
+import pytest
 
 import appmap
 from .appmap_test_base import AppMapTestBase
-from appmap._implementation.configuration import ConfigFilter, splitname
-from appmap._implementation.recording import NullFilter
+from appmap._implementation.configuration import ConfigFilter
+from appmap._implementation.recording import NullFilter, Filterable
 
 
-class TestConfiguration(AppMapTestBase):
+class TestConfigurationFromEnv(AppMapTestBase):
     def test_can_be_enabled(self, monkeypatch):
         """Test that recording is enabled when APPMAP=true"""
         monkeypatch.setenv("APPMAP", "true")
@@ -23,83 +23,36 @@ class TestConfiguration(AppMapTestBase):
         monkeypatch.setenv("APPMAP", "false")
         assert not appmap.enabled()
 
-    def test_package_included(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap.yml'))
 
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1'
-        c.__qualname__ = 'cls'
-        assert f.filter(c) is True
+def nf():
+    return ConfigFilter(NullFilter())
 
-    def test_class_included(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap-class.yml'))
 
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1.package2'
-        c.__qualname__ = 'Mod1Class'
-        assert f.filter(c) is True
+@pytest.mark.usefixtures('appmap_enabled')
+class TestConfiguration(AppMapTestBase):
+    def test_package_included(self):
+        f = Filterable('package1.cls', None)
+        assert nf().filter(f) is True
 
-    def test_function_included(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap-func.yml'))
+    @pytest.mark.appmap_config('appmap-class.yml')
+    def test_class_included(self):
+        f = Filterable('package1.package2.Mod1Class', None)
+        assert nf().filter(f) is True
 
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1.package2'
-        c.__qualname__ = 'Mod1Class.func'
-        assert f.filter(c) is True
+    @pytest.mark.appmap_config('appmap-func.yml')
+    def test_function_included(self):
+        f = Filterable('package1.package2.Mod1Class.func', None)
+        assert nf().filter(f) is True
 
-    def test_function_included_by_package(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap.yml'))
+    def test_function_included_by_package(self):
+        f = Filterable('package1.package2.Mod1Class.func', None)
+        assert nf().filter(f) is True
 
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1.package2'
-        c.__qualname__ = 'Mod1Class.func'
-        assert f.filter(c) is True
+    @pytest.mark.appmap_config('appmap-class.yml')
+    def test_function_included_by_class(self):
+        f = Filterable('package1.package2.Mod1Class.func', None)
+        assert nf().filter(f) is True
 
-    def test_function_included_by_class(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap-class.yml'))
-
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1.package2'
-        c.__qualname__ = 'Mod1Class.func'
-        assert f.filter(c) is True
-
-    def test_class_prefix_doesnt_match(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap.yml'))
-
-        f = ConfigFilter(NullFilter())
-        c = mocker.Mock()
-        c.__module__ = 'package1_prefix'
-        c.__qualname__ = 'cls'
-        assert f.filter(c) is False
-
-    def test_fn_prefix_doesnt_match(self, data_dir, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP", "true")
-        monkeypatch.setenv("APPMAP_CONFIG",
-                           os.path.join(data_dir, 'appmap.yml'))
-
-        f = mocker.Mock()
-        f.__module__ = 'package1_prefix'
-        f.__qualname__ = 'cls.func'
-        fltr = ConfigFilter(NullFilter())
-        assert not fltr.included(f)
-
-    def test_splitname_works_with_builtins(self):
-        name = '.'.join(splitname(str.maketrans))
-        assert name == 'builtins.str.maketrans'
+    def test_class_prefix_doesnt_match(self):
+        f = Filterable('package1_prefix.cls', None)
+        assert nf().filter(f) is False

@@ -155,8 +155,17 @@ class CallEvent(Event):
                        method_id, path, lineno, fntype, labels=labels)
 
     @staticmethod
-    def make_params(fn):
-        sig = inspect.signature(fn, follow_wrapped=False)
+    def make_params(filterable):
+        try:
+            fn = filterable.obj
+            if filterable.fntype != FnType.CLASS:
+                sig = inspect.signature(fn, follow_wrapped=False)
+            else:
+                sig = inspect.signature(filterable.static_fn.__func__, follow_wrapped=False)
+        except ValueError:
+            # Can't get signatures built-ins
+            return []
+
         if logger.isEnabledFor(logging.DEBUG):
             # inspect.signature is relatively expensive, and signature
             # mismatches are frequent. Only compare them if we're
@@ -170,11 +179,15 @@ class CallEvent(Event):
         return [Param(p) for p in sig.parameters.values()]
 
     @staticmethod
-    def set_params(params, args, kwargs):
+    def set_params(params, instance, args, kwargs):
         # Note that set_params expects args and kwargs as a tuple and
         # dict, respectively. It operates on them as collections, so
         # it doesn't unpack them.
         ret = []
+        if instance is not None:
+            ret.append(params[0].to_dict(instance))
+            params = params[1:]
+
         for p in params:
             if p.kind == 'req':
                 # A 'req' argument can be either keyword or
@@ -206,7 +219,7 @@ class CallEvent(Event):
         self.method_id = method_id
         self.path = path
         self.lineno = lineno
-        self.static = fntype in FnType.STATIC | FnType.CLASS
+        self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
         if fntype in FnType.CLASS | FnType.INSTANCE:
             self.receiver = parameters[0]

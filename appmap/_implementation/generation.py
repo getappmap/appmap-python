@@ -58,9 +58,19 @@ def classmap(recording):
         try:
             if e.event != 'call':
                 continue
-            packages, class_ = e.defined_class.rsplit('.', 1)
+
+            packages, *classes = e.defined_class.rsplit('.', 1)
+            # If there's only a single component in the name
+            # (e.g. it's a module name), use it as a class.
+            if len(classes) == 0:
+                class_ = packages
+                packages = []
+            else:
+                class_ = classes[0]
+                packages = packages.split('.')
+
             children = ret
-            for p in packages.split('.'):
+            for p in packages:
                 entry = children.setdefault(p, PackageEntry(p))
                 children = entry.children
 
@@ -103,6 +113,6 @@ class AppMapEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def dump(recording, metadata=None):
+def dump(recording, metadata=None, indent=None):
     a = appmap(recording, metadata)
-    return json.dumps(a, cls=AppMapEncoder)
+    return json.dumps(a, cls=AppMapEncoder, indent=indent)

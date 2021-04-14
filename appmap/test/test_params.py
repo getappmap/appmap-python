@@ -1,11 +1,11 @@
-from functools import wraps
 import inspect
 import sys
 
 import pytest
+import vendor.wrapt.src.appmap.wrapt as wrapt
 
-from appmap._implementation.utils import FnType
 from appmap._implementation.event import CallEvent
+from appmap._implementation.recording import FilterableCls, FilterableFn
 
 from .appmap_test_base import AppMapTestBase
 
@@ -29,29 +29,24 @@ class _params:
         self.C = C
 
     @classmethod
-    def prepare(cls, fn, fntype):
-        if fntype in FnType.STATIC | FnType.CLASS:
-            fn = fn.__func__
-        make_call_event = CallEvent.make(fn, fntype)
-        params = CallEvent.make_params(fn)
+    def prepare(cls, ffn):
+        fn = ffn.obj
+        make_call_event = CallEvent.make(fn, ffn.fntype)
+        params = CallEvent.make_params(ffn)
 
-        @wraps(fn)
-        def wrapped_fn(*args, **kwargs):
+        def wrapped_fn(_, instance, args, kwargs):
             return make_call_event(
-                parameters=CallEvent.set_params(params, args, kwargs))
+                parameters=CallEvent.set_params(params, instance, args, kwargs))
         return wrapped_fn
 
     def wrap_test_func(self, fnname):
         C = self.C
-        fn = inspect.getattr_static(C, fnname)
-        fntype = FnType.classify(fn)
-        wrapped = self.prepare(fn, fntype)
-        if fntype & FnType.STATIC:
-            wrapped = staticmethod(wrapped)
-        elif fntype & FnType.CLASS:
-            wrapped = classmethod(wrapped)
-        setattr(C, fnname, wrapped)
-
+        static_fn = inspect.getattr_static(C, fnname)
+        fn = getattr(C, fnname)
+        fc = FilterableCls(C)
+        ffn = FilterableFn(fc, fn, static_fn)
+        wrapped = self.prepare(ffn)
+        wrapt.wrap_function_wrapper(C, fnname, wrapped)
 
 @pytest.mark.usefixtures('data_dir', autouse=True)
 class TestMethodBase(AppMapTestBase):

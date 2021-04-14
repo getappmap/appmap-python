@@ -1,4 +1,3 @@
-"""Test recording context manager"""
 import json
 import os
 import sys
@@ -34,7 +33,7 @@ class TestRecordingWhenEnabled(AppMapTestBase):
             ExampleClass.call_yaml()
 
         generated_appmap = self.normalize_appmap(appmap.generation.dump(r))
-
+        print(json.dumps(generated_appmap, indent=2))
         assert generated_appmap == expected_appmap
 
     def test_recording_clears(self):
