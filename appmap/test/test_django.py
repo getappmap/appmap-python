@@ -52,7 +52,7 @@ def test_http_capture(events):
 
 def test_message_capture_get(events):
     client = django.test.Client()
-    client.get('/test', { 'my_param': 'example' }, content_type='application/x-www-form-urlencoded')
+    client.get('/test', { 'my_param': 'example' })
 
     assert events[0].message == [
         {
@@ -65,7 +65,7 @@ def test_message_capture_get(events):
 
 def test_message_capture_get_arr(events):
     client = django.test.Client()
-    client.get('/test', { 'my_param': ['example', 'example2'] }, content_type='application/x-www-form-urlencoded')
+    client.get('/test', { 'my_param': ['example', 'example2'] })
 
     assert events[0].message == [
         {
