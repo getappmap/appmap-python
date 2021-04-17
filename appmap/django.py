@@ -8,6 +8,7 @@ from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 
 import time
+import json
 
 
 class ExecuteWrapper:
@@ -57,9 +58,24 @@ class Middleware:
     def __call__(self, request):
         if self.recorder.enabled:
             start = time.monotonic()
+            params = {}
+            content_type = request.META.get('CONTENT_TYPE', '')
+            if content_type.startswith('application/json'):
+                params = json.loads(request.body.decode())
+            else:
+                form_params = dict(request.GET)
+                form_params.update(dict(request.POST))
+                for name, value_array in form_params.items():
+                    # QueryDict stores query parameter values in an array. If
+                    # only one element is present, extract it.
+                    if len(value_array) == 1:
+                        params[name] = value_array[0]
+                    else:
+                        params[name] = value_array
             call_event = HttpRequestEvent(
                 request_method=request.method,
                 path_info=request.path_info,
+                message_parameters=params,
                 protocol=request.META['SERVER_PROTOCOL']
             )
             self.recorder.add_event(call_event)

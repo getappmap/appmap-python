@@ -227,6 +227,7 @@ class CallEvent(Event):
         self.parameters = parameters
         self.labels = labels
 
+
 class SqlEvent(Event):
     __slots__ = ['sql_query']
 
@@ -237,12 +238,26 @@ class SqlEvent(Event):
         }
 
 
-class HttpRequestEvent(Event):
+class MessageEvent(Event):
+    __slots__ = ['message']
+
+    def __init__(self, message_parameters):
+        super().__init__('call')
+        self.message = []
+        for name, value in message_parameters.items():
+            message_object = {
+                "name": name
+            }
+            message_object.update(describe_value(value))
+            self.message.append(message_object)
+
+
+class HttpRequestEvent(MessageEvent):
     __slots__ = ['http_server_request']
 
-    def __init__(self, request_method, path_info,
+    def __init__(self, request_method, path_info, message_parameters,
                  normalized_path_info=None, protocol=None):
-        super().__init__('call')
+        super().__init__(message_parameters)
         http_server_request = {
             'request_method': request_method,
             'path_info': path_info
@@ -253,6 +268,7 @@ class HttpRequestEvent(Event):
             http_server_request['protocol'] = protocol
 
         self.http_server_request = http_server_request
+
 
 class ReturnEvent(Event):
     __slots__ = ['parent_id', 'elapsed']
