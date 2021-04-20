@@ -80,6 +80,11 @@ class TestRecordingWhenEnabled(AppMapTestBase):
         assert evt.event == 'call'
         assert evt.method_id == 'wrapped_instance_method'
 
+    def test_cant_start_twice(self):
+        rec = appmap.Recording()
+        rec.start()
+        with pytest.raises(RuntimeError):
+            rec.start()
 
 class TestRecording(AppMapTestBase):
     def test_exec_module_protection(self, monkeypatch):

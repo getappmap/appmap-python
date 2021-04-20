@@ -3,6 +3,7 @@ from collections import namedtuple
 import inspect
 import logging
 import sys
+import traceback
 import types
 
 import appmap.wrapt as wrapt
@@ -47,7 +48,7 @@ class Recording:
     def __enter__(self):
         self.start()
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tb):
         logger.debug("Recording.__exit__, stopping with exception %s", exc_type)
         self.stop()
         if self.exit_hook is not None:
@@ -200,6 +201,7 @@ class Recorder:
             return
         self._initialized = True
         self.enabled = False
+        self.start_tb = None
         self.filter_stack = [NullFilter]
         self.filter_chain = []
         self._events = []
@@ -216,11 +218,17 @@ class Recorder:
 
     def start_recording(self):
         logger.debug('AppMap recording started')
+        if self.enabled:
+            logger.error('Recording already in progress, previous start:')
+            logger.error(''.join(traceback.format_list(self.start_tb)))
+            raise RuntimeError('Recording already in progress')
+        self.start_tb = traceback.extract_stack()
         self.enabled = True
 
     def stop_recording(self):
         logger.debug('AppMap recording stopped')
         self.enabled = False
+        self.start_tb = None
         return self._events
 
     def add_event(self, event):
