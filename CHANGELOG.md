@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Use repr() instead of str() for object stringification.
 ### Fixed
+- `setUp` and `teardown` of `unittest` test cases are no longer captured.
 - Fixed a crash when HTTP request doesn't match any route in Flask.
 - Avoid capturing SQL queries run when fetching object representation in Django.
 
