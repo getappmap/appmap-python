@@ -6,7 +6,8 @@ from appmap._implementation import testing_framework
 
 if appmap.enabled():
     @pytest.hookimpl
-    def pytest_runtestloop(session):
+    def pytest_sessionstart(session):
+        """Set up AppMap testing session and associate it with pytest and unittest sessions."""
         # Use the same session for unittest in case there are any unittest.TestCases.
         appmap.unittest.session = session.appmap = testing_framework.session(name='pytest', version=pytest.__version__)
 
