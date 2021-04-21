@@ -106,7 +106,21 @@ def test_message_capture_put(events):
 
 def test_message_capture_post_json(events):
     client = django.test.Client()
-    client.post('/test', { 'my_param': 'example' }, content_type='application/json')
+    client.post('/test', { 'my_param': 'example' }, content_type='application/json; charset=UTF-8')
+
+    assert events[0].message == [
+        {
+            'name': 'my_param',
+            'class': 'builtins.str',
+            'object_id': events[0].message[0]['object_id'],
+            'value': 'example'
+        }
+    ]
+
+
+def test_message_capture_post_bad_json(events):
+    client = django.test.Client()
+    client.post('/test?my_param=example', "bad json", content_type='application/json')
 
     assert events[0].message == [
         {
@@ -128,5 +142,19 @@ def test_message_capture_post_multipart(events):
             'class': 'builtins.str',
             'object_id': events[0].message[0]['object_id'],
             'value': 'example'
+        }
+    ]
+
+
+def test_message_capture_post_with_query(events):
+    client = django.test.Client()
+    client.post('/test?my_param=get', { 'my_param': 'example' })
+
+    assert events[0].message == [
+        {
+            'name': 'my_param',
+            'class': 'builtins.list',
+            'object_id': events[0].message[0]['object_id'],
+            'value': "['get', 'example']"
         }
     ]
