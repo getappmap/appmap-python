@@ -1,7 +1,10 @@
 import unittest
 from unittest.mock import patch
 
+import appmap.unittest
+
 import simple
+
 
 class UnitTestTest(unittest.TestCase):
     def test_hello_world(self):

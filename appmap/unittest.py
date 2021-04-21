@@ -23,7 +23,8 @@ def testPartExecutor(wrapped, _, args, kwargs):
     def _args(test_case, *_, isTest=False, **__):
         return (test_case, isTest)
     test_case, is_test = _args(*args, **kwargs)
-    if not is_test:
+    already_recording = getattr(test_case, '_appmap_pytest_recording', None)
+    if (not is_test) or already_recording:
         with wrapped(*args, **kwargs):
             yield
         return
