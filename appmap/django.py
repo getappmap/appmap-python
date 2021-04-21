@@ -50,6 +50,24 @@ def connected(sender, connection, **_):
         wrappers.append(ExecuteWrapper())
 
 
+def request_params(request):
+    """Extract request parameters as a dict.
+
+    Parses query and form data and JSON request body.
+    Multiple parameter values are represented as lists."""
+    params = request.GET.copy()
+    params.update(request.POST)
+
+    if request.content_type == 'application/json':
+        try:
+            # note: replace with json.load(request) after we drop 3.5 support
+            params.update(json.loads(request.body.decode()))
+        except (json.decoder.JSONDecodeError, AttributeError):
+            pass  # invalid json or not an object
+
+    return {k: v[0] if len(v) == 1 else v for k, v in params.lists()}
+
+
 class Middleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -58,24 +76,10 @@ class Middleware:
     def __call__(self, request):
         if self.recorder.enabled:
             start = time.monotonic()
-            params = {}
-            content_type = request.META.get('CONTENT_TYPE', '')
-            if content_type.startswith('application/json'):
-                params = json.loads(request.body.decode())
-            else:
-                form_params = dict(request.GET)
-                form_params.update(dict(request.POST))
-                for name, value_array in form_params.items():
-                    # QueryDict stores query parameter values in an array. If
-                    # only one element is present, extract it.
-                    if len(value_array) == 1:
-                        params[name] = value_array[0]
-                    else:
-                        params[name] = value_array
             call_event = HttpRequestEvent(
                 request_method=request.method,
                 path_info=request.path_info,
-                message_parameters=params,
+                message_parameters=request_params(request),
                 protocol=request.META['SERVER_PROTOCOL']
             )
             self.recorder.add_event(call_event)
