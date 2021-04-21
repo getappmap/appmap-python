@@ -79,7 +79,7 @@ def test_message_capture_get_arr(events):
 
 def test_message_capture_post_form_urlencoded(events):
     client = django.test.Client()
-    client.generic('POST', '/test?my_param=example', content_type='application/x-www-form-urlencoded')
+    client.post('/test', 'my_param=example', content_type='application/x-www-form-urlencoded')
 
     assert events[0].message == [
         {
@@ -120,7 +120,7 @@ def test_message_capture_post_json(events):
 
 def test_message_capture_post_multipart(events):
     client = django.test.Client()
-    client.post('/test', { 'my_param': 'example' }, content_type=django.test.client.MULTIPART_CONTENT)
+    client.post('/test', { 'my_param': 'example' })
 
     assert events[0].message == [
         {
