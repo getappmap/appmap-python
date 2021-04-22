@@ -2,7 +2,6 @@
 # pylint: disable=unused-import, redefined-outer-name
 
 import pytest
-from appmap._implementation.recording import Recorder
 
 from .appmap_test_base import AppMapTestBase
 
@@ -23,14 +22,6 @@ django.conf.settings.configure(
     ROOT_URLCONF=()
 )
 
-@pytest.fixture
-def events():
-    rec = Recorder()
-    rec.events().clear()
-    rec.enabled = True
-    yield rec.events()
-    rec.enabled = False
-    rec.events().clear()
 
 class TestDjango(AppMapTestBase):
     def test_sql_capture(self, events):

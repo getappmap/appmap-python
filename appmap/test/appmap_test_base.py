@@ -6,6 +6,7 @@ import json
 import pytest
 
 import appmap._implementation
+from appmap._implementation.recording import Recorder
 
 
 def normalize_path(path):
@@ -15,9 +16,21 @@ def normalize_path(path):
     """
     return re.sub(r"^.*site-packages/", "", path)
 
+
 class AppMapTestBase:
     def setup_method(self, _):
         appmap._implementation.initialize()  # pylint: disable=protected-access
+
+    @staticmethod
+    @pytest.fixture
+    def events():
+        """Enables appmap recording and allows examining events."""
+        rec = Recorder()
+        rec.events().clear()
+        rec.enabled = True
+        yield rec.events()
+        rec.enabled = False
+        rec.events().clear()
 
     @staticmethod
     def normalize_git(git):
