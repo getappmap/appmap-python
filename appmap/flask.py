@@ -60,7 +60,7 @@ class AppmapFlask:
                 request_method=request.method,
                 path_info=request.path,
                 message_parameters={},
-                normalized_path_info=request.url_rule.rule,
+                normalized_path_info=request.url_rule.rule if request.url_rule else None,
                 protocol=request.environ.get('SERVER_PROTOCOL')
             )
             Recorder().add_event(call_event)

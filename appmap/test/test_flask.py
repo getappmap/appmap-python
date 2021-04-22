@@ -72,3 +72,17 @@ class TestFlaskRemoteRecording(AppMapTestBase):
         res = flask_client.delete('/_appmap/record')
         assert res.status_code == 404
 
+    @staticmethod
+    def test_http_capture(flask_client, events):
+        flask_client.get('/test')
+
+        assert events[0].http_server_request.items() >= {
+            'request_method': 'GET',
+            'path_info': '/test',
+            'protocol': 'HTTP/1.1'
+        }.items()
+
+        assert events[1].http_server_response == {
+            'status_code': 404,
+            'mime_type': 'text/html; charset=utf-8'
+        }
