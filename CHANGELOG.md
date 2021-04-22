@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#77] Have the Django integration capture parameters of `http_server_request`s,
   recording them in the `message` attribute of the `call` event.
-- [#83] Capture HTTP request headers in django.
+- [#83] Capture HTTP request headers in django and flask.
 - [#53] Module-scoped functions are now recorded.
 ### Fixed
 - Fixed a crash when HTTP request doesn't match any route in Flask.

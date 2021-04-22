@@ -86,3 +86,26 @@ class TestFlaskRemoteRecording(AppMapTestBase):
             'status_code': 404,
             'mime_type': 'text/html; charset=utf-8'
         }
+
+    @staticmethod
+    def test_message_capture_post(flask_client, events):
+        flask_client.post(
+            '/test', json={'my_param': 'example'}, headers={
+                'Authorization': 'token "test-token"',
+                'Accept': 'application/json',
+                'Accept-Language': 'pl'
+            }
+        )
+
+        assert events[0].http_server_request.items() >= {
+            'request_method': 'POST',
+            'path_info': '/test',
+            'protocol': 'HTTP/1.1',
+            'authorization': 'token "test-token"',
+            'mime_type': 'application/json',
+        }.items()
+
+        assert events[0].http_server_request['headers'].items() >= {
+            'Accept': 'application/json',
+            'Accept-Language': 'pl'
+        }.items()
