@@ -80,7 +80,8 @@ class Middleware:
                 request_method=request.method,
                 path_info=request.path_info,
                 message_parameters=request_params(request),
-                protocol=request.META['SERVER_PROTOCOL']
+                protocol=request.META['SERVER_PROTOCOL'],
+                headers=request.headers
             )
             self.recorder.add_event(call_event)
 
