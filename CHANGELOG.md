@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
 - [#77] Have the Django integration capture parameters of `http_server_request`s,
   recording them in the `message` attribute of the `call` event.
+- [#83] Capture HTTP request headers in django.
 - [#53] Module-scoped functions are now recorded.
 
 ## [0.8.0] - 2021-04-04

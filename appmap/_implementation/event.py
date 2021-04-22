@@ -256,18 +256,28 @@ class HttpRequestEvent(MessageEvent):
     __slots__ = ['http_server_request']
 
     def __init__(self, request_method, path_info, message_parameters,
-                 normalized_path_info=None, protocol=None):
+                 normalized_path_info=None, protocol=None, headers=None):
         super().__init__(message_parameters)
+
+        if headers is not None:
+            mime_type = headers.get('Content-Type')
+            authorization = headers.get('Authorization')
+            headers = {
+                k: v for k, v in headers.items()
+                if k not in ['Content-Type', 'Authorization', 'Host', 'User-Agent']
+            }
+
         http_server_request = {
             'request_method': request_method,
-            'path_info': path_info
+            'protocol': protocol,
+            'path_info': path_info,
+            'normalized_path_info': normalized_path_info,
+            'mime_type': mime_type,
+            'authorization': authorization,
+            'headers': headers if headers is not None and len(headers) > 0 else None
         }
-        if normalized_path_info:
-            http_server_request['normalized_path_info'] = normalized_path_info
-        if protocol:
-            http_server_request['protocol'] = protocol
 
-        self.http_server_request = http_server_request
+        self.http_server_request = {k: v for k, v in http_server_request.items() if v}
 
 
 class ReturnEvent(Event):
