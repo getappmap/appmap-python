@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recording them in the `message` attribute of the `call` event.
 - [#83] Capture HTTP request headers in django.
 - [#53] Module-scoped functions are now recorded.
+### Fixed
+- Fixed a crash when HTTP request doesn't match any route in Flask.
 
 ## [0.8.0] - 2021-04-04
 ### Fixed
