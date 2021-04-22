@@ -13,7 +13,7 @@ def get_test_location(cls, method_name):
     return get_function_location(fn)
 
 
-# unittest.case._Outcom.testPartExecutor is used by all supported
+# unittest.case._Outcome.testPartExecutor is used by all supported
 # versions of unittest to run test cases. `isTest` will be True when
 # the part is the actual test method, False when it's setUp or
 # teardown.
@@ -36,6 +36,7 @@ def testPartExecutor(wrapped, _, args, kwargs):
             location=location):
         with wrapped(*args, **kwargs):
             yield
+
 
 if __name__ == '__main__':
     unittest.main(module=None)

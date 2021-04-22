@@ -7,8 +7,6 @@ import vendor.wrapt.src.appmap.wrapt as wrapt
 from appmap._implementation.event import CallEvent
 from appmap._implementation.recording import FilterableCls, FilterableFn
 
-from .appmap_test_base import AppMapTestBase
-
 empty_args = {
     'name': 'args',
     'class': 'builtins.tuple',
@@ -48,8 +46,8 @@ class _params:
         wrapped = self.prepare(ffn)
         wrapt.wrap_function_wrapper(C, fnname, wrapped)
 
-@pytest.mark.usefixtures('data_dir', autouse=True)
-class TestMethodBase(AppMapTestBase):
+@pytest.mark.usefixtures('with_data_dir', autouse=True)
+class TestMethodBase:
     @pytest.fixture
     def params(self, request):
         """

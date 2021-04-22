@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#64] Capture SQL queries in SQLAlchemy.
 - [#58] Capture database type and version in Django and SQLAlchemy.
 ### Changed
+- Initialize settings controlled by environment variables on startup.
+- When using `pytest` to run `unittest` test cases, start recording by hooking the test
+  case functions, rather than relying on our `unittest` integration.
 - Use repr() instead of str() for object stringification.
 ### Fixed
 - `setUp` and `teardown` of `unittest` test cases are no longer captured.

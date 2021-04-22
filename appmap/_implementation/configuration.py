@@ -3,9 +3,9 @@ Manage Configuration AppMap recorder for Python.
 """
 
 import importlib_metadata
+from functools import lru_cache
 import inspect
 import logging
-import os.path
 
 import yaml
 
@@ -36,11 +36,6 @@ class Config:
         if self.__getattribute__('_initialized'):  # keep pylint happy
             return
 
-        config_file = os.getenv("APPMAP_CONFIG", "appmap.yml")
-        with open(config_file) as file:
-            self._config = yaml.safe_load(file)
-            logger.info('self._config %s', self._config)
-
         self._initialized = True
 
     @classmethod
@@ -55,6 +50,14 @@ class Config:
     def packages(self):
         return self._config['packages']
 
+    @property
+    @lru_cache(maxsize=None)
+    def _config(self):
+        config_file = Env.current.get("APPMAP_CONFIG", "appmap.yml")
+        with open(config_file) as file:
+            ret = yaml.safe_load(file)
+            logger.info('config: %s', ret)
+            return ret
 
 def startswith(prefix, sequence):
     """

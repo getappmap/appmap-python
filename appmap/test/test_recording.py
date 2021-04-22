@@ -7,13 +7,14 @@ import pytest
 import appmap
 
 from appmap._implementation.recording import Recorder, wrap_exec_module
-from .appmap_test_base import AppMapTestBase
+from .normalize import normalize_appmap
 
 
-@pytest.mark.usefixtures('appmap_enabled')
-class TestRecordingWhenEnabled(AppMapTestBase):
-    def test_recording_works(self, data_dir):
-        with open(os.path.join(data_dir, 'expected.appmap.json')) as f:
+@pytest.mark.appmap_enabled
+@pytest.mark.usefixtures('with_data_dir')
+class TestRecordingWhenEnabled:
+    def test_recording_works(self, with_data_dir):
+        with open(os.path.join(with_data_dir, 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)
 
         import yaml
@@ -32,7 +33,7 @@ class TestRecordingWhenEnabled(AppMapTestBase):
                 pass
             ExampleClass.call_yaml()
 
-        generated_appmap = self.normalize_appmap(appmap.generation.dump(r))
+        generated_appmap = normalize_appmap(appmap.generation.dump(r))
         print(json.dumps(generated_appmap, indent=2))
         assert generated_appmap == expected_appmap
 
@@ -86,26 +87,25 @@ class TestRecordingWhenEnabled(AppMapTestBase):
         with pytest.raises(RuntimeError):
             rec.start()
 
-class TestRecording(AppMapTestBase):
-    def test_exec_module_protection(self, monkeypatch):
-        """
-        Test that recording.wrap_exec_module properly protects against
-        rewrapping a wrapped exec_module function.  Repeatedly wrap
-        the function, up to the recursion limit, then call the wrapped
-        function.  If wrapping protection is working properly, there
-        won't be a problem.  If wrapping protection is broken, this
-        test will fail with a RecursionError.
-        """
+def test_exec_module_protection(monkeypatch):
+    """
+    Test that recording.wrap_exec_module properly protects against
+    rewrapping a wrapped exec_module function.  Repeatedly wrap
+    the function, up to the recursion limit, then call the wrapped
+    function.  If wrapping protection is working properly, there
+    won't be a problem.  If wrapping protection is broken, this
+    test will fail with a RecursionError.
+    """
 
-        def exec_module():
-            pass
+    def exec_module():
+        pass
 
-        def do_import(*args, **kwargs):  # pylint: disable=unused-argument
-            pass
-        monkeypatch.setattr(Recorder, 'do_import', do_import)
-        f = exec_module
-        for _ in range(sys.getrecursionlimit()):
-            f = wrap_exec_module(f)
+    def do_import(*args, **kwargs):  # pylint: disable=unused-argument
+        pass
+    monkeypatch.setattr(Recorder, 'do_import', do_import)
+    f = exec_module
+    for _ in range(sys.getrecursionlimit()):
+        f = wrap_exec_module(f)
 
-        f()
-        assert True
+    f()
+    assert True

@@ -3,18 +3,21 @@
 import importlib
 import json
 import os
-import sys
 
 import pytest
 
-from .appmap_test_base import AppMapTestBase
+import appmap
+from appmap._implementation.env import Env
+
+from .normalize import normalize_appmap
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture
 def flask_client(data_dir, monkeypatch):
-    sys.path.append(os.path.join(data_dir, 'flask'))
+    monkeypatch.syspath_prepend(os.path.join(data_dir, 'flask'))
 
-    monkeypatch.setenv("APPMAP_CONFIG", os.path.join(data_dir, 'flask', 'appmap.yml'))
+    Env.current.set("APPMAP_CONFIG",
+                    os.path.join(data_dir, 'flask', 'appmap.yml'))
 
     import app  # pylint: disable=import-error
     importlib.reload(app)
@@ -24,11 +27,13 @@ def flask_client(data_dir, monkeypatch):
 
 
 def test_flask_appmap_disabled(flask_client):
+    assert not appmap.enabled()
+
     res = flask_client.get('/_appmap/record')
     assert res.status_code == 404
 
-@pytest.mark.usefixtures('appmap_enabled')
-class TestFlaskRemoteRecording(AppMapTestBase):
+@pytest.mark.appmap_enabled
+class TestFlaskRemoteRecording:
     def test_starts_disabled(self, flask_client):
         res = flask_client.get('/_appmap/record')
         assert res.status_code == 200
@@ -62,7 +67,7 @@ class TestFlaskRemoteRecording(AppMapTestBase):
         res = flask_client.delete('/_appmap/record')
         assert res.status_code == 200
         assert res.is_json
-        generated_appmap = self.normalize_appmap(json.dumps(res.json))
+        generated_appmap = normalize_appmap(json.dumps(res.json))
 
         with open(os.path.join(data_dir, 'flask', 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)

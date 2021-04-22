@@ -3,22 +3,41 @@ import os.path
 import pytest
 
 import appmap._implementation
+from appmap._implementation.env import Env
+from appmap._implementation.recording import Recorder
 
+def _data_dir(pytestconfig):
+    return str(os.path.join(
+        str(pytestconfig.rootpath),
+        'appmap', 'test', 'data'))
 
 @pytest.fixture
-def appmap_enabled(data_dir, monkeypatch, request):
-    monkeypatch.setenv('APPMAP', 'true')
-    config = request.node.get_closest_marker('appmap_config')
-    if config:
-        config = config.args[0]
-    else:
-        config = 'appmap.yml'
-    monkeypatch.setenv('APPMAP_CONFIG', os.path.join(data_dir, config))
+def data_dir(pytestconfig):
+    return _data_dir(pytestconfig)
 
-    appmap._implementation.initialize()  # pylint: disable=protected-access
+@pytest.fixture
+def with_data_dir(data_dir, monkeypatch):  # pylint: disable=redefined-outer-name
+    monkeypatch.syspath_prepend(data_dir)
+    return data_dir
 
-    yield
+@pytest.fixture
+def events():
+    rec = Recorder()
+    rec.events().clear()
+    rec.enabled = True
+    yield rec.events()
+    rec.enabled = False
+    rec.events().clear()
 
-    monkeypatch.delenv('APPMAP')
-    monkeypatch.delenv('APPMAP_CONFIG')
+@pytest.hookimpl
+def pytest_runtest_setup(item):
+    mark = item.get_closest_marker('appmap_enabled')
+    env = {}
+    if mark:
+        appmap_yml = mark.kwargs.get('config', 'appmap.yml')
+        d = _data_dir(item.config)
+        config = os.path.join(d, appmap_yml)
+        Env.current.set('APPMAP_CONFIG', config)
+        env = {'APPMAP': 'true', 'APPMAP_CONFIG': config}
 
+    appmap._implementation.initialize(env=env)  # pylint: disable=protected-access
