@@ -103,7 +103,7 @@ class TestStaticMethods(TestMethodBase):
             'name': 'p',
             'class': 'builtins.str',
             'kind': 'req',
-            'value': 'static'
+            'value': "'static'"
         }
 
 
@@ -124,7 +124,7 @@ class TestClassMethods(TestMethodBase):
             'name': 'p',
             'class': 'builtins.str',
             'kind': 'req',
-            'value': 'cls'
+            'value': "'cls'"
         })
 
 
@@ -140,7 +140,7 @@ class TestInstanceMethods(TestMethodBase):
         })
 
     @pytest.mark.parametrize('params,arg,expected',
-                             [('one', 'world', ('builtins.str', 'world')),
+                             [('one', 'world', ('builtins.str', "'world'")),
                               ('one', None, ('builtins.NoneType', 'None'))],
                              indirect=['params'])
     def test_one_param(self, params, arg, expected):
@@ -156,7 +156,7 @@ class TestInstanceMethods(TestMethodBase):
         })
 
     @pytest.mark.parametrize('params,arg,expected',
-                             [('one', 'world', ('builtins.str', 'world')),
+                             [('one', 'world', ('builtins.str', "'world'")),
                               ('one', None, ('builtins.NoneType', 'None'))],
                              indirect=['params'])
     def test_one_param_kw(self, params, arg, expected):

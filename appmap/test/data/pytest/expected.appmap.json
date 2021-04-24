@@ -64,7 +64,7 @@
       "event": "return",
       "return_value": {
         "class": "builtins.str",
-        "value": "Hello"
+        "value": "'Hello'"
       },
 
       "thread_id": 1
@@ -92,7 +92,7 @@
       "event": "return",
       "return_value": {
         "class": "builtins.str",
-        "value": "world!"
+        "value": "'world!'"
       },
       "thread_id": 1
     },
@@ -102,7 +102,7 @@
       "event": "return",
       "return_value": {
         "class": "builtins.str",
-        "value": "Hello world!"
+        "value": "'Hello world!'"
       },
       "thread_id": 1
     }
