@@ -53,18 +53,15 @@ class _EventIds:
 
 def display_string(val):
     # If we're asked to display parameters, make a best-effort attempt
-    # to get a string value for the parameter using str() and
-    # repr(). If parameter display is disabled, or str() and repr()
-    # both raised, just formulate a value from the class and id.
+    # to get a string value for the parameter using repr(). If parameter
+    # display is disabled, or repr() has raised, just formulate a value
+    # from the class and id.
     value = None
     if Env.current.display_params:
         try:
-            value = str(val)
+            value = repr(val)
         except Exception:  # pylint: disable=broad-except
-            try:
-                value = repr(val)
-            except Exception:  # pylint: disable=broad-except
-                pass
+            pass
 
     if value is None:
         class_name = fqname(type(val))

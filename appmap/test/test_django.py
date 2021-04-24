@@ -61,7 +61,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
         assert events[0].http_server_request.items() >= {
@@ -86,7 +86,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
 
@@ -113,7 +113,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
 
@@ -126,7 +126,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
 
@@ -140,7 +140,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
 
@@ -154,7 +154,7 @@ class TestDjango(AppMapTestBase):
                 'name': 'my_param',
                 'class': 'builtins.str',
                 'object_id': events[0].message[0]['object_id'],
-                'value': 'example'
+                'value': "'example'"
             }
         ]
 

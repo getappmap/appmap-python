@@ -24,7 +24,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "ExampleClass.static_method\n...\n"
+        "value": "'ExampleClass.static_method\\n...\\n'"
       },
       "parent_id": 2,
       "id": 3,
@@ -51,7 +51,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "ClassMethodMixin#class_method, cls ExampleClass"
+        "value": "'ClassMethodMixin#class_method, cls ExampleClass'"
       },
       "parent_id": 4,
       "id": 5,
@@ -78,7 +78,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "Super#instance_method"
+        "value": "'Super#instance_method'"
       },
       "parent_id": 6,
       "id": 7,
@@ -136,7 +136,7 @@
           "name": "data",
           "kind": "req",
           "class": "builtins.str",
-          "value": "ExampleClass.call_yaml"
+          "value": "'ExampleClass.call_yaml'"
         }
       ],
       "id": 11,
@@ -154,7 +154,7 @@
           "name": "data",
           "kind": "req",
           "class": "builtins.str",
-          "value": "ExampleClass.call_yaml"
+          "value": "'ExampleClass.call_yaml'"
         },
         {
           "name": "stream",
@@ -182,7 +182,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "ExampleClass.call_yaml\n...\n"
+        "value": "'ExampleClass.call_yaml\\n...\\n'"
       },
       "parent_id": 12,
       "id": 13,
@@ -200,7 +200,7 @@
           "name": "data",
           "kind": "req",
           "class": "builtins.str",
-          "value": "ExampleClass.call_yaml"
+          "value": "'ExampleClass.call_yaml'"
         },
         {
           "name": "stream",
@@ -228,7 +228,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "ExampleClass.call_yaml\n...\n"
+        "value": "'ExampleClass.call_yaml\\n...\\n'"
       },
       "parent_id": 14,
       "id": 15,

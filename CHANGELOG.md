@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recording them in the `message` attribute of the `call` event.
 - [#83] Capture HTTP request headers in django and flask.
 - [#53] Module-scoped functions are now recorded.
+### Changed
+- Use repr() instead of str() for object stringification.
 ### Fixed
 - Fixed a crash when HTTP request doesn't match any route in Flask.
 - Avoid capturing SQL queries run when fetching object representation in Django.
@@ -33,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - [#65] Wrapped functions with mismatched signatures no longer cause mapping failures.
-  
+
 ## [0.7.0] - 2021-03-15
 ### Added
 - [#2] [#28] Add flask integration
@@ -42,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The `appmap.labels` decorator can now be applied to a function to specify labels that
   should appear in the AppMap.
-  
+
 ### Fixed
 - [#61] Don't modify an instrumented function's parameters when rendering them.
 - Correct the structure of the `return_value` object in a `return` event.
