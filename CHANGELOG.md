@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#53] Module-scoped functions are now recorded.
 ### Fixed
 - Fixed a crash when HTTP request doesn't match any route in Flask.
+- Avoid capturing SQL queries run when fetching object representation in Django.
 
 ## [0.8.0] - 2021-04-04
 ### Fixed

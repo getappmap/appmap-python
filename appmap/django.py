@@ -1,14 +1,15 @@
-from appmap._implementation.event import SqlEvent, ReturnEvent, HttpRequestEvent, HttpResponseEvent
-from appmap._implementation.recording import Recorder
-
 from django.core.handlers.base import BaseHandler
 from django.conf import settings
-
+from django.db.backends.utils import CursorDebugWrapper
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 
 import time
 import json
+
+from appmap._implementation.event import SqlEvent, ReturnEvent, HttpRequestEvent, HttpResponseEvent
+from appmap._implementation.instrument import is_instrumentation_disabled
+from appmap._implementation.recording import Recorder
 
 
 class ExecuteWrapper:
@@ -20,7 +21,11 @@ class ExecuteWrapper:
         try:
             return execute(sql, params, many, context)
         finally:
-            if self.recorder.enabled:
+            if is_instrumentation_disabled():
+                # We must be in the middle of fetching object representation.
+                # Don't record this query in the appmap.
+                pass
+            elif self.recorder.enabled:
                 stop = time.monotonic()
                 duration = stop - start
                 # Note this logic is based on django.db.backends.utils.CursorDebugWrapper.
@@ -40,6 +45,22 @@ class ExecuteWrapper:
                 self.recorder.add_event(call_event)
                 return_event = ReturnEvent(parent_id=call_event.id, elapsed=duration)
                 self.recorder.add_event(return_event)
+
+
+# CursorDebugWrapper is used in tests to capture and examine queries.
+# However, recording appmap can cause additional queries to run when fetching
+# object representation. Make sure tests don't see these queries.
+
+original_execute = CursorDebugWrapper.execute
+
+def wrapped_execute(self, sql, params=None):
+    """Directly execute the query if instrumentation is temporarily
+    disabled, to avoid capturing queries not issued by the application."""
+    if is_instrumentation_disabled():
+        return super().execute(sql, params)
+    return original_execute(self, sql, params)
+
+CursorDebugWrapper.execute = wrapped_execute
 
 
 @receiver(connection_created)
