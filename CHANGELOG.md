@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recording them in the `message` attribute of the `call` event.
 - [#83] Capture HTTP request headers in django and flask.
 - [#53] Module-scoped functions are now recorded.
+- [#64] Capture SQL queries in SQLAlchemy.
 ### Changed
 - Use repr() instead of str() for object stringification.
 ### Fixed

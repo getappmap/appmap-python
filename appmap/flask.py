@@ -11,6 +11,14 @@ from appmap._implementation.event import HttpRequestEvent, HttpResponseEvent
 from appmap._implementation.recording import Recorder, Recording
 
 
+try:
+    # pylint: disable=unused-import
+    from . import sqlalchemy  # noqa: F401
+except ImportError:
+    # not using sqlalchemy
+    pass
+
+
 class AppmapFlask:
     def __init__(self, app=None):
         self.app = app
