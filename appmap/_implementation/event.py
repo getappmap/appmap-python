@@ -229,11 +229,13 @@ class CallEvent(Event):
 class SqlEvent(Event):
     __slots__ = ['sql_query']
 
-    def __init__(self, sql):
+    def __init__(self, sql, vendor=None, version=None):
         super().__init__('call')
-        self.sql_query = {
-            'sql': sql
-        }
+        self.sql_query = compact_dict({
+            'sql': sql,
+            'database_type': vendor,
+            'server_version': '.'.join([str(v) for v in version]) if version else None
+        })
 
 
 class MessageEvent(Event):

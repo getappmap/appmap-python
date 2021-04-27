@@ -12,6 +12,25 @@ from appmap._implementation.instrument import is_instrumentation_disabled
 from appmap._implementation.recording import Recorder
 
 
+def parse_pg_version(version):
+    """Transform postgres version number like 120005 to a tuple like 12.0.5."""
+    return (version // 10000 % 100, version // 100 % 100, version % 100)
+
+
+def database_version(connection):
+    """Examine a database connection and try to establish the backend version."""
+    vendor = connection.vendor
+    if vendor == 'sqlite':
+        return connection.Database.sqlite_version_info
+    if vendor == 'mysql':
+        return connection.mysql_version
+    if vendor == 'postgresql':
+        return parse_pg_version(connection.pg_version)
+    if vendor == 'oracle':
+        return connection.oracle_version
+    return None
+
+
 class ExecuteWrapper:
     def __init__(self):
         self.recorder = Recorder()
@@ -28,6 +47,7 @@ class ExecuteWrapper:
             elif self.recorder.enabled:
                 stop = time.monotonic()
                 duration = stop - start
+                conn = context['connection']
                 # Note this logic is based on django.db.backends.utils.CursorDebugWrapper.
                 if many:
                     # Sometimes the same query is executed with different parameter sets.
@@ -38,10 +58,9 @@ class ExecuteWrapper:
                         times = '?'
                     sql = '%s times %s' % (times, sql)
                 else:
-                    db = context['connection']
                     cursor = context['cursor']
-                    sql = db.ops.last_executed_query(cursor, sql, params)
-                call_event = SqlEvent(sql)
+                    sql = conn.ops.last_executed_query(cursor, sql, params)
+                call_event = SqlEvent(sql, vendor=conn.vendor, version=database_version(conn))
                 self.recorder.add_event(call_event)
                 return_event = ReturnEvent(parent_id=call_event.id, elapsed=duration)
                 self.recorder.add_event(return_event)

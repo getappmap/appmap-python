@@ -28,7 +28,11 @@ class TestDjango(AppMapTestBase):
         conn = django.db.connections['default']
         conn.cursor().execute('SELECT 1').fetchall()
 
-        assert events[0].sql_query['sql'] == 'SELECT 1'
+        assert events[0].sql_query.items() >= {
+            'sql': 'SELECT 1',
+            'database_type': 'sqlite'
+        }.items()
+        assert events[0].sql_query['server_version'].startswith('3.')
 
 
     def test_http_capture(self, events):
