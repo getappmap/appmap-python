@@ -10,6 +10,11 @@ from .env import Env
 from ._intflag import _IntFlag
 
 
+def compact_dict(dictionary):
+    """Return a copy of dictionary with None values filtered out."""
+    return {k: v for k, v in dictionary.items() if v is not None}
+
+
 # FnType can inherit from IntFlag instead once we drop support for 3.5
 class FnType(_IntFlag):
     STATIC = 1

@@ -8,6 +8,7 @@ import threading
 from .env import Env
 from .utils import (
     appmap_tls,
+    compact_dict,
     get_function_location,
     split_function_name,
     fqname,
@@ -274,7 +275,7 @@ class HttpRequestEvent(MessageEvent):
             'headers': headers if headers is not None and len(headers) > 0 else None
         }
 
-        self.http_server_request = {k: v for k, v in http_server_request.items() if v}
+        self.http_server_request = compact_dict(http_server_request)
 
 
 class ReturnEvent(Event):
