@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#83] Capture HTTP request headers in django and flask.
 - [#53] Module-scoped functions are now recorded.
 - [#64] Capture SQL queries in SQLAlchemy.
-- [#58] Capture database type and version in Django.
+- [#58] Capture database type and version in Django and SQLAlchemy.
 ### Changed
 - Use repr() instead of str() for object stringification.
 ### Fixed

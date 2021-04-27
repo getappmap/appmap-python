@@ -13,7 +13,11 @@ class TestSQLAlchemy(AppMapTestBase):
     @staticmethod
     def test_sql_capture(connection, events):
         connection.execute('SELECT 1')
-        assert events[0].sql_query['sql'] == 'SELECT 1'
+        assert events[0].sql_query.items() >= {
+            'sql': 'SELECT 1',
+            'database_type': 'sqlite'
+        }.items()
+        assert events[0].sql_query['server_version'].startswith('3.')
 
 
     @staticmethod

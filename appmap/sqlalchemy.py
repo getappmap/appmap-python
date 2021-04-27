@@ -30,7 +30,8 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
             sql = '-- %s times\n%s' % (times, statement)
         else:
             sql = statement
-        call_event = SqlEvent(sql)
+        dialect = conn.dialect
+        call_event = SqlEvent(sql, vendor=dialect.name, version=dialect.server_version_info)
         recorder.add_event(call_event)
         setattr(
             context, 'appmap',
