@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- [#90] Capture HTTP response headers in django and flask.
+
 ## [0.9.0] - 2021-05-03
 ### Added
 - Attempting to start recording while recording is in progress will now raise a
@@ -30,10 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a crash when HTTP request doesn't match any route in Flask.
 - Avoid capturing SQL queries run when fetching object representation in Django.
 
-### Changed
-- When using `pytest` to run `unittest` test cases, start recording by hooking the test
-  case functions, rather than relying on our `unittest` integration.
-  
 ## [0.8.0] - 2021-04-04
 ### Fixed
 - [#74] pytest integration works again

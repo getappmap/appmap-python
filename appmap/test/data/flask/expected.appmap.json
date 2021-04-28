@@ -16,6 +16,7 @@
         {
             "event": "return",
             "http_server_response": {
+                "headers": { "Content-Length": "13" },
                 "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
@@ -38,6 +39,7 @@
         {
             "event": "return",
             "http_server_response": {
+                "headers": { "Content-Length": "14" },
                 "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
@@ -60,6 +62,7 @@
         {
             "event": "return",
             "http_server_response": {
+                "headers": { "Content-Length": "8" },
                 "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },

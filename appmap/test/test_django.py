@@ -17,6 +17,7 @@ import appmap.django  # noqa: F401
 # indicate a problem.
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
+    MIDDLEWARE=['django.middleware.http.ConditionalGetMiddleware'],
     ROOT_URLCONF=()
 )
 
@@ -40,10 +41,13 @@ def test_http_capture(events):
         'protocol': 'HTTP/1.1'
     }.items()
 
-    assert events[1].http_server_response == {
+    response = events[1].http_server_response
+    assert response.items() >= {
         'status_code': 404,
         'mime_type': 'text/html'
-    }
+    }.items()
+
+    assert 'ETag' in response['headers']
 
 
 def test_message_capture_post(events):

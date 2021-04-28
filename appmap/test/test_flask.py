@@ -33,7 +33,7 @@ def test_flask_appmap_disabled(flask_client):
     assert res.status_code == 404
 
 @pytest.mark.appmap_enabled
-class TestFlaskRemoteRecording:
+class TestFlask:
     def test_starts_disabled(self, flask_client):
         res = flask_client.get('/_appmap/record')
         assert res.status_code == 200
@@ -81,16 +81,19 @@ class TestFlaskRemoteRecording:
     def test_http_capture(flask_client, events):
         flask_client.get('/test')
 
-        assert events[0].http_server_request.items() >= {
+        assert events[0].http_server_request == {
             'request_method': 'GET',
             'path_info': '/test',
             'protocol': 'HTTP/1.1'
-        }.items()
+        }
 
-        assert events[1].http_server_response == {
+        response = events[1].http_server_response
+        assert response.items() >= {
             'status_code': 404,
             'mime_type': 'text/html; charset=utf-8'
-        }
+        }.items()
+
+        assert 'Content-Length' in response['headers']
 
     @staticmethod
     def test_message_capture_post(flask_client, events):

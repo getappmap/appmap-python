@@ -252,32 +252,39 @@ class MessageEvent(Event):
             self.message.append(message_object)
 
 
+def filter_http_headers(headers):
+    """Filter out HTTP headers which shouldn't go into appmap events.
+    Return None if none left."""
+    headers = {
+        k: v for k, v in headers.items()
+        if k not in ['Content-Type', 'Authorization', 'Host', 'User-Agent']
+    }
+    return headers if len(headers) > 0 else None
+
+
 class HttpRequestEvent(MessageEvent):
+    """A call AppMap event representing an HTTP request."""
     __slots__ = ['http_server_request']
 
     def __init__(self, request_method, path_info, message_parameters,
                  normalized_path_info=None, protocol=None, headers=None):
         super().__init__(message_parameters)
 
-        if headers is not None:
-            mime_type = headers.get('Content-Type')
-            authorization = headers.get('Authorization')
-            headers = {
-                k: v for k, v in headers.items()
-                if k not in ['Content-Type', 'Authorization', 'Host', 'User-Agent']
-            }
-
-        http_server_request = {
+        request = {
             'request_method': request_method,
             'protocol': protocol,
             'path_info': path_info,
             'normalized_path_info': normalized_path_info,
-            'mime_type': mime_type,
-            'authorization': authorization,
-            'headers': headers if headers is not None and len(headers) > 0 else None
         }
 
-        self.http_server_request = compact_dict(http_server_request)
+        if headers is not None:
+            request.update({
+                'mime_type': headers.get('Content-Type'),
+                'authorization': headers.get('Authorization'),
+                'headers': filter_http_headers(headers),
+            })
+
+        self.http_server_request = compact_dict(request)
 
 
 class ReturnEvent(Event):
@@ -300,12 +307,20 @@ class FuncReturnEvent(ReturnEvent):
 class HttpResponseEvent(ReturnEvent):
     __slots__ = ['http_server_response']
 
-    def __init__(self, status_code, mime_type, **kwargs):
+    def __init__(self, status_code, headers=None, **kwargs):
         super().__init__(**kwargs)
-        self.http_server_response = {
-            'status_code': status_code,
-            'mime_type': mime_type
+
+        response = {
+            'status_code': status_code
         }
+
+        if headers is not None:
+            response.update({
+                'mime_type': headers.get('Content-Type'),
+                'headers': filter_http_headers(headers)
+            })
+
+        self.http_server_response = compact_dict(response)
 
 
 class ExceptionEvent(ReturnEvent):

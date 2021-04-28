@@ -86,7 +86,7 @@ class AppmapFlask:
                 parent_id=parent_id,
                 elapsed=duration,
                 status_code=response.status_code,
-                mime_type=response.content_type
+                headers=response.headers
             )
             Recorder().add_event(return_event)
 
