@@ -14,11 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#53] Module-scoped functions are now recorded.
 - [#64] Capture SQL queries in SQLAlchemy.
 - [#58] Capture database type and version in Django and SQLAlchemy.
+
 ### Changed
+- [#94] Drop support for python 3.5.
 - Initialize settings controlled by environment variables on startup.
 - When using `pytest` to run `unittest` test cases, start recording by hooking the test
   case functions, rather than relying on our `unittest` integration.
 - Use repr() instead of str() for object stringification.
+
 ### Fixed
 - `setUp` and `teardown` of `unittest` test cases are no longer captured.
 - Fixed a crash when HTTP request doesn't match any route in Flask.

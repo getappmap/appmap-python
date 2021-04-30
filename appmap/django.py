@@ -100,8 +100,7 @@ def request_params(request):
 
     if request.content_type == 'application/json':
         try:
-            # note: replace with json.load(request) after we drop 3.5 support
-            params.update(json.loads(request.body.decode()))
+            params.update(json.load(request))
         except (json.decoder.JSONDecodeError, AttributeError):
             pass  # invalid json or not an object
 

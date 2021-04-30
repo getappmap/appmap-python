@@ -7,7 +7,7 @@ class AppMapPyVerException(Exception):
 
 
 def check_py_version():
-    MIN_PY_VERSION = (3, 5)
+    MIN_PY_VERSION = (3, 6)
     if sys.version_info < MIN_PY_VERSION:
         raise AppMapPyVerException(
             'Minimum Python version supported is %s, found %s' %
