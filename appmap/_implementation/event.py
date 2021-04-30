@@ -252,14 +252,9 @@ class MessageEvent(Event):
             self.message.append(message_object)
 
 
-def filter_http_headers(headers):
-    """Filter out HTTP headers which shouldn't go into appmap events.
-    Return None if none left."""
-    headers = {
-        k: v for k, v in headers.items()
-        if k not in ['Content-Type', 'Authorization', 'Host', 'User-Agent']
-    }
-    return headers if len(headers) > 0 else None
+def none_if_empty(collection):
+    """Return collection or None if it's empty."""
+    return collection if len(collection) > 0 else None
 
 
 class HttpRequestEvent(MessageEvent):
@@ -281,7 +276,7 @@ class HttpRequestEvent(MessageEvent):
             request.update({
                 'mime_type': headers.get('Content-Type'),
                 'authorization': headers.get('Authorization'),
-                'headers': filter_http_headers(headers),
+                'headers': none_if_empty(dict(headers)),
             })
 
         self.http_server_request = compact_dict(request)
@@ -317,7 +312,7 @@ class HttpResponseEvent(ReturnEvent):
         if headers is not None:
             response.update({
                 'mime_type': headers.get('Content-Type'),
-                'headers': filter_http_headers(headers)
+                'headers': none_if_empty(dict(headers))
             })
 
         self.http_server_response = compact_dict(response)

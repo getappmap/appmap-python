@@ -23,6 +23,9 @@ def flask_client(data_dir, monkeypatch):
     importlib.reload(app)
 
     with app.app.test_client() as client:  # pylint: disable=no-member
+        # set user agent so the version number doesn't break diff
+        client.environ_base['HTTP_USER_AGENT'] = 'werkzeug'
+
         yield client
 
 
@@ -81,11 +84,11 @@ class TestFlask:
     def test_http_capture(flask_client, events):
         flask_client.get('/test')
 
-        assert events[0].http_server_request == {
+        assert events[0].http_server_request.items() >= {
             'request_method': 'GET',
             'path_info': '/test',
             'protocol': 'HTTP/1.1'
-        }
+        }.items()
 
         response = events[1].http_server_response
         assert response.items() >= {
