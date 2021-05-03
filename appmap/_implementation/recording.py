@@ -1,13 +1,17 @@
 from abc import ABC, abstractmethod
 from collections import namedtuple
+from collections.abc import MutableSequence
+
 import inspect
 import logging
 import sys
+import traceback
 import types
 
 import appmap.wrapt as wrapt
 
 from .env import Env
+from .event import _EventIds
 from .utils import FnType
 
 logger = logging.getLogger(__name__)
@@ -47,7 +51,7 @@ class Recording:
     def __enter__(self):
         self.start()
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tb):
         logger.debug("Recording.__exit__, stopping with exception %s", exc_type)
         self.stop()
         if self.exit_hook is not None:
@@ -200,6 +204,7 @@ class Recorder:
             return
         self._initialized = True
         self.enabled = False
+        self.start_tb = None
         self.filter_stack = [NullFilter]
         self.filter_chain = []
         self._events = []
@@ -213,14 +218,21 @@ class Recorder:
 
     def clear(self):
         self._events = []
+        _EventIds.reset()
 
     def start_recording(self):
         logger.debug('AppMap recording started')
+        if self.enabled:
+            logger.error('Recording already in progress, previous start:')
+            logger.error(''.join(traceback.format_list(self.start_tb)))
+            raise RuntimeError('Recording already in progress')
+        self.start_tb = traceback.extract_stack()
         self.enabled = True
 
     def stop_recording(self):
         logger.debug('AppMap recording stopped')
         self.enabled = False
+        self.start_tb = None
         return self._events
 
     def add_event(self, event):
@@ -237,6 +249,9 @@ class Recorder:
 
     def do_import(self, *args, **kwargs):
         mod = args[0]
+        if mod.__name__.startswith('appmap'):
+            return
+
         logger.debug('do_import, mod %s args %s kwargs %s', mod, args, kwargs)
         if not self.filter_chain:
             logger.debug('  filter_stack %s', self.filter_stack)
@@ -244,9 +259,6 @@ class Recorder:
             for filter_ in self.filter_stack[1:]:
                 self.filter_chain = filter_(self.filter_chain)
                 logger.debug('  self.filter chain: %s', self.filter_chain)
-
-        if mod.__name__.startswith('appmap'):
-            return
 
         def instrument_functions(filterable):
             if not self.filter_chain.filter(filterable):
@@ -316,9 +328,37 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
     return spec
 
 
-def wrap_find_spec(find_spec):
-    return wrap_finder_function(find_spec, wrapped_find_spec)
+def wrap_finder_find_spec(finder):
+    find_spec = getattr(finder, 'find_spec', None)
+    if find_spec is None:
+        logger.debug('no find_spec for finder %r', finder)
+        return
 
+    finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
+
+
+class MetapathObserver(MutableSequence):
+    def __init__(self, meta_path):
+        self._meta_path = meta_path
+
+    def __getitem__(self, key):
+        return self._meta_path.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self._meta_path.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        self._meta_path.__delitem__(key)
+
+    def __len__(self):
+        return self._meta_path.__len__()
+
+    def insert(self, index, value):
+        wrap_finder_find_spec(value)
+        self._meta_path.insert(index, value)
+
+    def copy(self):
+        return self._meta_path.copy()
 
 def initialize():
     Recorder.initialize()
@@ -326,11 +366,11 @@ def initialize():
     if Env.current.enabled:
         logger.debug('sys.metapath: %s', sys.meta_path)
         for finder in sys.meta_path:
-            find_spec = getattr(finder, 'find_spec', None)
-            if find_spec is None:
-                logger.debug('no find_spec for finder %r', finder)
-                continue
-            finder.find_spec = wrap_find_spec(finder.find_spec)
+            wrap_finder_find_spec(finder)
+
+        # Make sure we instrument any finders that get added in the
+        # future.
+        sys.meta_path = MetapathObserver(sys.meta_path.copy())
 
 
 def instrument_module(module):

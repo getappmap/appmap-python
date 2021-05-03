@@ -2,7 +2,10 @@
 import logging
 import logging.config
 import os
+import os.path
 
+_cwd = os.getcwd()
+_bootenv = os.environ.copy()
 
 class _EnvMeta(type):
     def __init__(cls, *args, **kwargs):
@@ -16,26 +19,38 @@ class _EnvMeta(type):
 
         return cls._instance
 
-    def reset(cls):
-        cls._instance = None
+    def reset(cls, env=None):
+        cls._instance = Env(env)
 
 
 class Env(metaclass=_EnvMeta):
-    def __init__(self):
+    def __init__(self, env=None):
         # root_dir and root_dir_len are going to be used when
         # instrumenting every function, so preprocess them as
         # much as possible.
-        self._root_dir = str(os.path.join(os.getcwd()) + '/')
+        self._cwd = _cwd
+        self._env = _bootenv.copy()
+        if env:
+            self._env.update(env)
+
+        self._root_dir = str(os.path.join(self._cwd) + '/')
         self._root_dir_len = len(self._root_dir)
 
-        output_dir = os.getenv("APPMAP_OUTPUT_DIR",
+        output_dir = self.get("APPMAP_OUTPUT_DIR",
                                os.path.join('tmp', 'appmap'))
         self._output_dir = os.path.abspath(output_dir)
 
-        _configure_logging()
+        self._configure_logging()
 
-        self._display_params = (
-            os.getenv("APPMAP_DISPLAY_PARAMS", "true").lower() == "true")
+
+    def set(self, name, value):
+        self._env[name] = value
+
+    def get(self, name, default=None):
+        return self._env.get(name, default)
+
+    def delete(self, name):
+        del self._env[name]
 
     @property
     def root_dir(self):
@@ -51,57 +66,53 @@ class Env(metaclass=_EnvMeta):
 
     @property
     def enabled(self):
-        # There are currently tests that depend on being able to
-        # toggle the state of enabled by changing the value of APPMAP
-        # in environment. So, don't cache it for now.
-        return os.getenv("APPMAP", "false") == "true"
+        return self.get("APPMAP", "false").lower() == "true"
 
     @property
     def display_params(self):
-        return self._display_params
+        return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
 
+    def _configure_logging(self):
+        log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
 
-def _configure_logging():
-    log_level = os.getenv("APPMAP_LOG_LEVEL", "warning").upper()
-
-    log_config = os.getenv("APPMAP_LOG_CONFIG")
-    log_stream = os.getenv("APPMAP_LOG_STREAM", "stderr")
-    log_stream = 'ext://sys.%s' % (log_stream)
-    config_dict = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'default': {
-                'style': '{',
-                'format': '[{asctime}] {levelname} {name}: {message}'
-            }
-        },
-        'handlers': {
-            'default': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'default'
-            }
-        },
-        'loggers': {
-            'appmap': {
-                'level': log_level,
-                'handlers': ['default'],
-                'propagate': False
+        log_config = self.get("APPMAP_LOG_CONFIG")
+        log_stream = self.get("APPMAP_LOG_STREAM", "stderr")
+        log_stream = 'ext://sys.%s' % (log_stream)
+        config_dict = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'default': {
+                    'style': '{',
+                    'format': '[{asctime}] {levelname} {name}: {message}'
+                }
+            },
+            'handlers': {
+                'default': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': 'default'
+                }
+            },
+            'loggers': {
+                'appmap': {
+                    'level': log_level,
+                    'handlers': ['default'],
+                    'propagate': False
+                }
             }
         }
-    }
-    if log_config is not None:
-        name, level = log_config.split('=', 2)
-        config_dict['loggers'].update({
-            name: {
-                'level': level.upper(),
-                'handlers': ['default'],
-                'propagate': False
-            }
-        })
-    logging.config.dictConfig(config_dict)
+        if log_config is not None:
+            name, level = log_config.split('=', 2)
+            config_dict['loggers'].update({
+                name: {
+                    'level': level.upper(),
+                    'handlers': ['default'],
+                    'propagate': False
+                }
+            })
+        logging.config.dictConfig(config_dict)
 
 
-def initialize():
-    Env.reset()
+def initialize(env=None):
+    Env.reset(env)
     logging.info('appmap enabled: %s', Env.current.enabled)

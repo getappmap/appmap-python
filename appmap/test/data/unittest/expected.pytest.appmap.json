@@ -12,18 +12,18 @@
     "recording": {
       "defined_class": "simple.test_simple.UnitTestTest",
       "method_id": "test_hello_world",
-      "source_location": "simple/test_simple.py:5"
+      "source_location": "simple/test_simple.py:9"
     },
     "name": "Unit test test hello world",
     "feature": "Hello world",
     "app": "Simple",
     "frameworks": [
       {
-        "name": "unittest"
+        "name": "pytest"
       }
     ],
     "recorder": {
-      "name": "unittest"
+      "name": "pytest"
     }
   },
   "events": [
@@ -31,7 +31,7 @@
       "defined_class": "simple.test_simple.UnitTestTest",
       "method_id": "test_hello_world",
       "path": "simple/test_simple.py",
-      "lineno": 5,
+      "lineno": 10,
       "static": false,
       "receiver": {
         "name": "self",
@@ -181,7 +181,7 @@
                 {
                   "name": "test_hello_world",
                   "type": "function",
-                  "location": "simple/test_simple.py:5",
+                  "location": "simple/test_simple.py:10",
                   "static": false
                 }
               ]

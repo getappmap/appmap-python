@@ -15,8 +15,8 @@ install: |
   export PATH="$PYENV_ROOT/bin:$PATH"
   pyenv update
   git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
-  for v in {5..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
-  pyenv latest local 3.{9,{5..8}}
+  for v in {6..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
+  pyenv latest local 3.{9,{6..8}}
   pip install --upgrade pip
   pip install poetry tox
 
@@ -29,7 +29,8 @@ script:
 - export PATH="$HOME/.pyenv/bin:$PATH"
 - eval "$(pyenv init -)"
 - eval "$(pyenv virtualenv-init -)"
-- tox -e py39 pylint appmap || travis_terminate 1
+- tox -e py39 -- pylint appmap || travis_terminate 1
+- tox -e py39 -- vermin -t=3.6- appmap || travis_terminate 1
 - tox
 - poetry build
 - ci/test_install.sh

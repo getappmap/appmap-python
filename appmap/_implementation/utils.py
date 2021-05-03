@@ -1,4 +1,5 @@
 from collections.abc import MutableMapping
+from enum import IntFlag, auto
 import inspect
 import threading
 import types
@@ -7,27 +8,17 @@ import subprocess
 import os
 
 from .env import Env
-from ._intflag import _IntFlag
-
 
 def compact_dict(dictionary):
     """Return a copy of dictionary with None values filtered out."""
     return {k: v for k, v in dictionary.items() if v is not None}
 
 
-# FnType can inherit from IntFlag instead once we drop support for 3.5
-class FnType(_IntFlag):
-    STATIC = 1
-    CLASS = 2
-    INSTANCE = 4
-    MODULE = 8
-
-    # Don't use these. They're only here so we don't have to implement
-    # something like enum.IntFlag._create_pseudo_member_.
-    _zero = 0
-    _three = STATIC | CLASS
-    _six = CLASS | INSTANCE
-    _eleven = STATIC | CLASS | MODULE
+class FnType(IntFlag):
+    STATIC = auto()
+    CLASS = auto()
+    INSTANCE = auto()
+    MODULE = auto()
 
     @staticmethod
     def classify(fn):

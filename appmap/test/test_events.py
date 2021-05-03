@@ -11,35 +11,35 @@ import pytest
 import appmap
 import appmap._implementation
 from appmap._implementation.event import _EventIds
-
-from .appmap_test_base import AppMapTestBase
+from appmap._implementation.env import Env
 
 # pylint: disable=import-error
-class TestEvents(AppMapTestBase):
-    def test_per_thread_id(self):
-        """ thread ids should be constant for a  thread """
-        assert _EventIds.get_thread_id() == _EventIds.get_thread_id()
+def test_per_thread_id():
+    """ thread ids should be constant for a  thread """
+    assert _EventIds.get_thread_id() == _EventIds.get_thread_id()
 
-    def test_thread_ids(self):
-        """thread ids should be different per thread"""
+def test_thread_ids():
+    """thread ids should be different per thread"""
 
-        tids = Queue()
+    tids = Queue()
 
-        def add_thread_id(q):
-            tid = _EventIds.get_thread_id()
-            q.put(tid)
+    def add_thread_id(q):
+        tid = _EventIds.get_thread_id()
+        q.put(tid)
 
-        t = partial(add_thread_id, tids)
-        threads = [Thread(target=t) for _ in range(5)]
-        list(map(Thread.start, threads))
-        list(map(Thread.join, threads))
+    t = partial(add_thread_id, tids)
+    threads = [Thread(target=t) for _ in range(5)]
+    list(map(Thread.start, threads))
+    list(map(Thread.join, threads))
 
-        assert not tids.empty()
+    assert not tids.empty()
 
-        all_tids = [tids.get() for _ in range(tids.qsize())]
-        assert len(set(all_tids)) == len(all_tids)  # Should all be unique
+    all_tids = [tids.get() for _ in range(tids.qsize())]
+    assert len(set(all_tids)) == len(all_tids)  # Should all be unique
 
-    @pytest.mark.usefixtures('appmap_enabled')
+@pytest.mark.appmap_enabled
+@pytest.mark.usefixtures('with_data_dir')
+class TestEvents:
     def test_recursion_protection(self):
         r = appmap.Recording()
         with r:
@@ -50,9 +50,6 @@ class TestEvents(AppMapTestBase):
         # is working
         assert True
 
-
-@pytest.mark.usefixtures('appmap_enabled')
-class TestParams(AppMapTestBase):
     def test_when_str_raises(self, mocker):
         r = appmap.Recording()
         with r:
@@ -63,6 +60,7 @@ class TestParams(AppMapTestBase):
 
             ExampleClass().instance_with_param(param)
 
+        assert len(r.events) > 0
         expected_value = 'param.__repr__'
         actual_value = r.events[0].parameters[0]['value']
         assert expected_value == actual_value
@@ -81,10 +79,8 @@ class TestParams(AppMapTestBase):
         actual_value = r.events[0].parameters[0]['value']
         assert re.fullmatch(expected_re, actual_value)
 
-    def test_when_display_disabled(self, mocker, monkeypatch):
-        monkeypatch.setenv("APPMAP_DISPLAY_PARAMS", "false")
-        self.setup_method(None)
-
+    def test_when_display_disabled(self, mocker):
+        Env.current.set("APPMAP_DISPLAY_PARAMS", "false")
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass
