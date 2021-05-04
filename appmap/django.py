@@ -7,9 +7,11 @@ from django.dispatch import receiver
 import time
 import json
 
-from appmap._implementation.event import SqlEvent, ReturnEvent, HttpRequestEvent, HttpResponseEvent
+from appmap._implementation.event import \
+    SqlEvent, ReturnEvent, HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.instrument import is_instrumentation_disabled
 from appmap._implementation.recording import Recorder
+from ._implementation.utils import values_dict
 
 
 def parse_pg_version(version):
@@ -104,7 +106,7 @@ def request_params(request):
         except (json.decoder.JSONDecodeError, AttributeError):
             pass  # invalid json or not an object
 
-    return {k: v[0] if len(v) == 1 else v for k, v in params.lists()}
+    return values_dict(params.lists())
 
 
 class Middleware:
@@ -115,7 +117,7 @@ class Middleware:
     def __call__(self, request):
         if self.recorder.enabled:
             start = time.monotonic()
-            call_event = HttpRequestEvent(
+            call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path_info,
                 message_parameters=request_params(request),
@@ -128,7 +130,7 @@ class Middleware:
 
         if self.recorder.enabled:
             duration = time.monotonic() - start
-            return_event = HttpResponseEvent(
+            return_event = HttpServerResponseEvent(
                 parent_id=call_event.id,
                 elapsed=duration,
                 status_code=response.status_code,

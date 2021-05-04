@@ -257,8 +257,30 @@ def none_if_empty(collection):
     return collection if len(collection) > 0 else None
 
 
-class HttpRequestEvent(MessageEvent):
-    """A call AppMap event representing an HTTP request."""
+# pylint: disable=too-few-public-methods
+class HttpClientRequestEvent(MessageEvent):
+    """A call AppMap event representing an HTTP client request."""
+    __slots__ = ['http_client_request']
+
+    def __init__(self, request_method, url, message_parameters, headers=None):
+        super().__init__(message_parameters)
+
+        request = {
+            'request_method': request_method,
+            'url': url,
+        }
+
+        if headers is not None:
+            request.update({
+                'headers': none_if_empty(dict(headers)),
+            })
+
+        self.http_client_request = compact_dict(request)
+
+
+# pylint: disable=too-few-public-methods
+class HttpServerRequestEvent(MessageEvent):
+    """A call AppMap event representing an HTTP server request."""
     __slots__ = ['http_server_request']
 
     def __init__(self, request_method, path_info, message_parameters,
@@ -300,8 +322,7 @@ class FuncReturnEvent(ReturnEvent):
 
 
 class HttpResponseEvent(ReturnEvent):
-    __slots__ = ['http_server_response']
-
+    """A generic HTTP response event."""
     def __init__(self, status_code, headers=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -315,7 +336,27 @@ class HttpResponseEvent(ReturnEvent):
                 'headers': none_if_empty(dict(headers))
             })
 
-        self.http_server_response = compact_dict(response)
+        self.response = compact_dict(response)
+
+
+# pylint: disable=too-few-public-methods
+class HttpServerResponseEvent(HttpResponseEvent):
+    """An HTTP server response event."""
+    __slots__ = ['http_server_response']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.http_server_response = self.response
+
+
+# pylint: disable=too-few-public-methods
+class HttpClientResponseEvent(HttpResponseEvent):
+    """An HTTP client response event."""
+    __slots__ = ['http_client_response']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.http_client_response = self.response
 
 
 class ExceptionEvent(ReturnEvent):

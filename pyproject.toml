@@ -42,6 +42,7 @@ inflection = "~0.3.0"
 importlib-metadata = ">=0.8"
 
 [tool.poetry.dev-dependencies]
+httpretty = "^1.0.5"
 pytest = "^6.1.2"
 pytest-randomly = "^3.5.0"
 pylint = "^2.6.0"
@@ -64,6 +65,7 @@ tox = "^3.22.0"
 tox-pyenv = "^1.1.0"
 tox-travis = "^0.12"
 Twisted = "^21.2.0"
+requests = "^2.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

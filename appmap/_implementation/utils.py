@@ -14,6 +14,12 @@ def compact_dict(dictionary):
     return {k: v for k, v in dictionary.items() if v is not None}
 
 
+def values_dict(items):
+    """Given a list of (key, list) values returns a dictionary where
+    single-element lists have been replaced by their sole value.
+    """
+    return {k: v[0] if len(v) == 1 else v for k, v in items}
+
 class FnType(IntFlag):
     STATIC = auto()
     CLASS = auto()
