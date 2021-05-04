@@ -7,7 +7,7 @@ from flask import g, request
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
-from appmap._implementation.event import HttpRequestEvent, HttpResponseEvent
+from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recording import Recorder, Recording
 
 
@@ -64,7 +64,7 @@ class AppmapFlask:
 
     def before_request(self):
         if self.recording.is_running() and request.path != self.record_url:
-            call_event = HttpRequestEvent(
+            call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path,
                 message_parameters={},
@@ -82,7 +82,7 @@ class AppmapFlask:
             parent_id = g.appmap_request_event.id
             duration = time.monotonic() - g.appmap_request_start
 
-            return_event = HttpResponseEvent(
+            return_event = HttpServerResponseEvent(
                 parent_id=parent_id,
                 elapsed=duration,
                 status_code=response.status_code,
