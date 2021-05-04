@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Headers such as Host, User-Agent, Authorization and Content-Type are no longer
   filtered out in HTTP event `headers` field.
 
+### Fixed
+- When using `pytest` as the test driver, make sure the test case decorator returns the
+  correct value.
+
 ## [0.9.0] - 2021-05-03
 ### Added
 - Attempting to start recording while recording is in progress will now raise a
