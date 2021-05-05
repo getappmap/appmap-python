@@ -53,7 +53,7 @@ The second option is to upload them to the [AppLand server](https://app.land) us
 
 ## Supported versions
 
-* Python >=3.5
+* Python >=3.6
 * Pytest >=6.1.2
 
 Support for new versions is added frequently, please check back regularly for updates.
