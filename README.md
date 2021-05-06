@@ -8,7 +8,7 @@
   - [pytest](#pytest)
   - [unittest](#unittest)
   - [Run your tests](#run-your-tests)
-- [Remote Recording [coming soon]](#remote-recording-coming-soon)
+- [Remote Recording](#remote-recording)
   - [Django](#django)
   - [Flask](#flask)
   - [Run your web app](#run-your-web-app)
@@ -38,7 +38,7 @@ There are several ways to record AppMaps of your Python program using the `appma
 * Use the `appmap.record` [context manager](#context-manager) to control recording. The context manager takes
   an instance of an `appmap.Recording`, which can be used to generate the AppMap.
 
-* [coming soon] Run your application server with AppMap remote recording enabled, and use
+* Run your application server with [AppMap remote recording](#remote-recording) enabled, and use
   the [AppLand browser extension](https://github.com/applandinc/appland-browser-extension)
   to start, stop, and upload recordings.
 
@@ -211,8 +211,8 @@ $ APPMAP=true pytest
 `appmap-python` supports remote recording of Django and Flask web applications. Import the
 appropriate remote recording support into your web app.
 
-## Django [coming soon]
-`import appmap.django`. Adds `/_appmap/record` routes to a Django app.
+## Django
+Add `appmap.django.Middleware` to your `MIDDLEWARE`.
 
 ## Flask
 For projects that use a [Flask application
@@ -222,7 +222,7 @@ modifications are required. When the application initializes, `appmap-python` ad
 middleware that handles the `/_appmap/record` routes.
 
 For projects that don't provide an application factory, `appmap-python` can be used as a
-[Flask extension](https://flask.palletsprojects.com/en/1.1.x/extensions/#extensions). 
+[Flask extension](https://flask.palletsprojects.com/en/1.1.x/extensions/#extensions).
 
 For example:
 ```python

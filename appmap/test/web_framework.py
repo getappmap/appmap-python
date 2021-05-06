@@ -70,15 +70,17 @@ class TestRecording:
     def test_starts_disabled(client):
         res = client.get('/_appmap/record')
         assert res.status_code == 200
-        assert res.is_json
-        assert res.json == {'enabled': False}
+        assert res.headers['Content-Type'] == 'application/json'
+        data = res.json
+        if callable(data):
+            data = data()
+        assert data == {'enabled': False}
 
     @staticmethod
     @pytest.mark.appmap_enabled
     def test_can_be_enabled(client):
         res = client.post('/_appmap/record')
         assert res.status_code == 200
-        assert res.content_length == 0
 
     @staticmethod
     @pytest.mark.appmap_enabled
@@ -105,8 +107,9 @@ class TestRecording:
 
         res = client.delete('/_appmap/record')
         assert res.status_code == 200
-        assert res.is_json
-        generated_appmap = normalize_appmap(json.dumps(res.json))
+        assert res.headers['Content-Type'] == 'application/json'
+        data = res.data if hasattr(res, 'data') else res.content
+        generated_appmap = normalize_appmap(data)
 
         with open(data_dir / 'remote.appmap.json') as expected:
             expected_appmap = json.load(expected)

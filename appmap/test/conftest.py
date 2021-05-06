@@ -19,11 +19,11 @@ def fixture_with_data_dir(data_dir, monkeypatch):
 @pytest.fixture
 def events():
     rec = Recorder()
-    rec.events().clear()
+    rec.events.clear()
     rec.enabled = True
-    yield rec.events()
+    yield rec.events
     rec.enabled = False
-    rec.events().clear()
+    rec.events.clear()
 
 @pytest.hookimpl
 def pytest_runtest_setup(item):

@@ -241,6 +241,7 @@ class Recorder:
         """
         self._events.append(event)
 
+    @property
     def events(self):
         """
         Get the events from the current recording

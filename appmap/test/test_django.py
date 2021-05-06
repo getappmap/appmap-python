@@ -11,7 +11,7 @@ import pytest
 
 import appmap.django  # noqa: F401
 
-from .web_framework import TestRequestCapture
+from .web_framework import TestRequestCapture, TestRecording
 
 
 def test_sql_capture(events):
@@ -166,9 +166,14 @@ def client():
 def view(_request):
     return django.http.HttpResponse('testing')
 
+def user_view(_request, name):
+    return django.http.HttpResponse(f'user {name}')
 
 urlpatterns = [
-    django.urls.path('test', view)
+    django.urls.path('test', view),
+    django.urls.path('', view),
+    django.urls.path('user/<name>', user_view),
+    django.urls.path('post/<name>', user_view),
 ]
 
 

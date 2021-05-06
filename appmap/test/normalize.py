@@ -51,7 +51,8 @@ def normalize_headers(dct):
     This allows sharing tests between web frameworks, for example.
     """
     for hdr in ['User-Agent', 'Content-Length', 'ETag', 'Cookie', 'Host']:
-        dct.pop(hdr, None)
+        value = dct.pop(hdr, None)
+        assert value is None or isinstance(value, str)
 
 def normalize_appmap(generated_appmap):
     """
