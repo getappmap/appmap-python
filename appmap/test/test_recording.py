@@ -34,7 +34,6 @@ class TestRecordingWhenEnabled:
             ExampleClass.call_yaml()
 
         generated_appmap = normalize_appmap(appmap.generation.dump(r))
-        print(json.dumps(generated_appmap, indent=2))
         assert generated_appmap == expected_appmap
 
     def test_recording_clears(self):

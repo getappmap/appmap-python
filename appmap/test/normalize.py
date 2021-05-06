@@ -80,8 +80,8 @@ def normalize_appmap(generated_appmap):
             # locations are correct -- if they weren't, the
             # instrumented code would be broken, right?
             v = dct['value']
-            dct['value'] = re.sub(r'<(.*) object at 0x.*>',
-                                  r'<\1 object at 0xabcdef>',
+            dct['value'] = re.sub(r'<(.*)( object)* at 0x.*>',
+                                  r'<\1 at 0xabcdef>',
                                   v)
         return dct
 
