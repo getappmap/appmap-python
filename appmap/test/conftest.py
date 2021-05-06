@@ -11,12 +11,12 @@ def _data_dir(pytestconfig):
         str(pytestconfig.rootpath),
         'appmap', 'test', 'data'))
 
-@pytest.fixture
-def data_dir(pytestconfig):
+@pytest.fixture(name='data_dir')
+def fixture_data_dir(pytestconfig):
     return _data_dir(pytestconfig)
 
-@pytest.fixture
-def with_data_dir(data_dir, monkeypatch):  # pylint: disable=redefined-outer-name
+@pytest.fixture(name='with_data_dir')
+def fixture_with_data_dir(data_dir, monkeypatch):
     monkeypatch.syspath_prepend(data_dir)
     return data_dir
 
