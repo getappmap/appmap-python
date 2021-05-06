@@ -1,5 +1,12 @@
 """Common tests for web frameworks such as django and flask."""
+
+import json
 import pytest
+
+
+import appmap
+from .normalize import normalize_appmap
+
 
 @pytest.mark.appmap_enabled
 class TestRequestCapture:
@@ -46,3 +53,65 @@ class TestRequestCapture:
             'Accept': 'application/json',
             'Accept-Language': 'pl'
         }.items()
+
+
+class TestRecording:
+    """Common tests for remote recording."""
+
+    @staticmethod
+    def test_appmap_disabled(client):
+        assert not appmap.enabled()
+
+        res = client.get('/_appmap/record')
+        assert res.status_code == 404
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    def test_starts_disabled(client):
+        res = client.get('/_appmap/record')
+        assert res.status_code == 200
+        assert res.is_json
+        assert res.json == {'enabled': False}
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    def test_can_be_enabled(client):
+        res = client.post('/_appmap/record')
+        assert res.status_code == 200
+        assert res.content_length == 0
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    def test_can_only_enable_once(client):
+        res = client.post('/_appmap/record')
+        assert res.status_code == 200
+        res = client.post('/_appmap/record')
+        assert res.status_code == 409
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    def test_can_record(data_dir, client):
+        res = client.post('/_appmap/record')
+        assert res.status_code == 200
+
+        res = client.get('/')
+        assert res.status_code == 200
+
+        res = client.get('/user/test_user')
+        assert res.status_code == 200
+
+        res = client.get('/post/123')
+        assert res.status_code == 200
+
+        res = client.delete('/_appmap/record')
+        assert res.status_code == 200
+        assert res.is_json
+        generated_appmap = normalize_appmap(json.dumps(res.json))
+
+        with open(data_dir / 'remote.appmap.json') as expected:
+            expected_appmap = json.load(expected)
+
+        assert generated_appmap == expected_appmap
+
+        res = client.delete('/_appmap/record')
+        assert res.status_code == 404
