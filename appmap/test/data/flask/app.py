@@ -1,4 +1,7 @@
-from flask import Flask
+"""Rudimentary Flask application for testing."""
+# pylint: disable=missing-function-docstring
+
+from flask import Flask, make_response
 from markupsafe import escape
 
 from appmap.flask import AppmapFlask
@@ -12,6 +15,13 @@ appmap_flask = AppmapFlask(app)
 @app.route('/')
 def hello_world():
     return 'Hello, World!'
+
+
+@app.route('/test')
+def the_test():
+    response = make_response('testing')
+    response.add_etag()
+    return response
 
 
 @app.route('/user/<username>')

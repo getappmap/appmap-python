@@ -11,6 +11,8 @@ import pytest
 
 import appmap.django  # noqa: F401
 
+from .web_framework import TestRequestCapture
+
 
 def test_sql_capture(events):
     conn = django.db.connections['default']
@@ -20,24 +22,6 @@ def test_sql_capture(events):
         'database_type': 'sqlite'
     }.items()
     assert events[0].sql_query['server_version'].startswith('3.')
-
-
-def test_http_capture(events, client):
-    client.get('/test')
-
-    assert events[0].http_server_request.items() >= {
-        'request_method': 'GET',
-        'path_info': '/test',
-        'protocol': 'HTTP/1.1'
-    }.items()
-
-    response = events[1].http_server_response
-    assert response.items() >= {
-        'status_code': 200,
-        'mime_type': 'text/html; charset=utf-8'
-    }.items()
-
-    assert 'ETag' in response['headers']
 
 
 def test_message_capture_post(events, client):
@@ -157,9 +141,26 @@ def test_message_capture_post_with_query(events, client):
     ]
 
 
+# pylint: disable=arguments-differ
+class ClientAdaptor(django.test.Client):
+    """Adaptor for the client request parameters used in .web_framework tests."""
+    def generic(self, *args, headers=None, **kwargs):
+        headers = {
+            'HTTP_' + k.replace('-', '_').upper(): v
+            for k, v in (headers or {}).items()
+        }
+        return super().generic(*args, **headers, **kwargs)
+
+    def post(self, *args, json=None, **kwargs):
+        if json:
+            kwargs['data'] = json
+            kwargs['content_type'] = 'application/json'
+        return super().post(*args, **kwargs)
+
+
 @pytest.fixture
 def client():
-    return django.test.Client()
+    return ClientAdaptor()
 
 
 def view(_request):
