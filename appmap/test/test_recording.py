@@ -17,9 +17,6 @@ class TestRecordingWhenEnabled:
         with open(os.path.join(with_data_dir, 'expected.appmap.json')) as f:
             expected_appmap = json.load(f)
 
-        import yaml
-        appmap.instrument_module(yaml)
-
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass  # pylint: disable=import-error

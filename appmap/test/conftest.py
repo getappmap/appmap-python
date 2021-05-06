@@ -1,4 +1,6 @@
+import importlib
 import pytest
+import yaml
 
 import appmap._implementation
 from appmap._implementation.env import Env
@@ -37,3 +39,7 @@ def pytest_runtest_setup(item):
         env = {'APPMAP': 'true', 'APPMAP_CONFIG': config}
 
     appmap._implementation.initialize(env=env)  # pylint: disable=protected-access
+
+    # Some tests want yaml instrumented, others don't.
+    # Reload it to make sure it's instrumented, or not, as set in appmap.yml.
+    importlib.reload(yaml)
