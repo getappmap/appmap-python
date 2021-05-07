@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- A recording is now created atomically. It is first written to a temp file, which is then
+  renamed to the final file.
+  
 - Capture HTTP client request and response.
 
 ## [0.10.0] - 2021-05-07
