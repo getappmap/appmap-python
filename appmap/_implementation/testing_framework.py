@@ -1,5 +1,7 @@
 import inflection
+import os
 import re
+from tempfile import NamedTemporaryFile
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -124,4 +126,11 @@ class session:
         filename = fi.filename + '.appmap.json'
         metadata = fi.metadata
         metadata.update(self.metadata)
-        (self.appmap_path / filename).write_text(generation.dump(rec, metadata))
+        appmap_json = self.appmap_path / filename
+        with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
+            f.write(generation.dump(rec, metadata))
+            try:
+                os.remove(appmap_json)
+            except FileNotFoundError:
+                pass
+            os.replace(f.name, appmap_json)
