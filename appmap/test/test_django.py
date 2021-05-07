@@ -1,5 +1,5 @@
 # flake8: noqa: E402
-# pylint: disable=unused-import, redefined-outer-name
+# pylint: disable=unused-import
 
 import pytest
 

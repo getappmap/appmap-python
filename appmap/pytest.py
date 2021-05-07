@@ -17,7 +17,7 @@ class recorded_testcase:
                 item.name,
                 method_id=item.originalname,
                 location=item.location):
-            wrapped(*args, **kwargs)
+            return wrapped(*args, **kwargs)
 
 
 if appmap.enabled():

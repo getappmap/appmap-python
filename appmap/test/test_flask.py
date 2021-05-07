@@ -11,9 +11,8 @@ from appmap._implementation.env import Env
 
 from .normalize import normalize_appmap
 
-# pylint: disable=redefined-outer-name
-@pytest.fixture
-def flask_client(data_dir, monkeypatch):
+@pytest.fixture(name='flask_client')
+def fixture_flask_client(data_dir, monkeypatch):
     monkeypatch.syspath_prepend(os.path.join(data_dir, 'flask'))
 
     Env.current.set("APPMAP_CONFIG",

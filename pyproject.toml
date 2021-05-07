@@ -63,6 +63,7 @@ vermin = "^1.1.0"
 tox = "^3.22.0"
 tox-pyenv = "^1.1.0"
 tox-travis = "^0.12"
+Twisted = "^21.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
