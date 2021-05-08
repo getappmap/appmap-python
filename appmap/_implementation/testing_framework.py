@@ -119,14 +119,16 @@ class session:
         }
 
         rec = recording.Recording()
-        with rec:
-            yield
 
-        fi = FuncItem(klass, method, **kwds)
-        filename = fi.filename + '.appmap.json'
-        metadata = fi.metadata
-        metadata.update(self.metadata)
-        appmap_json = self.appmap_path / filename
-        with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
-            f.write(generation.dump(rec, metadata))
-        os.replace(f.name, appmap_json)
+        try:
+            with rec:
+                yield
+        finally:
+            item = FuncItem(klass, method, **kwds)
+            filename = item.filename + '.appmap.json'
+            metadata = item.metadata
+            metadata.update(self.metadata)
+            appmap_json = self.appmap_path / filename
+            with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
+                f.write(generation.dump(rec, metadata))
+            os.replace(f.name, appmap_json)

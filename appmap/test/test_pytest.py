@@ -16,11 +16,11 @@ def test_basic_integration(data_dir, pytester, monkeypatch):
     monkeypatch.setenv('APPMAP', 'true')
 
     result = pytester.runpytest('-vv')
-    result.assert_outcomes(passed=1)
+    result.assert_outcomes(passed=1, failed=1, xpassed=1, xfailed=1)
 
     appmap_json = pytester.appmap_json
 
-    assert len(list(appmap_json.parent.iterdir())) == 1
+    assert len(list(appmap_json.parent.iterdir())) == 4
 
     generated_appmap = normalize_appmap(appmap_json.read_text())
 

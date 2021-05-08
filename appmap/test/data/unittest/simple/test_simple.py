@@ -15,6 +15,17 @@ class UnitTestTest(unittest.TestCase):
         simple.Simple().hello_world('!')
         patched_hw.assert_called_once_with('!')
 
+    def test_status_failed(self):
+        self.assertTrue(False)
+
+    @unittest.expectedFailure
+    def test_status_xfailed(self):
+        self.assertTrue(False)
+
+    @unittest.expectedFailure
+    def test_status_xsucceeded(self):
+        self.assertTrue(True)
+
     def setUp(self):
         simple.Simple().getReady()
 

@@ -38,12 +38,12 @@ def test_appmap_unittest_runner(data_dir, runner_testdir):
 
 def test_pytest_runner(data_dir, runner_testdir):
     result = runner_testdir.runpytest('-svv')
-    result.assert_outcomes(passed=2)
+    result.assert_outcomes(passed=2, failed=2, xfailed=1)
 
     # unittest cases run by pytest should get recorded as pytest
     # tests
     path = runner_testdir.path
-    assert len(list(path.glob('tmp/appmap/pytest/*'))) == 2
+    assert len(list(path.glob('tmp/appmap/pytest/*'))) == 5
     assert len(list(path.glob('tmp/appmap/unittest/*'))) == 0
 
     verify_expected_appmap(data_dir, runner_testdir, 'pytest')
@@ -51,6 +51,7 @@ def test_pytest_runner(data_dir, runner_testdir):
 def test_unittest_runner(data_dir, runner_testdir):
     runner_testdir.run(sys.executable, '-m', 'unittest', '-vv')
 
+    assert len(list(runner_testdir.path.glob('tmp/appmap/unittest/*'))) == 5
     verify_expected_appmap(data_dir, runner_testdir, 'unittest')
 
 @pytest.mark.example_dir('trial')
