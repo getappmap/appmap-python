@@ -1,5 +1,3 @@
-from glob import glob
-from pathlib import Path
 import sys
 
 import json
@@ -8,26 +6,26 @@ import pytest
 from .normalize import normalize_appmap
 
 @pytest.fixture(name='runner_testdir')
-def fixture_runner_testdir(request, testdir):
+def fixture_runner_testdir(request, pytester, monkeypatch):
     marker = request.node.get_closest_marker('example_dir')
-    testdir.example_dir = 'unittest' if marker is None else marker.args[0]
-    testdir.copy_example(testdir.example_dir)
-    testdir.monkeypatch.setenv('APPMAP', 'true')
+    pytester.example_dir = 'unittest' if marker is None else marker.args[0]
+    pytester.copy_example(pytester.example_dir)
+    monkeypatch.setenv('APPMAP', 'true')
 
     # The init subdirectory contains a sitecustomize.py file that
     # imports the appmap module. This simulates the way a real
     # installation works, performing the same function as the the
     # appmap.pth file that gets put in site-packages.
-    testdir.monkeypatch.setenv('PYTHONPATH', 'init')
-    return testdir
+    monkeypatch.setenv('PYTHONPATH', 'init')
+    return pytester
 
 def verify_expected_appmap(data_dir, testdir, test_type):
-    out_dir = Path(str(testdir)) / 'tmp/appmap' / test_type
-    appmap_json = glob(str(out_dir / '*_test_hello_world.appmap.json'), recursive=True)
+    out_dir = testdir.path / 'tmp/appmap' / test_type
+    appmap_json = list(out_dir.glob('**/*_test_hello_world.appmap.json'))
     assert len(appmap_json) == 1 # sanity check
-    generated_appmap = normalize_appmap(Path(appmap_json[0]).read_text())
+    generated_appmap = normalize_appmap(appmap_json[0].read_text())
 
-    appmap_json = Path(data_dir) / testdir.example_dir / ('expected.%s.appmap.json' % test_type)
+    appmap_json = data_dir / testdir.example_dir / (f'expected.{test_type}.appmap.json')
     expected_appmap = json.loads(appmap_json.read_text())
 
     assert generated_appmap == expected_appmap
@@ -44,7 +42,7 @@ def test_pytest_runner(data_dir, runner_testdir):
 
     # unittest cases run by pytest should get recorded as pytest
     # tests
-    path = Path(str(runner_testdir.tmpdir))
+    path = runner_testdir.path
     assert len(list(path.glob('tmp/appmap/pytest/*'))) == 2
     assert len(list(path.glob('tmp/appmap/unittest/*'))) == 0
 
