@@ -34,6 +34,7 @@ script:
 - tox -e py39 -- vermin -t=3.6- appmap || travis_terminate 1
 - tox
 - poetry build
+- echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 - ci/test_install.sh
 
 before_deploy:
