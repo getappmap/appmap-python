@@ -129,8 +129,4 @@ class session:
         appmap_json = self.appmap_path / filename
         with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
             f.write(generation.dump(rec, metadata))
-            try:
-                os.remove(appmap_json)
-            except FileNotFoundError:
-                pass
-            os.replace(f.name, appmap_json)
+        os.replace(f.name, appmap_json)

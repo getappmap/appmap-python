@@ -5,13 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- A recording is now created atomically. It is first written to a temp file, which is then
+  renamed to the final file.
 ## [0.10.0] - 2021-05-07
 ### Added
 - [#90] Capture HTTP response headers in django and flask.
 
 ### Changed
-- A recording is now created atomically. It is first written to a temp file, which is then
-  renamed to the final file.
 - Headers such as Host, User-Agent, Authorization and Content-Type are no longer
   filtered out in HTTP event `headers` field.
 
