@@ -34,8 +34,8 @@ def testPartExecutor(wrapped, _, args, kwargs):
     with session.record(
             test_case.__class__,
             method_name,
-            location=location):
-        with wrapped(*args, **kwargs):
+            location=location) as metadata:
+        with wrapped(*args, **kwargs), testing_framework.collect_result_metadata(metadata):
             yield
 
 

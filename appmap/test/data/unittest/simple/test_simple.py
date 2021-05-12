@@ -26,6 +26,10 @@ class UnitTestTest(unittest.TestCase):
     def test_status_xsucceeded(self):
         self.assertTrue(True)
 
+    @staticmethod
+    def test_status_errored():
+        raise RuntimeError('test error')
+
     def setUp(self):
         simple.Simple().getReady()
 

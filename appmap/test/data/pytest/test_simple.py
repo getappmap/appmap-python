@@ -19,3 +19,7 @@ def test_status_xfailed():
 @pytest.mark.xfail
 def test_status_xsucceeded():
     assert True
+
+
+def test_status_errored():
+    raise RuntimeError('test error')

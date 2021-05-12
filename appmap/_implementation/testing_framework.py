@@ -119,16 +119,34 @@ class session:
         }
 
         rec = recording.Recording()
+        item = FuncItem(klass, method, **kwds)
+        filename = item.filename + '.appmap.json'
+        metadata = item.metadata
+        metadata.update(self.metadata)
+        appmap_json = self.appmap_path / filename
 
         try:
             with rec:
-                yield
+                yield metadata
         finally:
-            item = FuncItem(klass, method, **kwds)
-            filename = item.filename + '.appmap.json'
-            metadata = item.metadata
-            metadata.update(self.metadata)
-            appmap_json = self.appmap_path / filename
             with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
                 f.write(generation.dump(rec, metadata))
             os.replace(f.name, appmap_json)
+
+
+@contextmanager
+def collect_result_metadata(metadata):
+    """Collect test case result metadata.
+
+    Sets test_status and exception information.
+    """
+    try:
+        yield
+        metadata['test_status'] = 'succeeded'
+    except Exception as exn:
+        metadata['test_status'] = 'failed'
+        metadata['exception'] = {
+            'class': exn.__class__.__name__,
+            'message': str(exn)
+        }
+        raise

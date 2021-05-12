@@ -21,7 +21,8 @@
       "source_location": "test_simple.py:3"
     },
     "name": "hello world",
-    "feature": "Hello world"
+    "feature": "Hello world",
+    "test_status": "succeeded"
   },
   "events": [
     {

@@ -1,3 +1,6 @@
+"""Test cases dealing with various test framework runners and cases."""
+
+import re
 import sys
 
 import json
@@ -8,35 +11,39 @@ from .normalize import normalize_appmap
 def test_unittest_runner(testdir):
     testdir.run(sys.executable, '-m', 'unittest', '-vv')
 
-    assert len(list(testdir.output().iterdir())) == 5
+    assert len(list(testdir.output().iterdir())) == 6
     verify_expected_appmap(testdir)
+    verify_expected_metadata(testdir)
 
 
 def test_appmap_unittest_runner(testdir):
     testdir.run(sys.executable, '-m', 'appmap.unittest', '-vv')
 
     verify_expected_appmap(testdir)
+    verify_expected_metadata(testdir)
 
 
 def test_pytest_runner_unittests(testdir):
     testdir.test_type = 'pytest'
     result = testdir.runpytest('-svv')
-    result.assert_outcomes(passed=2, failed=2, xfailed=1)
+    result.assert_outcomes(passed=2, failed=3, xfailed=1)
 
     # unittest cases run by pytest should get recorded as pytest tests
-    assert len(list(testdir.output().iterdir())) == 5
+    assert len(list(testdir.output().iterdir())) == 6
     assert len(list(testdir.path.glob('tmp/appmap/unittest/*'))) == 0
 
     verify_expected_appmap(testdir)
+    verify_expected_metadata(testdir)
 
 
 @pytest.mark.example_dir('pytest')
 def test_pytest_runner_pytest(testdir):
     result = testdir.runpytest('-vv')
-    result.assert_outcomes(passed=1, failed=1, xpassed=1, xfailed=1)
+    result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
 
-    assert len(list(testdir.output().iterdir())) == 4
+    assert len(list(testdir.output().iterdir())) == 5
     verify_expected_appmap(testdir)
+    verify_expected_metadata(testdir)
 
 
 @pytest.mark.example_dir('pytest')
@@ -99,3 +106,17 @@ def verify_expected_appmap(testdir):
     expected_appmap = json.loads(appmap_json.read_text())
 
     assert generated_appmap == expected_appmap
+
+
+def verify_expected_metadata(testdir):
+    """Verifies if the test outputs contain the expected metadata.
+    The expected metadata are JSON documents with common
+    suffix to the tests:
+        test_foo.appmap.json -> foo.metadata.json
+    """
+    pattern = re.compile(r'test_(status_.+)\.appmap\.json')
+    for file in testdir.output().glob('*test_status_*.appmap.json'):
+        name = pattern.search(file.name).group(1)
+        metadata = json.loads(file.read_text())['metadata']
+        expected = testdir.expected / f'{name}.metadata.json'
+        assert metadata.items() >= json.loads(expected.read_text()).items()

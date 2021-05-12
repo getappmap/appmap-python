@@ -24,7 +24,8 @@
     ],
     "recorder": {
       "name": "unittest"
-    }
+    },
+    "test_status": "succeeded"
   },
   "events": [
     {

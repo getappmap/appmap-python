@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A recording is now created atomically. It is first written to a temp file, which is then
   renamed to the final file.
 - Capture HTTP client request and response.
+- [#101] Record test status (failed or succeeded) in test appmap metadata.
 
 ### Fixed
 - When using `pytest` as the test driver, failed unittest cases appmaps are now recorded.

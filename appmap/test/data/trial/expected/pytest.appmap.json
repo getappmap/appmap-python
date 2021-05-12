@@ -24,7 +24,8 @@
     ],
     "recorder": {
       "name": "pytest"
-    }
+    },
+    "test_status": "succeeded"
   },
   "events": [
     {

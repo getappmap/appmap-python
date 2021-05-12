@@ -16,8 +16,9 @@ class recorded_testcase:
                 item.cls,
                 item.name,
                 method_id=item.originalname,
-                location=item.location):
-            return wrapped(*args, **kwargs)
+                location=item.location) as metadata:
+            with testing_framework.collect_result_metadata(metadata):
+                return wrapped(*args, **kwargs)
 
 
 if appmap.enabled():
@@ -59,5 +60,10 @@ if appmap.enabled():
                 pyfuncitem.cls,
                 pyfuncitem.name,
                 method_id=pyfuncitem.originalname,
-                location=pyfuncitem.location):
-            yield
+                location=pyfuncitem.location) as metadata:
+            result = yield
+            try:
+                with testing_framework.collect_result_metadata(metadata):
+                    result.get_result()
+            except:  # pylint: disable=bare-except
+                pass  # exception got recorded in metadata
