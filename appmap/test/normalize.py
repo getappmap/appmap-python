@@ -58,9 +58,6 @@ def normalize_appmap(generated_appmap):
     """
     Normalize the data in generated_appmap, removing any
     environment-specific values.
-
-    Note that attempts to access required keys will raise
-    KeyError, causing the test to fail.
     """
 
     def normalize(dct):
@@ -68,6 +65,8 @@ def normalize_appmap(generated_appmap):
             dct['classMap'].sort(key=itemgetter('name'))
         if 'children' in dct:
             dct['children'].sort(key=itemgetter('name'))
+        if 'comment' in dct:
+            dct['comment'] = 'function comment'
         if 'elapsed' in dct:
             elapsed = dct.pop('elapsed')
             assert isinstance(elapsed, float)

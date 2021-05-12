@@ -324,6 +324,7 @@
         {
           "name": "dump",
           "type": "function",
+          "comment": "function comment",
           "location": "yaml/__init__.py:285",
           "static": true
         }

@@ -50,7 +50,7 @@ class FuncEntry(ClassMapEntry):
         self.location = '%s:%s' % (e.path, e.lineno)
         self.static = e.static
         self.labels = e.labels
-
+        self.comment = e.comment
 
 def classmap(recording):
     ret = ClassMapDict()
