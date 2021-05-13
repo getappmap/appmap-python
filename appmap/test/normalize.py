@@ -46,6 +46,13 @@ def normalize_metadata(metadata):
                 v = f.pop('version')
                 assert v == pytest.__version__
 
+def normalize_headers(dct):
+    """Remove some headers which are variable between implementations.
+    This allows sharing tests between web frameworks, for example.
+    """
+    for hdr in ['User-Agent', 'Content-Length', 'ETag', 'Cookie', 'Host']:
+        dct.pop(hdr, None)
+
 def normalize_appmap(generated_appmap):
     """
     Normalize the data in generated_appmap, removing any
@@ -65,8 +72,16 @@ def normalize_appmap(generated_appmap):
             assert isinstance(elapsed, float)
         if 'git' in dct:
             normalize_git(dct.pop('git'))
+        if 'headers' in dct:
+            normalize_headers(dct['headers'])
+            if len(dct['headers']) == 0:
+                del dct['headers']
+        if 'http_server_request' in dct:
+            normalize(dct['http_server_request'])
         if 'location' in dct:
             dct['location'] = normalize_path(dct['location'])
+        if 'normalized_path_info' in dct:
+            del dct['normalized_path_info']
         if 'path' in dct:
             dct['path'] = normalize_path(dct['path'])
         if 'metadata' in dct:
