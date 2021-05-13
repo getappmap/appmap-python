@@ -44,28 +44,6 @@
             "id": 5,
             "parent_id": 4,
             "thread_id": 1
-        },
-        {
-            "event": "call",
-            "http_server_request": {
-                "path_info": "/post/123",
-                "protocol": "HTTP/1.1",
-                "request_method": "GET"
-            },
-            "message": [],
-            "id": 6,
-            "thread_id": 1
-        },
-        {
-            "event": "return",
-            "http_server_response": {
-                "headers": { "Content-Type": "text/html; charset=utf-8" },
-                "mime_type": "text/html; charset=utf-8",
-                "status_code": 200
-            },
-            "id": 7,
-            "parent_id": 6,
-            "thread_id": 1
         }
     ],
     "metadata": {
