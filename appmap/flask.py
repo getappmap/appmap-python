@@ -3,7 +3,7 @@ import json
 import time
 
 import flask.cli
-from flask import g, request
+from flask import _app_ctx_stack, request
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
@@ -74,13 +74,15 @@ class AppmapFlask:
             )
             Recorder().add_event(call_event)
 
-            g.appmap_request_event = call_event
-            g.appmap_request_start = time.monotonic()
+            appctx = _app_ctx_stack.top
+            appctx.appmap_request_event = call_event
+            appctx.appmap_request_start = time.monotonic()
 
     def after_request(self, response):
         if self.recording.is_running() and request.path != self.record_url:
-            parent_id = g.appmap_request_event.id
-            duration = time.monotonic() - g.appmap_request_start
+            appctx = _app_ctx_stack.top
+            parent_id = appctx.appmap_request_event.id
+            duration = time.monotonic() - appctx.appmap_request_start
 
             return_event = HttpServerResponseEvent(
                 parent_id=parent_id,
