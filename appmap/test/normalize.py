@@ -78,6 +78,8 @@ def normalize_appmap(generated_appmap):
                 del dct['headers']
         if 'http_server_request' in dct:
             normalize(dct['http_server_request'])
+            if 'message' in dct:
+                del dct['message']
         if 'location' in dct:
             dct['location'] = normalize_path(dct['location'])
         if 'normalized_path_info' in dct:

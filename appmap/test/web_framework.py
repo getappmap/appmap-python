@@ -1,4 +1,5 @@
 """Common tests for web frameworks such as django and flask."""
+# pylint: disable=missing-function-docstring
 
 import json
 import pytest
@@ -65,6 +66,134 @@ class TestRequestCapture:
     #     client.get(url)
     #     np = events[0].http_server_request['normalized_path_info']
     #     assert np == expected
+
+
+    @staticmethod
+    def test_post(events, client):
+        client.post('/test', data=json.dumps({ 'my_param': 'example' }),
+            content_type='application/json; charset=UTF-8',
+            headers={
+                'Authorization': 'token "test-token"',
+                'Accept': 'application/json',
+                'Accept-Language': 'pl'
+            }
+        )
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+        assert events[0].http_server_request.items() >= {
+            'request_method': 'POST',
+            'path_info': '/test',
+            'protocol': 'HTTP/1.1',
+            'authorization': 'token "test-token"',
+            'mime_type': 'application/json; charset=UTF-8',
+        }.items()
+
+        assert events[0].http_server_request['headers'].items() >= {
+            'Accept': 'application/json',
+            'Accept-Language': 'pl'
+        }.items()
+
+    @staticmethod
+    def test_get(events, client):
+        client.get('/test?my_param=example')
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+
+    @staticmethod
+    def test_get_arr(events, client):
+        client.get('/test?my_param=example&my_param=example2')
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.list',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "['example', 'example2']"
+            },
+        ]
+
+
+    @staticmethod
+    def test_post_form_urlencoded(events, client):
+        client.post(
+            '/test', data='my_param=example',
+            content_type='application/x-www-form-urlencoded'
+        )
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+
+    @staticmethod
+    def test_put(events, client):
+        client.put('/test', json={ 'my_param': 'example' })
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+
+    @staticmethod
+    def test_post_bad_json(events, client):
+        client.post('/test?my_param=example', data="bad json", content_type='application/json')
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+
+    @staticmethod
+    def test_post_multipart(events, client):
+        client.post('/test', data={ 'my_param': 'example' }, content_type='multipart/form-data')
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'example'"
+            }
+        ]
+
+    @staticmethod
+    def test_post_with_query(events, client):
+        client.post('/test?my_param=get', data={ 'my_param': 'example' })
+
+        assert events[0].message == [
+            {
+                'name': 'my_param',
+                'class': 'builtins.list',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "['get', 'example']"
+            }
+        ]
 
 
 class TestRecording:
