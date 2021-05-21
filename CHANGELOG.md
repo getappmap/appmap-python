@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   renamed to the final file.
 - Capture HTTP client request and response.
 - [#101] Record test status (failed or succeeded) in test appmap metadata.
+- [#108] Capture message parameters in Flask.
 
 ### Fixed
 - When using `pytest` as the test driver, failed unittest cases appmaps are now recorded.

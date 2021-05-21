@@ -5,11 +5,13 @@ import time
 import flask.cli
 from flask import _app_ctx_stack, request
 from werkzeug.routing import parse_rule
+from werkzeug.exceptions import BadRequest
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recording import Recorder, Recording
+from ._implementation.utils import values_dict
 
 
 try:
@@ -18,6 +20,21 @@ try:
 except ImportError:
     # not using sqlalchemy
     pass
+
+
+def request_params(req):
+    """Extract request parameters as a dict.
+
+    Parses query and form data and JSON request body.
+    Multiple parameter values are represented as lists."""
+    params = req.values.copy()
+    params.update(req.view_args or {})
+    try:
+        params.update(req.json or {})
+    except BadRequest:
+        pass  # probably a JSON parse error
+
+    return values_dict(params.lists())
 
 
 class AppmapFlask:
@@ -75,7 +92,7 @@ class AppmapFlask:
             call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path,
-                message_parameters={},
+                message_parameters=request_params(request),
                 normalized_path_info=np,
                 protocol=request.environ.get('SERVER_PROTOCOL'),
                 headers=request.headers
