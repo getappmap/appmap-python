@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- [#102] Function comments now appear in the `classMap`.
 - [#3] Allow remote recording django apps.
-- A recording is now created atomically. It is first written to a temp file, which is then
+- [#99] A recording is now created atomically. It is first written to a temp file, which is then
   renamed to the final file.
 - Capture HTTP client request and response.
 - [#101] Record test status (failed or succeeded) in test appmap metadata.

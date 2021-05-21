@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial, lru_cache
 import inspect
 from inspect import Parameter, Signature
 from itertools import chain
@@ -87,10 +87,15 @@ class Event:
         self.event = event
         self.thread_id = _EventIds.get_thread_id()
 
-    def to_dict(self):
+    def to_dict(self, attrs=None):
         ret = {}
-        for k in chain.from_iterable(getattr(cls, '__slots__', [])
-                                     for cls in type(self).__mro__):
+        if attrs is None:
+            attrs = chain.from_iterable(getattr(cls, '__slots__', [])
+                                        for cls in type(self).__mro__)
+        for k in attrs:
+            if k[0] == '_':     # skip internal attrs
+                continue
+
             a = getattr(self, k, None)
             if a is not None:
                 ret[k] = a
@@ -132,8 +137,7 @@ class Param:
 
 
 class CallEvent(Event):
-    __slots__ = ['defined_class', 'method_id', 'path', 'lineno',
-                 'static', 'receiver', 'parameters', 'labels']
+    __slots__ = ['_fn', 'static', 'receiver', 'parameters', 'labels']
 
     @staticmethod
     def make(fn, fntype):
@@ -141,16 +145,13 @@ class CallEvent(Event):
         Return a factory for creating new CallEvents based on
         introspecting the given function.
         """
-        defined_class, method_id = split_function_name(fn)
-        path, lineno = get_function_location(fn)
 
         # Delete the labels so the app doesn't see them.
         labels = getattr(fn, '_appmap_labels', None)
         if labels:
             del fn._appmap_labels
 
-        return partial(CallEvent, defined_class,
-                       method_id, path, lineno, fntype, labels=labels)
+        return partial(CallEvent, fn, fntype, labels=labels)
 
     @staticmethod
     def make_params(filterable):
@@ -210,13 +211,47 @@ class CallEvent(Event):
             ret.append(p.to_dict(value))
         return ret
 
-    def __init__(self, defined_class, method_id, path, lineno,
-                 fntype, parameters, labels):
+    @property
+    @lru_cache(maxsize=None)
+    def function_name(self):
+        return split_function_name(self._fn)
+
+    @property
+    @lru_cache(maxsize=None)
+    def defined_class(self):
+        return self.function_name[0]
+
+    @property
+    @lru_cache(maxsize=None)
+    def method_id(self):
+        return self.function_name[1]
+
+    @property
+    @lru_cache(maxsize=None)
+    def function_location(self):
+        return get_function_location(self._fn)
+
+    @property
+    @lru_cache(maxsize=None)
+    def path(self):
+        return self.function_location[0]
+
+    @property
+    @lru_cache(maxsize=None)
+    def lineno(self):
+        return self.function_location[1]
+
+    @property
+    @lru_cache(maxsize=None)
+    def comment(self):
+        comment = inspect.getdoc(self._fn)
+        if comment is None:
+            comment = inspect.getcomments(self._fn)
+        return comment
+
+    def __init__(self, fn, fntype, parameters, labels):
         super().__init__('call')
-        self.defined_class = defined_class
-        self.method_id = method_id
-        self.path = path
-        self.lineno = lineno
+        self._fn = fn
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
         if fntype in FnType.CLASS | FnType.INSTANCE:
@@ -225,6 +260,14 @@ class CallEvent(Event):
         self.parameters = parameters
         self.labels = labels
 
+    def to_dict(self, attrs=None):
+        ret = super().to_dict() # get the attrs defined in __slots__
+
+        # update with the computed properties
+        ret.update(super().to_dict(attrs=['defined_class', 'method_id',
+                                          'path', 'lineno']))
+
+        return ret
 
 class SqlEvent(Event):
     __slots__ = ['sql_query']

@@ -84,3 +84,15 @@ class ExampleClass(Super, ClassMethodMixin):
         # Call twice, to make sure both show up in the recording
         yaml.dump(data)
         yaml.dump(data)
+
+    def with_docstring(self):
+        """
+        docstrings can have
+        multiple lines
+        """
+        return True
+
+    # comments can have
+    # multiple lines
+    def with_comment(self):
+        return True
