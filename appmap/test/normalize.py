@@ -82,8 +82,6 @@ def normalize_appmap(generated_appmap):
                 del dct['message']
         if 'location' in dct:
             dct['location'] = normalize_path(dct['location'])
-        if 'normalized_path_info' in dct:
-            del dct['normalized_path_info']
         if 'path' in dct:
             dct['path'] = normalize_path(dct['path'])
         if 'metadata' in dct:

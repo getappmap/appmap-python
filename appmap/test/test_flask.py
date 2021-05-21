@@ -23,26 +23,6 @@ def flask_client(data_dir, monkeypatch):
 
 
 @pytest.mark.appmap_enabled
-def test_message_path_segments(events, client):
-    client.get('/post/alice/42/summary')
-
-    assert events[0].message == [
-        {
-            'name': 'username',
-            'class': 'builtins.str',
-            'object_id': events[0].message[0]['object_id'],
-            'value': "'alice'"
-        },
-        {
-            'name': 'post_id',
-            'class': 'builtins.int',
-            'object_id': events[0].message[1]['object_id'],
-            'value': "42"
-        }
-    ]
-
-
-@pytest.mark.appmap_enabled
 @pytest.mark.parametrize('url,expected', [
     ('/user/test_user', '/user/{username}'),
     ('/post/123', '/post/{post_id}'),
