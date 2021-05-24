@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - When using `pytest` as the test driver, failed unittest cases appmaps are now recorded.
 
+### Fixed
+- [#104] The flask integration now formats parameters in `normalized_path_info` to match
+  the appmap spec.
+
 ## [0.10.0] - 2021-05-07
 ### Added
 - [#90] Capture HTTP response headers in django and flask.

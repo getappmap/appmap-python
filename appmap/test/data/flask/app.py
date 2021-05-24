@@ -34,3 +34,8 @@ def show_user_profile(username):
 def show_post(post_id):
     # show the post with the given id, the id is an integer
     return 'Post %d' % post_id
+
+@app.route('/post/<username>/<int:post_id>/summary')
+def show_user_post(username, post_id):
+    # Show the summary of a user's post
+    return f'User {escape(username)} post {post_id}'

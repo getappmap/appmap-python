@@ -54,6 +54,18 @@ class TestRequestCapture:
             'Accept-Language': 'pl'
         }.items()
 
+    # put this back when django supports it
+    # @staticmethod
+    # @pytest.mark.parametrize('url,expected', [
+    #     ('/user/test_user', '/user/{username}'),
+    #     ('/post/123', '/post/{post_id}'),
+    #     ('/post/test_user/123/summary', '/post/{username}/{post_id}/summary')
+    # ])
+    # def test_path_normalization(client, events, url, expected):
+    #     client.get(url)
+    #     np = events[0].http_server_request['normalized_path_info']
+    #     assert np == expected
+
 
 class TestRecording:
     """Common tests for remote recording."""
@@ -100,9 +112,6 @@ class TestRecording:
         assert res.status_code == 200
 
         res = client.get('/user/test_user')
-        assert res.status_code == 200
-
-        res = client.get('/post/123')
         assert res.status_code == 200
 
         res = client.delete('/_appmap/record')

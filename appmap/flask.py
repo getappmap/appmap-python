@@ -4,6 +4,7 @@ import time
 
 import flask.cli
 from flask import _app_ctx_stack, request
+from werkzeug.routing import parse_rule
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
@@ -64,11 +65,18 @@ class AppmapFlask:
 
     def before_request(self):
         if self.recording.is_running() and request.path != self.record_url:
+            np = None
+            # See
+            # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213
+            # for a description of parse_rule.
+            if request.url_rule:
+                np = ''.join([f'{{{p}}}' if c else p
+                              for c,_,p in parse_rule(request.url_rule.rule)])
             call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path,
                 message_parameters={},
-                normalized_path_info=request.url_rule.rule if request.url_rule else None,
+                normalized_path_info=np,
                 protocol=request.environ.get('SERVER_PROTOCOL'),
                 headers=request.headers
             )
