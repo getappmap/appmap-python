@@ -1,10 +1,12 @@
+"""Shared infrastructure for testing framework integration."""
+
+from hashlib import sha256
 import inflection
 import os
 import re
 from tempfile import NamedTemporaryFile
 
 from contextlib import contextmanager
-from pathlib import Path
 
 from appmap._implementation import configuration, env, generation, recording
 from appmap._implementation.utils import fqname
@@ -90,11 +92,40 @@ class FuncItem:
         return ret
 
 
+NAME_MAX = 255  # true for most filesystems
+HASH_LEN = 7  # arbitrary, but git proves it's a reasonable value
+APPMAP_SUFFIX = '.appmap.json'
+
+
+def name_hash(namepart):
+    """Returns the hex digits of the sha256 of the os.fsencode()d namepart."""
+    return sha256(os.fsencode(namepart)).hexdigest()
+
+
+def write_appmap(basedir, basename, contents):
+    """Write an appmap file into basedir.
+
+    Adds APPMAP_SUFFIX to basename; shortens the name if necessary.
+    Atomically replaces existing files. Creates the basedir if required.
+    """
+
+    if len(basename) > NAME_MAX - len(APPMAP_SUFFIX):
+        part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
+        basename = basename[:part] + '-' + name_hash(basename[part:])[:HASH_LEN]
+    filename = basename + APPMAP_SUFFIX
+
+    if not basedir.exists():
+        basedir.mkdir(parents=True, exist_ok=True)
+
+    with NamedTemporaryFile(mode='w', dir=basedir, delete=False) as tmp:
+        tmp.write(contents)
+    os.replace(tmp.name, basedir / filename)
+
+
 class session:
     def __init__(self, name, version=None):
         self.name = name
         self.version = version
-        self.appmap_path = None
         self.metadata = None
 
     @contextmanager
@@ -103,35 +134,28 @@ class session:
             yield
             return
 
-        self.appmap_path = Path(env.Env.current.output_dir) / self.name
-        self.appmap_path.mkdir(parents=True, exist_ok=True)
-
         framework = {'name': self.name}
         if self.version is not None:
             framework['version'] = self.version
 
-        self.metadata = {
+        item = FuncItem(klass, method, **kwds)
+
+        metadata = item.metadata
+        metadata.update({
             'app': configuration.Config().name,
             'frameworks': [framework],
             'recorder': {
                 'name': self.name
             }
-        }
+        })
 
         rec = recording.Recording()
-        item = FuncItem(klass, method, **kwds)
-        filename = item.filename + '.appmap.json'
-        metadata = item.metadata
-        metadata.update(self.metadata)
-        appmap_json = self.appmap_path / filename
-
         try:
             with rec:
                 yield metadata
         finally:
-            with NamedTemporaryFile(mode='w', dir=self.appmap_path, delete=False) as f:
-                f.write(generation.dump(rec, metadata))
-            os.replace(f.name, appmap_json)
+            basedir = env.Env.current.output_dir / self.name
+            write_appmap(basedir, item.filename, generation.dump(rec, metadata))
 
 
 @contextmanager

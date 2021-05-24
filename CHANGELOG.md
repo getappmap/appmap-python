@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - When using `pytest` as the test driver, failed unittest cases appmaps are now recorded.
+- [#91] Limit appmap file name length to 255 characters.
 
 ### Fixed
 - [#104] The flask integration now formats parameters in `normalized_path_info` to match

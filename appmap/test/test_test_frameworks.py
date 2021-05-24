@@ -1,4 +1,5 @@
 """Test cases dealing with various test framework runners and cases."""
+# pylint: disable=missing-function-docstring
 
 import re
 import sys
@@ -7,6 +8,8 @@ import json
 import pytest
 
 from .normalize import normalize_appmap
+from .._implementation import testing_framework
+
 
 def test_unittest_runner(testdir):
     testdir.run(sys.executable, '-m', 'unittest', '-vv')
@@ -46,17 +49,6 @@ def test_pytest_runner_pytest(testdir):
     verify_expected_metadata(testdir)
 
 
-@pytest.mark.example_dir('pytest')
-def test_overwrites_existing(testdir):
-    appmap_json = testdir.output() / 'test_hello_world.appmap.json'
-    appmap_json.parent.mkdir(parents=True, exist_ok=True)
-    appmap_json.touch()
-
-    result = testdir.runpytest('-vv', '-k', 'test_hello_world')
-    result.assert_outcomes(passed=1)
-    verify_expected_appmap(testdir)
-
-
 @pytest.mark.example_dir('trial')
 def test_pytest_trial(testdir):
     testdir.test_type = 'pytest'
@@ -70,6 +62,23 @@ def test_pytest_trial(testdir):
     # unclean.
     result.assert_outcomes(xfailed=1)
     verify_expected_appmap(testdir)
+
+
+def test_overwrites_existing(tmp_path):
+    foo_file = (tmp_path / 'foo.appmap.json')
+    foo_file.write_text('existing')
+    testing_framework.write_appmap(tmp_path, 'foo', 'replacement')
+    assert foo_file.read_text() == 'replacement'
+
+
+def test_write_appmap(tmp_path):
+    testing_framework.write_appmap(tmp_path, 'foo', 'bar')
+    assert (tmp_path / 'foo.appmap.json').read_text() == 'bar'
+
+    longname = '-'.join(['testing'] * 42)
+    testing_framework.write_appmap(tmp_path, longname, 'bar')
+    expected_shortname = longname[:235] + '-5d6e10d.appmap.json'
+    assert (tmp_path / expected_shortname).read_text() == 'bar'
 
 
 @pytest.fixture(name='testdir')
