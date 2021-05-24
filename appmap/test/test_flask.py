@@ -40,3 +40,15 @@ def test_message_path_segments(events, client):
             'value': "42"
         }
     ]
+
+
+@pytest.mark.appmap_enabled
+@pytest.mark.parametrize('url,expected', [
+    ('/user/test_user', '/user/{username}'),
+    ('/post/123', '/post/{post_id}'),
+    ('/post/test_user/123/summary', '/post/{username}/{post_id}/summary')
+])
+def test_path_normalization(client, events, url, expected):
+    client.get(url)
+    normalized = events[0].http_server_request['normalized_path_info']
+    assert normalized == expected

@@ -55,19 +55,6 @@ class TestRequestCapture:
             'Accept-Language': 'pl'
         }.items()
 
-    # put this back when django supports it
-    # @staticmethod
-    # @pytest.mark.parametrize('url,expected', [
-    #     ('/user/test_user', '/user/{username}'),
-    #     ('/post/123', '/post/{post_id}'),
-    #     ('/post/test_user/123/summary', '/post/{username}/{post_id}/summary')
-    # ])
-    # def test_path_normalization(client, events, url, expected):
-    #     client.get(url)
-    #     np = events[0].http_server_request['normalized_path_info']
-    #     assert np == expected
-
-
     @staticmethod
     def test_post(events, client):
         client.post('/test', data=json.dumps({ 'my_param': 'example' }),
