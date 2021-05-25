@@ -1,11 +1,12 @@
 """Initialize from the environment"""
+
+from pathlib import Path
 import logging
 import logging.config
-import os
-import os.path
+from os import environ
 
-_cwd = os.getcwd()
-_bootenv = os.environ.copy()
+_cwd = Path.cwd()
+_bootenv = environ.copy()
 
 class _EnvMeta(type):
     def __init__(cls, *args, **kwargs):
@@ -33,12 +34,11 @@ class Env(metaclass=_EnvMeta):
         if env:
             self._env.update(env)
 
-        self._root_dir = str(os.path.join(self._cwd) + '/')
+        self._root_dir = str(self._cwd) + '/'
         self._root_dir_len = len(self._root_dir)
 
-        output_dir = self.get("APPMAP_OUTPUT_DIR",
-                               os.path.join('tmp', 'appmap'))
-        self._output_dir = os.path.abspath(output_dir)
+        output_dir = Path(self.get('APPMAP_OUTPUT_DIR', 'tmp/appmap'))
+        self._output_dir = output_dir.resolve()
 
         self._configure_logging()
 
