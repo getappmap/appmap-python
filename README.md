@@ -371,11 +371,6 @@ As a package intended to be installed in as many environments as possible, `appm
 needs to avoid using features of Python or the standard library that were added after the
 oldest version currently supported (see [above](#supported-version)).
 
-The Travis build uses [vermin](https://github.com/netromdk/vermin) to help weed out the
-use of some invalid features. Additionally, tests are run using all supported versions of
-Python.
-
-
 ## Dependency management
 
 [poetry](https://https://python-poetry.org/) for dependency management:
