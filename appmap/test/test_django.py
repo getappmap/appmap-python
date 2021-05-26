@@ -1,6 +1,7 @@
 # flake8: noqa: E402
 # pylint: disable=unused-import, redefined-outer-name, missing-function-docstring
 
+import django
 import django.conf
 import django.db
 import django.http
@@ -11,6 +12,7 @@ import pytest
 
 
 import appmap.django  # noqa: F401
+from .._implementation.metadata import Metadata
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
@@ -25,6 +27,19 @@ def test_sql_capture(events):
         'database_type': 'sqlite'
     }.items()
     assert events[0].sql_query['server_version'].startswith('3.')
+    assert Metadata()['frameworks'] == [{
+        'name': 'Django',
+        'version': django.get_version()
+    }]
+
+
+@pytest.mark.appmap_enabled
+def test_framework_metadata(client, events):  # pylint: disable=unused-argument
+    client.get('/')
+    assert Metadata()['frameworks'] == [{
+        'name': 'Django',
+        'version': django.get_version()
+    }]
 
 
 # pylint: disable=arguments-differ

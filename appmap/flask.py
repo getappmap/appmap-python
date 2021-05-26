@@ -2,6 +2,7 @@ from functools import wraps
 import json
 import time
 
+import flask
 import flask.cli
 from flask import _app_ctx_stack, request
 from werkzeug.routing import parse_rule
@@ -10,6 +11,7 @@ from werkzeug.exceptions import BadRequest
 from appmap._implementation.env import Env
 from appmap._implementation import generation
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
+from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder, Recording
 from ._implementation.utils import values_dict
 
@@ -82,6 +84,7 @@ class AppmapFlask:
 
     def before_request(self):
         if self.recording.is_running() and request.path != self.record_url:
+            Metadata.add_framework('flask', flask.__version__)
             np = None
             # See
             # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213

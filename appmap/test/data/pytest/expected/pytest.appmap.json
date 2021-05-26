@@ -9,11 +9,6 @@
       "url": "https://github.com/applandinc/appmap-python"
     },
     "app": "Simple",
-    "frameworks": [
-      {
-        "name": "pytest"
-      }
-    ],
     "recorder": {
       "name": "pytest"
     },

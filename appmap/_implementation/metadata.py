@@ -25,8 +25,30 @@ def _lines(text):
 
 class Metadata(dict):
     """A dict that self-initializes to reflect platform and git metadata."""
+
     def __init__(self, root_dir=None):
         super().__init__(self.base(root_dir or Env.current.root_dir))
+
+        if any(self.__class__.frameworks):
+            self['frameworks'] = self.__class__.frameworks
+            self.reset()
+
+
+    frameworks = []
+    @classmethod
+    def add_framework(cls, name, version=None):
+        """Add a framework that will end up (only) in the next Metadata() created.
+
+        Duplicate entries are ignored.
+        """
+        if not any(f['name'] == name for f in cls.frameworks):
+            cls.frameworks.append(compact_dict({'name': name, 'version': version}))
+
+
+    @classmethod
+    def reset(cls):
+        """Resets stored framework metadata."""
+        cls.frameworks = []
 
 
     @staticmethod

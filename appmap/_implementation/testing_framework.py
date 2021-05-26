@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 from appmap._implementation import configuration, env, generation, recording
 from appmap._implementation.utils import fqname
+from .metadata import Metadata
 
 
 try:
@@ -134,16 +135,13 @@ class session:
             yield
             return
 
-        framework = {'name': self.name}
-        if self.version is not None:
-            framework['version'] = self.version
+        Metadata.add_framework(self.name, self.version)
 
         item = FuncItem(klass, method, **kwds)
 
         metadata = item.metadata
         metadata.update({
             'app': configuration.Config().name,
-            'frameworks': [framework],
             'recorder': {
                 'name': self.name
             }

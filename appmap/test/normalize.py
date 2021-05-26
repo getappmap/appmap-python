@@ -70,6 +70,9 @@ def normalize_appmap(generated_appmap):
         if 'elapsed' in dct:
             elapsed = dct.pop('elapsed')
             assert isinstance(elapsed, float)
+        if 'frameworks' in dct:
+            assert all('name' in f for f in dct['frameworks'])
+            del dct['frameworks']
         if 'git' in dct:
             normalize_git(dct.pop('git'))
         if 'headers' in dct:
