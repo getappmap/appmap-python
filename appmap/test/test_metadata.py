@@ -1,88 +1,86 @@
-# pylint: disable=protected-access
-
 """Test Metadata"""
+# pylint: disable=protected-access, missing-function-docstring
+
+from distutils.dir_util import copy_tree
 import pytest
 
 from appmap._implementation import utils
 from appmap._implementation.metadata import Metadata
 
 
-class TestMetadata:
-    @pytest.fixture
-    def tmp_git(self, tmp_path):
-        g = utils.git(cwd=tmp_path)
-        g('init')
-        utils.subprocess_run(['touch', 'README.md'], cwd=tmp_path)
-        g('add README.md')
-        g('commit -m "initial commit"')
-        g('remote add origin https://www.example.com/repo.git')
-        utils.subprocess_run(['touch', 'new_file'], cwd=tmp_path)
-        return g
+@pytest.fixture(scope='session', name='git_directory')
+def git_directory_fixture(tmp_path_factory):
+    git_dir = tmp_path_factory.mktemp('test-project')
+    (git_dir / 'README.metadata').write_text('Read me')
+    (git_dir / 'new_file').write_text('new_file')
 
-    def test_missing_git(self, tmp_git, monkeypatch):
-        monkeypatch.setenv('PATH', '')
-        try:
-            md = Metadata(cwd=tmp_git.cwd)
-            assert not md._git_available()
-        except FileNotFoundError:
-            assert False, "_git_available didn't handle missing git"
+    git = utils.git(cwd=git_dir)
+    git('init')
+    git('config --local user.email test@test')
+    git('config --local user.name Test')
+    git('add README.metadata')
+    git('commit -m "initial commit"')
+    git('remote add origin https://www.example.test/repo.git')
 
-    def test_fixture(self, tmp_git):
-        md = Metadata(cwd=tmp_git.cwd)
-        assert md._git_available()  # sanity check
+    return git_dir
 
-    def test_git_metadata(self, tmp_git):
-        md = Metadata(cwd=tmp_git.cwd)
 
-        git_md = md._git_metadata()
-        expected = {
-            'repository': 'https://www.example.com/repo.git',
-            'branch': 'master',
-            'status': [
-                '?? new_file'
-            ]
-        }
-        for k, v in expected.items():
-            assert git_md[k] == v
-        missing = ('tag', 'annotated_tag',
-                   'commits_since_tag', 'commit_since_annotated_tag')
-        for m in missing:
-            assert m not in git_md
+@pytest.fixture(name='git')
+def tmp_git(git_directory, tmp_path):
+    copy_tree(git_directory, str(tmp_path))
+    return utils.git(cwd=tmp_path)
 
-    def test_tag(self, tmp_git):
-        tag = 'new_tag'
-        tmp_git('tag %s' % (tag))
-        md = Metadata(cwd=tmp_git.cwd)
-        git_md = md._git_metadata()
 
-        assert git_md['tag'] == tag
-        assert 'commits_since_tag' not in git_md
+def test_missing_git(git, monkeypatch):
+    monkeypatch.setenv('PATH', '')
+    try:
+        metadata = Metadata(cwd=git.cwd)
+        assert not metadata._git_available()
+    except FileNotFoundError:
+        assert False, "_git_available didn't handle missing git"
 
-    def test_annotated_tag(self, tmp_git):
-        tag = 'new_annotated_tag'
-        tmp_git('tag -a "%s" -m "add annotated tag"' % (tag))
-        md = Metadata(cwd=tmp_git.cwd)
-        git_md = md._git_metadata()
 
-        assert git_md['annotated_tag'] == tag
-        assert 'commits_since_annotated_tag' not in git_md
+def test_git_metadata(git):
+    metadata = Metadata(cwd=git.cwd)
+    assert metadata._git_available()  # sanity check
+    git_md = metadata._git_metadata()
+    expected = {
+        'repository': 'https://www.example.test/repo.git',
+        'branch': 'master',
+        'status': [
+            '?? new_file'
+        ]
+    }
+    for key, val in expected.items():
+        assert git_md[key] == val
+    for key in (
+        'tag', 'annotated_tag', 'commits_since_tag', 'commits_since_annotated_tag'
+    ):
+        assert key not in git_md
 
-    def test_since_tag(self, tmp_git):
-        tag = 'new_tag'
-        tmp_git('tag %s' % (tag))
-        tmp_git('add new_file')
-        tmp_git('commit -m "added new file"')
-        md = Metadata(cwd=tmp_git.cwd)
-        git_md = md._git_metadata()
 
-        assert git_md['commits_since_tag'] == 1
+def test_tags(git):
+    atag = 'new_annotated_tag'
+    git(f'tag -a "{atag}" -m "add annotated tag"')
 
-    def test_since_annotated_tag(self, tmp_git):
-        tag = 'new_tag'
-        tmp_git('tag -a "%s" -m "add annotated tag"' % (tag))
-        tmp_git('add new_file')
-        tmp_git('commit -m "added new file"')
-        md = Metadata(cwd=tmp_git.cwd)
-        git_md = md._git_metadata()
+    git('add new_file')
+    git('commit -m "added new file"')
 
-        assert git_md['commits_since_annotated_tag'] == 1
+    tag = 'new_tag'
+    git(f'tag {tag}')
+
+    git('rm README.metadata')
+    git('commit -m "Removed readme"')
+
+    metadata = Metadata(cwd=git.cwd)
+    git_md = metadata._git_metadata()
+
+    assert git_md == {
+        'repository': 'https://www.example.test/repo.git',
+        'branch': 'master',
+        'commit': git_md['commit'],
+        'tag': tag,
+        'annotated_tag': atag,
+        'commits_since_tag': 1,
+        'commits_since_annotated_tag': 2
+    }
