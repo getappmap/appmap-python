@@ -8,6 +8,17 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
+def _lines(text):
+    """Split text into lines, stripping and returning just the nonempty ones.
+
+    Returns None if the result would be empty."""
+
+    lines = [x for x in map(lambda x: x.strip(), text.split('\n')) if len(x) > 0]
+    if len(lines) == 0:
+        return None
+    return lines
+
+
 class Metadata:
     def __init__(self, cwd=None):
         self._cwd = cwd if cwd else os.getcwd()
@@ -55,7 +66,7 @@ class Metadata:
         repository = git('config --get remote.origin.url')
         branch = git('rev-parse --abbrev-ref HEAD')
         commit = git('rev-parse HEAD')
-        status = list(map(lambda x: x.strip(), git('status -s').split('\n')))
+        status = _lines(git('status -s'))
         annotated_tag = git('describe --abbrev=0') or None
         tag = git('describe --abbrev=0 --tags') or None
 

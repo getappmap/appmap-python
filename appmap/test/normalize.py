@@ -17,7 +17,7 @@ def normalize_git(git):
     git.pop('repository')
     git.pop('branch')
     git.pop('commit')
-    status = git.pop('status')
+    status = git.pop('status', [])
     assert isinstance(status, list)
     tag = git.pop('tag', None)
     if tag:
