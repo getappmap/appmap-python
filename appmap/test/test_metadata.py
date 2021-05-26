@@ -34,16 +34,16 @@ def tmp_git(git_directory, tmp_path):
 def test_missing_git(git, monkeypatch):
     monkeypatch.setenv('PATH', '')
     try:
-        metadata = Metadata(cwd=git.cwd)
-        assert not metadata._git_available()
+        metadata = Metadata(root_dir=git.cwd)
+        assert 'git' not in metadata
     except FileNotFoundError:
         assert False, "_git_available didn't handle missing git"
 
 
 def test_git_metadata(git):
-    metadata = Metadata(cwd=git.cwd)
-    assert metadata._git_available()  # sanity check
-    git_md = metadata._git_metadata()
+    metadata = Metadata(root_dir=git.cwd)
+    assert 'git' in metadata
+    git_md = metadata['git']
     expected = {
         'repository': 'https://www.example.test/repo.git',
         'branch': 'master',
@@ -72,8 +72,8 @@ def test_tags(git):
     git('rm README.metadata')
     git('commit -m "Removed readme"')
 
-    metadata = Metadata(cwd=git.cwd)
-    git_md = metadata._git_metadata()
+    metadata = Metadata(root_dir=git.cwd)
+    git_md = metadata['git']
 
     assert git_md == {
         'repository': 'https://www.example.test/repo.git',

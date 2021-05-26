@@ -1,9 +1,13 @@
+"""Shared metadata gathering"""
+
+from functools import lru_cache
 import logging
 import platform
 import re
-import os
 
 from . import utils
+from .env import Env
+from .utils import compact_dict
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +23,16 @@ def _lines(text):
     return lines
 
 
-class Metadata:
-    def __init__(self, cwd=None):
-        self._cwd = cwd if cwd else os.getcwd()
+class Metadata(dict):
+    """A dict that self-initializes to reflect platform and git metadata."""
+    def __init__(self, root_dir=None):
+        super().__init__(self.base(root_dir or Env.current.root_dir))
 
-    def to_dict(self):
+
+    @staticmethod
+    @lru_cache()
+    def base(root_dir):
+        """Gathers git and platform metadata given the project root directory path."""
         metadata = {
             'language': {
                 'name': 'python',
@@ -36,14 +45,17 @@ class Metadata:
             }
         }
 
-        if self._git_available():
-            metadata.update({'git': self._git_metadata()})
+        if Metadata._git_available(root_dir):
+            metadata.update({'git': Metadata._git_metadata(root_dir)})
 
         return metadata
 
-    def _git_available(self):
+
+    @staticmethod
+    @lru_cache()
+    def _git_available(root_dir):
         try:
-            ret = utils.subprocess_run(['git', 'status'], cwd=self._cwd)
+            ret = utils.subprocess_run(['git', 'status'], cwd=root_dir)
             if not ret.returncode:
                 return True
             logger.warning("Failed running 'git status', %s", ret.stderr)
@@ -61,8 +73,11 @@ class Metadata:
 
         return False
 
-    def _git_metadata(self):
-        git = utils.git(cwd=self._cwd)
+
+    @staticmethod
+    @lru_cache()
+    def _git_metadata(root_dir):
+        git = utils.git(cwd=root_dir)
         repository = git('config --get remote.origin.url')
         branch = git('rev-parse --abbrev-ref HEAD')
         commit = git('rev-parse HEAD')
@@ -84,7 +99,7 @@ class Metadata:
             if result:
                 commits_since_tag = int(result.group(1))
 
-        ret = {
+        return compact_dict({
             'repository': repository,
             'branch': branch,
             'commit': commit,
@@ -93,5 +108,4 @@ class Metadata:
             'annotated_tag': annotated_tag,
             'commits_since_tag': commits_since_tag,
             'commits_since_annotated_tag': commits_since_annotated_tag
-        }
-        return { k: v for k,v in ret.items() if v is not None }
+        })

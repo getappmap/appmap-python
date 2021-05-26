@@ -89,7 +89,7 @@ def classmap(recording):
 
 
 def appmap(recording, metadata):
-    appmap_metadata = Metadata().to_dict()
+    appmap_metadata = Metadata()
     if metadata:
         appmap_metadata.update(metadata)
 
