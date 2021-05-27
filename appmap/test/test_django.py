@@ -42,6 +42,12 @@ def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     }]
 
 
+@pytest.mark.appmap_enabled
+def test_app_can_read_body(client, events):  # pylint: disable=unused-argument
+    response = client.post('/echo', json={'test': 'json'})
+    assert response.content == b'{"test": "json"}'
+
+
 # pylint: disable=arguments-differ
 class ClientAdaptor(django.test.Client):
     """Adaptor for the client request parameters used in .web_framework tests."""
@@ -90,13 +96,17 @@ def post_unnamed_view(_request, arg):
 def user_post_view(_request, username, post_id):
     return django.http.HttpResponse(f'post {username} {post_id}')
 
+def echo_view(request):
+    return django.http.HttpResponse(request.body)
+
 urlpatterns = [
     django.urls.path('test', view),
     django.urls.path('', view),
     django.urls.re_path('^user/(?P<username>[^/]+)$', user_view),
     django.urls.path('post/<int:post_id>', post_view),
     django.urls.path('post/<username>/<int:post_id>/summary', user_post_view),
-    django.urls.re_path(r'^post/unnamed/(\d+)$', post_unnamed_view)
+    django.urls.re_path(r'^post/unnamed/(\d+)$', post_unnamed_view),
+    django.urls.path('echo', echo_view),
 ]
 
 def test_unnamed(client, events):

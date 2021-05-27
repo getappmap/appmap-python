@@ -131,3 +131,6 @@ class Metadata(dict):
             'commits_since_tag': commits_since_tag,
             'commits_since_annotated_tag': commits_since_annotated_tag
         })
+
+def initialize():
+    Metadata.reset()
