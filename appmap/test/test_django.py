@@ -5,6 +5,7 @@ from pathlib import Path
 
 import django
 import django.conf
+import django.core.handlers.exception
 import django.db
 import django.http
 from django.template.loader import render_to_string
@@ -114,6 +115,9 @@ def user_post_view(_request, username, post_id):
 
 def echo_view(request):
     return django.http.HttpResponse(request.body)
+    
+def exception_view(_request):
+    raise RuntimeError("An error")
 
 def user_included_view(_request, username):
     return django.http.HttpResponse(f'user {username}, included')
@@ -126,6 +130,7 @@ urlpatterns = [
     path('post/<username>/<int:post_id>/summary', user_post_view),
     re_path(r'^post/unnamed/(\d+)$', post_unnamed_view),
     path('echo', echo_view),
+    path('exception', exception_view),
     re_path(r'^post/included/', include([
             path('<username>', user_view)]))
 ]
@@ -149,6 +154,27 @@ def test_included_view(client, events):
         'path_info': '/post/included/test_user',
         'normalized_path_info': '/post/included/{username}'
     })
+
+@pytest.mark.appmap_enabled
+def test_exception(client, events, monkeypatch):
+    def raise_on_call(*args):
+        raise RuntimeError('An error')
+    monkeypatch.setattr(django.core.handlers.exception, 'response_for_exception', raise_on_call)
+
+    with pytest.raises(RuntimeError):
+        client.get('/exception')
+
+    assert events[0].http_server_request == DictIncluding({
+        'request_method': 'GET',
+        'path_info': '/exception',
+        'protocol': 'HTTP/1.1'
+    })
+
+    assert events[1].parent_id == events[0].id
+    assert events[1].exceptions == [DictIncluding({
+            'class': 'builtins.RuntimeError',
+            'message': 'An error'
+    })]
 
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
