@@ -182,6 +182,37 @@ class TestRequestCapture:
             }
         ]
 
+    @staticmethod
+    @pytest.mark.parametrize('url,expected', [
+        ('/user/test_user', '/user/{username}'),
+        ('/post/123', '/post/{post_id}'),
+        ('/post/test_user/123/summary', '/post/{username}/{post_id}/summary')
+    ])
+    def test_path_normalization(client, events, url, expected):
+        client.get(url)
+        np = events[0].http_server_request['normalized_path_info']
+        assert np == expected
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    def test_message_path_segments(events, client):
+        client.get('/post/alice/42/summary')
+
+        assert events[0].message == [
+            {
+                'name': 'username',
+                'class': 'builtins.str',
+                'object_id': events[0].message[0]['object_id'],
+                'value': "'alice'"
+            },
+            {
+                'name': 'post_id',
+                'class': 'builtins.int',
+                'object_id': events[0].message[1]['object_id'],
+                'value': "42"
+            }
+        ]
+
 
 class TestRecording:
     """Common tests for remote recording."""
@@ -243,3 +274,4 @@ class TestRecording:
 
         res = client.delete('/_appmap/record')
         assert res.status_code == 404
+

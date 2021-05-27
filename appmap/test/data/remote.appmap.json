@@ -5,6 +5,7 @@
             "event": "call",
             "http_server_request": {
                 "path_info": "/",
+                "normalized_path_info": "/",
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
@@ -26,6 +27,7 @@
             "event": "call",
             "http_server_request": {
                 "path_info": "/user/test_user",
+                "normalized_path_info": "/user/{username}",
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },

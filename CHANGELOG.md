@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- [#105] django integration now captures `normalized_path_info` for `http_server_request`
+  events.
 - [#102] Function comments now appear in the `classMap`.
 - [#3] Allow remote recording django apps.
 - [#99] A recording is now created atomically. It is first written to a temp file, which is then

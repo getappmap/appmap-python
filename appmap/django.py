@@ -4,9 +4,12 @@ from django.db.backends.utils import CursorDebugWrapper
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.urls import resolve
+from django.urls.resolvers import _route_to_regex
 
 import time
 import json
+import re
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
@@ -111,6 +114,36 @@ def request_params(request):
 
     return values_dict(params.lists())
 
+def normalize_path_info(path_info, resolved):
+    # Prior to django 3.2, there doesn't appear to be a good way to
+    # determine whether the pattern that matched a request was a path
+    # or a re_path. To figure it out, just try to use the route as a
+    # regex. If that fails, assume it's a path, and use django's
+    # internal parser to turn it into a regex.
+    regex = resolved.route
+    match = re.match(regex, path_info[1:])
+    if not match:
+        regex = _route_to_regex(resolved.route)[0]
+        match = re.match(regex, path_info[1:])
+
+    # Compile the regex so we can see what groups it contains.
+    groups = re.compile(regex).groupindex
+    if len(groups) == 0:
+        # No named groups means no parameters to normalize.
+        return path_info
+
+    # For each parameter, insert the portion of the path that
+    # precedes, followed by the name of the parameter.
+    np = '/'
+    pos = 0
+    for i,g in enumerate(groups):
+        np += match.string[pos:match.start(i+1)]
+        np += f'{{{g}}}'
+        pos = match.end(i+1)
+
+    # Finally, append anything remaining in the path
+    np += match.string[pos:]
+    return np
 
 class Middleware:
     def __init__(self, get_response):
@@ -122,10 +155,14 @@ class Middleware:
             return self.recording(request)
         if self.recorder.enabled:
             start = time.monotonic()
+            resolved = resolve(request.path_info)
+            params = request_params(request)
+            params.update(resolved.kwargs)
             call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path_info,
-                message_parameters=request_params(request),
+                message_parameters=params,
+                normalized_path_info=normalize_path_info(request.path_info, resolved),
                 protocol=request.META['SERVER_PROTOCOL'],
                 headers=request.headers
             )

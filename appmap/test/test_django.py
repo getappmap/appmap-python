@@ -12,8 +12,10 @@ import pytest
 
 import appmap.django  # noqa: F401
 
+# Make sure assertions in web_framework get rewritten (e.g. to show
+# diffs in generated appmaps)
+pytest.register_assert_rewrite('appmap.test.web_framework')
 from .web_framework import TestRequestCapture, TestRecording
-
 
 def test_sql_capture(events):
     conn = django.db.connections['default']
@@ -61,22 +63,33 @@ def client():
 def view(_request):
     return django.http.HttpResponse('testing')
 
-def user_view(_request, name):
-    return django.http.HttpResponse(f'user {name}')
+def user_view(_request, username):
+    return django.http.HttpResponse(f'user {username}')
 
 def post_view(_request, post_id):
     return django.http.HttpResponse(f'post {post_id}')
 
-def user_post_view(_request, name, post_id):
-    return django.http.HttpResponse(f'user {name} post {post_id} summary')
+def post_unnamed_view(_request, arg):
+    return django.http.HttpResponse(f'post with unnamed, {arg}')
+
+def user_post_view(_request, username, post_id):
+    return django.http.HttpResponse(f'post {username} {post_id}')
 
 urlpatterns = [
     django.urls.path('test', view),
     django.urls.path('', view),
-    django.urls.path('user/<name>', user_view),
+    django.urls.re_path('^user/(?P<username>[^/]+)$', user_view),
     django.urls.path('post/<int:post_id>', post_view),
-    django.urls.path('post/<name>/<int:post_id>/summary', user_post_view),
+    django.urls.path('post/<username>/<int:post_id>/summary', user_post_view),
+    django.urls.re_path(r'^post/unnamed/(\d+)$', post_unnamed_view)
 ]
+
+def test_unnamed(client, events):
+    client.get('/post/unnamed/5')
+
+    # unnamed captures in a re_path don't show up in the event's
+    # message attribute.
+    assert len(events[0].message) == 0
 
 
 django.conf.settings.configure(
