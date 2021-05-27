@@ -49,6 +49,6 @@ deploy:
   # Don't undo the changes we just made to pyproject.toml
   skip_cleanup: true
   provider: script
-  script: poetry publish --build
+  script: ci/deploy.sh
   on:
     tags: true
