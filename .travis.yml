@@ -35,6 +35,8 @@ script:
 - poetry build
 - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 - ci/test_install.sh
+- git clean -n -d
+- git clean -n -x -d
 
 before_deploy:
 - awk -i inplace -v travis_tag=$TRAVIS_TAG '/# @@appmap-python-version@@/ {getline; printf("version = \"%s\"\n", travis_tag)}; !/version = "0.0.0"/ {print $0}' pyproject.toml
