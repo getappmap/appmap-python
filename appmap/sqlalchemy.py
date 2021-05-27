@@ -2,11 +2,13 @@
 
 import time
 
+import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from appmap._implementation.event import SqlEvent, ReturnEvent
 from appmap._implementation.instrument import is_instrumentation_disabled
+from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder
 
 
@@ -20,6 +22,7 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
         # Don't record this query in the appmap.
         pass
     elif recorder.enabled:
+        Metadata.add_framework('SQLAlchemy', sqlalchemy.__version__)
         if executemany:
             # Sometimes the same query is executed with different parameter sets.
             # Instead of substituting them all, just say how many times it was run.

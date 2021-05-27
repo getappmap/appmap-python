@@ -15,14 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capture HTTP client request and response.
 - [#101] Record test status (failed or succeeded) in test appmap metadata.
 - [#108] Capture message parameters in Flask.
+- Flask, Django and SQLAlchemy versions are now recorded in the metadata.
 
 ### Fixed
 - When using `pytest` as the test driver, failed unittest cases appmaps are now recorded.
 - [#91] Limit appmap file name length to 255 characters.
-
-### Fixed
 - [#104] The flask integration now formats parameters in `normalized_path_info` to match
   the appmap spec.
+- Git metadata is now cached, preventing running git several times per test case.
 
 ## [0.10.0] - 2021-05-07
 ### Added

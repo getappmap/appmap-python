@@ -17,11 +17,6 @@
     "name": "Deferred hello world",
     "feature": "Hello world",
     "app": "deferred",
-    "frameworks": [
-      {
-        "name": "pytest"
-      }
-    ],
     "recorder": {
       "name": "pytest"
     },

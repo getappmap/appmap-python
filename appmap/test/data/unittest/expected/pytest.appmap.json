@@ -17,11 +17,6 @@
     "name": "Unit test test hello world",
     "feature": "Hello world",
     "app": "Simple",
-    "frameworks": [
-      {
-        "name": "pytest"
-      }
-    ],
     "recorder": {
       "name": "pytest"
     },

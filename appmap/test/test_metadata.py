@@ -84,3 +84,13 @@ def test_tags(git):
         'commits_since_tag': 1,
         'commits_since_annotated_tag': 2
     }
+
+
+def test_add_framework():
+    Metadata.add_framework('foo', '3.4')
+    Metadata.add_framework('foo', '3.4')
+    assert Metadata()['frameworks'] == [{'name': 'foo', 'version': '3.4'}]
+
+    Metadata.add_framework('bar')
+    Metadata.add_framework('baz', '4.2')
+    assert Metadata()['frameworks'] == [{'name': 'bar'}, {'name': 'baz', 'version': '4.2'}]

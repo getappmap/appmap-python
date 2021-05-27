@@ -2,9 +2,11 @@
 
 import pytest
 
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 
+from .._implementation.metadata import Metadata
 import appmap.sqlalchemy  # pylint: disable=unused-import
 from .appmap_test_base import AppMapTestBase
 
@@ -18,6 +20,10 @@ class TestSQLAlchemy(AppMapTestBase):
             'database_type': 'sqlite'
         }.items()
         assert events[0].sql_query['server_version'].startswith('3.')
+        assert Metadata()['frameworks'] == [{
+            'name': 'SQLAlchemy',
+            'version': sqlalchemy.__version__
+        }]
 
 
     @staticmethod

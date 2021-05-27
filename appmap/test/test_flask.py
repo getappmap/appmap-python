@@ -1,10 +1,12 @@
 """Test flask integration"""
 # pylint: disable=missing-function-docstring
 
+import flask
 import importlib
 import pytest
 
 from appmap._implementation.env import Env
+from .._implementation.metadata import Metadata
 
 from .web_framework import TestRequestCapture, TestRecording  # pylint: disable=unused-import
 
@@ -23,12 +25,9 @@ def flask_client(data_dir, monkeypatch):
 
 
 @pytest.mark.appmap_enabled
-@pytest.mark.parametrize('url,expected', [
-    ('/user/test_user', '/user/{username}'),
-    ('/post/123', '/post/{post_id}'),
-    ('/post/test_user/123/summary', '/post/{username}/{post_id}/summary')
-])
-def test_path_normalization(client, events, url, expected):
-    client.get(url)
-    normalized = events[0].http_server_request['normalized_path_info']
-    assert normalized == expected
+def test_framework_metadata(client, events):  # pylint: disable=unused-argument
+    client.get('/')
+    assert Metadata()['frameworks'] == [{
+        'name': 'flask',
+        'version': flask.__version__
+    }]

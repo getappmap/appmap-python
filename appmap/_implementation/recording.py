@@ -12,6 +12,7 @@ import appmap.wrapt as wrapt
 
 from .env import Env
 from .event import _EventIds
+from .metadata import Metadata
 from .utils import FnType
 
 logger = logging.getLogger(__name__)
@@ -219,6 +220,7 @@ class Recorder:
     def clear(self):
         self._events = []
         _EventIds.reset()
+        Metadata.reset()
 
     def start_recording(self):
         logger.debug('AppMap recording started')

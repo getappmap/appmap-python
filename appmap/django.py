@@ -1,3 +1,11 @@
+"""Django integration. Captures HTTP requests and SQL queries.
+
+Automatically used in pytest tests. To enable remote recording,
+add appmap.django.Middleware to MIDDLEWARE in your app configuration
+and run with APPMAP=true set in the environment.
+"""
+
+import django
 from django.core.handlers.base import BaseHandler
 from django.conf import settings
 from django.db.backends.utils import CursorDebugWrapper
@@ -16,6 +24,7 @@ from appmap._implementation.env import Env
 from appmap._implementation.event import \
     SqlEvent, ReturnEvent, HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.instrument import is_instrumentation_disabled
+from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder
 from ._implementation.utils import values_dict
 
@@ -39,6 +48,11 @@ def database_version(connection):
     return None
 
 
+def add_metadata():
+    """Adds Django framework to metadata for the next appmap generation."""
+    Metadata.add_framework('Django', django.get_version())
+
+
 class ExecuteWrapper:
     def __init__(self):
         self.recorder = Recorder()
@@ -53,6 +67,7 @@ class ExecuteWrapper:
                 # Don't record this query in the appmap.
                 pass
             elif self.recorder.enabled:
+                add_metadata()
                 stop = time.monotonic()
                 duration = stop - start
                 conn = context['connection']
@@ -154,6 +169,7 @@ class Middleware:
         if Env.current.enabled and request.path_info == '/_appmap/record':
             return self.recording(request)
         if self.recorder.enabled:
+            add_metadata()
             start = time.monotonic()
             resolved = resolve(request.path_info)
             params = request_params(request)
