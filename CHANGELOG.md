@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#104] The flask integration now formats parameters in `normalized_path_info` to match
   the appmap spec.
 - Git metadata is now cached, preventing running git several times per test case.
+- Fix a problem with Django JSON parameter capture preventing the application
+  from accessing the request body.
 
 ## [0.10.0] - 2021-05-07
 ### Added
