@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.0.0] - 2021-05-27
 ### Added
 - [#105] django integration now captures `normalized_path_info` for `http_server_request`
   events.
@@ -239,7 +241,8 @@ testing. Also adds a Travis config to run them all.
 - Deploy release to PyPI
 
 
-[Unreleased]: https://github.com/applandinc/appmap-python/compare/0.10.0...HEAD
+[Unreleased]: https://github.com/applandinc/appmap-python/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/applandinc/appmap-python/compare/0.10.0...1.0.0
 [0.10.0]: https://github.com/applandinc/appmap-python/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/applandinc/appmap-python/compare/0.8.0...0.9.0
 [0.8.0]: https://github.com/applandinc/appmap-python/compare/0.8.0.dev2...0.8.0
