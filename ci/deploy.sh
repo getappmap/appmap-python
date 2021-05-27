@@ -2,5 +2,5 @@
 
 set -ex
 
-git clean -fd
+git clean -f -x -d -e /.tox -e /dist
 poetry publish --build
