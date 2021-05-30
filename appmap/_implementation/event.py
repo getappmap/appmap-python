@@ -194,10 +194,16 @@ class CallEvent(Event):
                 if p.name in kwargs:
                     value = kwargs[p.name]
                 else:
-                    value = args[0]
-                    args = args[1:]
+                    if args:
+                        value = args[0]
+                        args = args[1:]
+                    else:
+                        continue  # required argument missing
             elif p.kind == 'keyreq':
-                value = kwargs[p.name]
+                if p.name in kwargs:
+                    value = kwargs[p.name]
+                else:
+                    continue  # required argument missing
             elif p.kind == 'opt' or p.kind == 'key':
                 value = kwargs.get(p.name, p.default)
             elif p.kind == 'rest':

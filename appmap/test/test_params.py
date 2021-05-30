@@ -1,3 +1,7 @@
+"""Tests for the function parameter handling"""
+
+# pylint: disable=missing-function-docstring
+
 import inspect
 import sys
 
@@ -152,6 +156,12 @@ class TestInstanceMethods(TestMethodBase):
             'kind': 'req',
             'value': expected_value
         })
+
+    @staticmethod
+    @pytest.mark.parametrize('params', ['one'], indirect=True)
+    def test_one_arg_missing(params):
+        evt = params.C().one()
+        assert len(evt.parameters) == 0
 
     @pytest.mark.parametrize('params,arg,expected',
                              [('one', 'world', ('builtins.str', "'world'")),

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#55] Informative message is displayed when appmap.yml is missing.
 
+### Fixed
+- When an argument to a method is missing, don't raise an exception in the
+  appmap code. Instead omit the missing parameter and allow the original
+  function call to raise ArgumentError if appropriate.
+
 ## [1.0.0] - 2021-05-27
 ### Added
 - [#105] django integration now captures `normalized_path_info` for `http_server_request`
