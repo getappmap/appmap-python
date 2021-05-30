@@ -183,9 +183,21 @@ class CallEvent(Event):
         # dict, respectively. It operates on them as collections, so
         # it doesn't unpack them.
         ret = []
-        if instance is not None:
-            ret.append(params[0].to_dict(instance))
-            params = params[1:]
+
+        # HACK: this is to detect cases when this is a method, yet the self
+        # parameter is None. Unfortunately wrapt tries to be too smart
+        # by separating the instance argument, and as a consequence
+        # we can't differentiate here between a function and a method
+        # bound to None. Thus we rely on 'self' being the conventional
+        # name for the self argument. This is usually correct but
+        # theoretically could be wrong with code that's off-style.
+        takes_self = params and params[0].name == 'self'
+
+        if instance is not None or takes_self:
+            args = [instance, *args]
+        else:
+            # we're popping the front repeatedly, lists are better at this
+            args = list(args)
 
         for p in params:
             if p.kind == 'req':
@@ -195,8 +207,7 @@ class CallEvent(Event):
                     value = kwargs[p.name]
                 else:
                     if args:
-                        value = args[0]
-                        args = args[1:]
+                        value = args.pop(0)
                     else:
                         continue  # required argument missing
             elif p.kind == 'keyreq':
@@ -207,7 +218,7 @@ class CallEvent(Event):
             elif p.kind == 'opt' or p.kind == 'key':
                 value = kwargs.get(p.name, p.default)
             elif p.kind == 'rest':
-                value = args
+                value = tuple(args)
             elif p.kind == 'keyrest':
                 value = kwargs
             else:

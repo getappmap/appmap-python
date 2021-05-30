@@ -163,6 +163,26 @@ class TestInstanceMethods(TestMethodBase):
         evt = params.C().one()
         assert len(evt.parameters) == 0
 
+    @pytest.mark.parametrize('params', ['one'], indirect=True)
+    def test_one_receiver_none(self, params):
+        evt = params.C.one(None, 1)
+        assert len(evt.parameters) == 1
+
+        assert evt.receiver == {
+            'name': 'self',
+            'kind': 'req',
+            'class': 'builtins.NoneType',
+            'object_id': evt.receiver['object_id'],
+            'value': 'None'
+        }
+
+        self.assert_parameter(evt, 0, {
+            'name': 'p',
+            'class': 'builtins.int',
+            'kind': 'req',
+            'value': '1'
+        })
+
     @pytest.mark.parametrize('params,arg,expected',
                              [('one', 'world', ('builtins.str', "'world'")),
                               ('one', None, ('builtins.NoneType', 'None'))],

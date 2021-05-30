@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When an argument to a method is missing, don't raise an exception in the
   appmap code. Instead omit the missing parameter and allow the original
   function call to raise ArgumentError if appropriate.
+- Handle the case when a method is called with self=None.
 
 ## [1.0.0] - 2021-05-27
 ### Added
