@@ -26,9 +26,9 @@ from appmap._implementation.event import (
     HttpServerResponseEvent,
     ReturnEvent,
     SqlEvent,
-    TemplateEvent,
 )
 from appmap._implementation.instrument import is_instrumentation_disabled
+from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder
 from ._implementation.utils import values_dict, patch_class
@@ -264,25 +264,8 @@ BaseHandler.load_middleware = load_middleware
 
 
 @patch_class(Template)
-class TemplateHandler:  # pylint: disable=too-few-public-methods
-    """Patch for django.template.Template to capture and record template
-    rendering (if recording is enabled).
-    """
-    def render(self, orig, *args):
-        """Calls the original implementation.
-
-        If recording is enabled, adds appropriate TemplateEvent
-        and ReturnEvent.
-        """
-        rec = Recorder()
-        if rec.enabled:
-            start = time.monotonic()
-            call_event = TemplateEvent(self.origin.name, self)
-            rec.add_event(call_event)
-        try:
-            return orig(self, *args)
-        finally:
-            if rec.enabled:
-                rec.add_event(
-                    ReturnEvent(call_event.id, time.monotonic() - start)
-                )
+class TemplateHandler(BaseTemplateHandler):
+    @property
+    def filename(self):
+        """The full path of the template file."""
+        return self.origin.name  # pylint: disable=no-member

@@ -5,15 +5,17 @@ import time
 import flask
 import flask.cli
 from flask import _app_ctx_stack, request
+import jinja2
 from werkzeug.routing import parse_rule
 from werkzeug.exceptions import BadRequest
 
 from appmap._implementation.env import Env
 from appmap._implementation import generation
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
+from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder, Recording
-from ._implementation.utils import values_dict
+from ._implementation.utils import values_dict, patch_class
 
 
 try:
@@ -121,6 +123,12 @@ class AppmapFlask:
             Recorder().add_event(return_event)
 
         return response
+
+
+@patch_class(jinja2.Template)
+class TemplateHandler(BaseTemplateHandler):
+    # pylint: disable=missing-class-docstring, too-few-public-methods
+    pass
 
 
 def wrap_cli_fn(fn):

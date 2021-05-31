@@ -168,6 +168,8 @@ def patch_class(cls):
     It's the responsibility of the wrapper method to call the original
     if appropriate, with arguments it wants (self probably being
     the first one).
+
+    Methods without an implementation in the original are copied verbatim.
     """
     def _wrap_fun(wrapper, original):
         def wrapped(self, *args, **kwargs):
@@ -175,9 +177,12 @@ def patch_class(cls):
         return wrapped
     def _wrap_cls(patch):
         for func in dir(patch):
-            wrapper = getattr(patch, func)
-            if callable(wrapper) and not func.startswith('__'):
-                original = getattr(cls, func)
-                setattr(cls, func, _wrap_fun(wrapper, original))
+            if not func.startswith('__'):
+                wrapper = getattr(patch, func)
+                original = getattr(cls, func, None)
+                if original:
+                    setattr(cls, func, _wrap_fun(wrapper, original))
+                else:
+                    setattr(cls, func, wrapper)
         return patch
     return _wrap_cls

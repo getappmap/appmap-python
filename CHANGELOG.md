@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - [#55] Informative message is displayed when appmap.yml is missing.
-- [#119] Record template rendering in Django.
+- [#119] Record template rendering in Django and flask.
 
 ### Fixed
 - When an argument to a method is missing, don't raise an exception in the
