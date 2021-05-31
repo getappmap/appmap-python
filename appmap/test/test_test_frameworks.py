@@ -7,6 +7,7 @@ import sys
 import json
 import pytest
 
+from appmap.test.helpers import DictIncluding
 from .normalize import normalize_appmap
 from .._implementation import testing_framework
 
@@ -128,4 +129,4 @@ def verify_expected_metadata(testdir):
         name = pattern.search(file.name).group(1)
         metadata = json.loads(file.read_text())['metadata']
         expected = testdir.expected / f'{name}.metadata.json'
-        assert metadata.items() >= json.loads(expected.read_text()).items()
+        assert metadata == DictIncluding(json.loads(expected.read_text()))

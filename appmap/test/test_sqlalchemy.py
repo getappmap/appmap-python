@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey
 
+from appmap.test.helpers import DictIncluding
 from .._implementation.metadata import Metadata
 import appmap.sqlalchemy  # pylint: disable=unused-import
 from .appmap_test_base import AppMapTestBase
@@ -15,10 +16,10 @@ class TestSQLAlchemy(AppMapTestBase):
     @staticmethod
     def test_sql_capture(connection, events):
         connection.execute('SELECT 1')
-        assert events[0].sql_query.items() >= {
+        assert events[0].sql_query == DictIncluding({
             'sql': 'SELECT 1',
             'database_type': 'sqlite'
-        }.items()
+        })
         assert events[0].sql_query['server_version'].startswith('3.')
         assert Metadata()['frameworks'] == [{
             'name': 'SQLAlchemy',

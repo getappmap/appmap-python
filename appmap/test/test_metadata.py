@@ -7,6 +7,8 @@ import pytest
 from appmap._implementation import utils
 from appmap._implementation.metadata import Metadata
 
+from appmap.test.helpers import DictIncluding
+
 
 @pytest.fixture(scope='session', name='git_directory')
 def git_directory_fixture(tmp_path_factory):
@@ -44,15 +46,13 @@ def test_git_metadata(git):
     metadata = Metadata(root_dir=git.cwd)
     assert 'git' in metadata
     git_md = metadata['git']
-    expected = {
+    assert git_md == DictIncluding({
         'repository': 'https://www.example.test/repo.git',
         'branch': 'master',
         'status': [
             '?? new_file'
         ]
-    }
-    for key, val in expected.items():
-        assert git_md[key] == val
+    })
     for key in (
         'tag', 'annotated_tag', 'commits_since_tag', 'commits_since_annotated_tag'
     ):
@@ -75,15 +75,14 @@ def test_tags(git):
     metadata = Metadata(root_dir=git.cwd)
     git_md = metadata['git']
 
-    assert git_md == {
+    assert git_md == DictIncluding({
         'repository': 'https://www.example.test/repo.git',
         'branch': 'master',
-        'commit': git_md['commit'],
         'tag': tag,
         'annotated_tag': atag,
         'commits_since_tag': 1,
         'commits_since_annotated_tag': 2
-    }
+    })
 
 
 def test_add_framework():

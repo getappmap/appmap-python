@@ -6,6 +6,7 @@ import pytest
 
 
 import appmap
+from appmap.test.helpers import DictIncluding
 from .normalize import normalize_appmap
 
 def content_type(res):
@@ -23,17 +24,17 @@ class TestRequestCapture:
         """Test GET request and response capture."""
         client.get('/test')
 
-        assert events[0].http_server_request.items() >= {
+        assert events[0].http_server_request == DictIncluding({
             'request_method': 'GET',
             'path_info': '/test',
             'protocol': 'HTTP/1.1'
-        }.items()
+        })
 
         response = events[1].http_server_response
-        assert response.items() >= {
+        assert response == DictIncluding({
             'status_code': 200,
             'mime_type': 'text/html; charset=utf-8'
-        }.items()
+        })
 
         assert 'ETag' in response['headers']
 
@@ -48,18 +49,18 @@ class TestRequestCapture:
             }
         )
 
-        assert events[0].http_server_request.items() >= {
+        assert events[0].http_server_request == DictIncluding({
             'request_method': 'POST',
             'path_info': '/test',
             'protocol': 'HTTP/1.1',
             'authorization': 'token "test-token"',
             'mime_type': 'application/json',
-        }.items()
+        })
 
-        assert events[0].http_server_request['headers'].items() >= {
+        assert events[0].http_server_request['headers'] == DictIncluding({
             'Accept': 'application/json',
             'Accept-Language': 'pl'
-        }.items()
+        })
 
     @staticmethod
     def test_post(events, client):
@@ -73,37 +74,35 @@ class TestRequestCapture:
         )
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
-        assert events[0].http_server_request.items() >= {
+        assert events[0].http_server_request == DictIncluding({
             'request_method': 'POST',
             'path_info': '/test',
             'protocol': 'HTTP/1.1',
             'authorization': 'token "test-token"',
             'mime_type': 'application/json; charset=UTF-8',
-        }.items()
+        })
 
-        assert events[0].http_server_request['headers'].items() >= {
+        assert events[0].http_server_request['headers'] == DictIncluding({
             'Accept': 'application/json',
             'Accept-Language': 'pl'
-        }.items()
+        })
 
     @staticmethod
     def test_get(events, client):
         client.get('/test?my_param=example')
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
 
     @staticmethod
@@ -111,12 +110,11 @@ class TestRequestCapture:
         client.get('/test?my_param=example&my_param=example2')
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.list',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "['example', 'example2']"
-            },
+            }),
         ]
 
 
@@ -128,12 +126,11 @@ class TestRequestCapture:
         )
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
 
     @staticmethod
@@ -141,12 +138,11 @@ class TestRequestCapture:
         client.put('/test', json={ 'my_param': 'example' })
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
 
     @staticmethod
@@ -154,12 +150,11 @@ class TestRequestCapture:
         client.post('/test?my_param=example', data="bad json", content_type='application/json')
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
 
     @staticmethod
@@ -167,12 +162,11 @@ class TestRequestCapture:
         client.post('/test', data={ 'my_param': 'example' }, content_type='multipart/form-data')
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'example'"
-            }
+            })
         ]
 
     @staticmethod
@@ -180,12 +174,11 @@ class TestRequestCapture:
         client.post('/test?my_param=get', data={ 'my_param': 'example' })
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'my_param',
                 'class': 'builtins.list',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "['get', 'example']"
-            }
+            })
         ]
 
     @staticmethod
@@ -205,18 +198,16 @@ class TestRequestCapture:
         client.get('/post/alice/42/summary')
 
         assert events[0].message == [
-            {
+            DictIncluding({
                 'name': 'username',
                 'class': 'builtins.str',
-                'object_id': events[0].message[0]['object_id'],
                 'value': "'alice'"
-            },
-            {
+            }),
+            DictIncluding({
                 'name': 'post_id',
                 'class': 'builtins.int',
-                'object_id': events[0].message[1]['object_id'],
                 'value': "42"
-            }
+            })
         ]
 
 
@@ -282,4 +273,3 @@ class TestRecording:
 
         res = client.delete('/_appmap/record')
         assert res.status_code == 404
-

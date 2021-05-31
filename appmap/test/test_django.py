@@ -12,6 +12,7 @@ import pytest
 
 import appmap
 import appmap.django  # noqa: F401
+from appmap.test.helpers import DictIncluding
 from .._implementation.metadata import Metadata
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
@@ -22,10 +23,10 @@ from .web_framework import TestRequestCapture, TestRecording
 def test_sql_capture(events):
     conn = django.db.connections['default']
     conn.cursor().execute('SELECT 1').fetchall()
-    assert events[0].sql_query.items() >= {
+    assert events[0].sql_query == DictIncluding({
         'sql': 'SELECT 1',
         'database_type': 'sqlite'
-    }.items()
+    })
     assert events[0].sql_query['server_version'].startswith('3.')
     assert Metadata()['frameworks'] == [{
         'name': 'Django',
@@ -129,10 +130,10 @@ def test_included_view(client, events):
     client.get('/post/included/test_user')
 
     assert len(events) == 2
-    assert events[0].http_server_request.items() >= {
+    assert events[0].http_server_request == DictIncluding({
         'path_info': '/post/included/test_user',
         'normalized_path_info': '/post/included/{username}'
-    }.items()
+    })
 
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
