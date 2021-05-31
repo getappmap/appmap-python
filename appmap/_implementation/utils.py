@@ -85,12 +85,22 @@ def split_function_name(fn):
         fn_name = qualname
     return (class_name, fn_name)
 
+
+def root_relative_path(path):
+    """Returns the path relative to the current root_dir.
+
+    The path should be absolute.
+    If it's not under the current root_dir, it's returned unchanged.
+    """
+    if path.startswith(Env.current.root_dir):
+        path = path[Env.current.root_dir_len:]
+    return path
+
+
 def get_function_location(fn):
     fn = inspect.unwrap(fn)
     try:
-        path = inspect.getsourcefile(fn)
-        if path.startswith(Env.current.root_dir):
-            path = path[Env.current.root_dir_len:]
+        path = root_relative_path(inspect.getsourcefile(fn))
     except TypeError:
         path = '<builtin>'
 
@@ -143,3 +153,31 @@ class git:
     @property
     def cwd(self):
         return self._cwd
+
+
+def patch_class(cls):
+    """Class decorator for monkey patching.
+
+    Decorating a class (patch) with @patch_class(orig) will change orig, so
+    that every method defined in patch will call that implementation instead
+    of the one in orig.
+
+    The methods take the original (unbound) implementation as the
+    second argument after self; the rest is passed as is.
+
+    It's the responsibility of the wrapper method to call the original
+    if appropriate, with arguments it wants (self probably being
+    the first one).
+    """
+    def _wrap_fun(wrapper, original):
+        def wrapped(self, *args, **kwargs):
+            return wrapper(self, original, *args, **kwargs)
+        return wrapped
+    def _wrap_cls(patch):
+        for func in dir(patch):
+            wrapper = getattr(patch, func)
+            if callable(wrapper) and not func.startswith('__'):
+                original = getattr(cls, func)
+                setattr(cls, func, _wrap_fun(wrapper, original))
+        return patch
+    return _wrap_cls

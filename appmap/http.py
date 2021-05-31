@@ -10,35 +10,7 @@ from urllib.parse import urlsplit, parse_qs
 
 from ._implementation.event import HttpClientRequestEvent, HttpClientResponseEvent
 from ._implementation.recording import Recorder
-from ._implementation.utils import values_dict
-
-
-def patch_class(cls):
-    """Class decorator for monkey patching.
-
-    Decorating a class (patch) with @wrap(orig) will change orig, so that
-    every method defined in patch will call that implementation instead
-    of the one in orig.
-
-    The methods take the original (unbound) implementation as the
-    second argument after self; the rest is passed as is.
-
-    It's the responsibility of the wrapper method to call the original
-    if appropriate, with arguments it wants (instance probably being
-    the first one.
-    """
-    def _wrap_fun(wrapper, original):
-        def wrapped(self, *args, **kwargs):
-            return wrapper(self, original, *args, **kwargs)
-        return wrapped
-    def _wrap_cls(patch):
-        for func in dir(patch):
-            wrapper = getattr(patch, func)
-            if callable(wrapper) and not func.startswith('__'):
-                original = getattr(cls, func)
-                setattr(cls, func, _wrap_fun(wrapper, original))
-        return patch
-    return _wrap_cls
+from ._implementation.utils import values_dict, patch_class
 
 
 def is_secure(self: HTTPConnection):

@@ -12,8 +12,8 @@ from django.db.backends.utils import CursorDebugWrapper
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.template import Template
 from django.urls import get_resolver, resolve
-
 
 import time
 import json
@@ -21,12 +21,17 @@ import re
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
-from appmap._implementation.event import \
-    SqlEvent, ReturnEvent, HttpServerRequestEvent, HttpServerResponseEvent
+from appmap._implementation.event import (
+    HttpServerRequestEvent,
+    HttpServerResponseEvent,
+    ReturnEvent,
+    SqlEvent,
+    TemplateEvent,
+)
 from appmap._implementation.instrument import is_instrumentation_disabled
 from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder
-from ._implementation.utils import values_dict
+from ._implementation.utils import values_dict, patch_class
 
 
 def parse_pg_version(version):
@@ -256,3 +261,28 @@ def load_middleware(*args, **kwargs):
     return original_load_middleware(*args, **kwargs)
 
 BaseHandler.load_middleware = load_middleware
+
+
+@patch_class(Template)
+class TemplateHandler:  # pylint: disable=too-few-public-methods
+    """Patch for django.template.Template to capture and record template
+    rendering (if recording is enabled).
+    """
+    def render(self, orig, *args):
+        """Calls the original implementation.
+
+        If recording is enabled, adds appropriate TemplateEvent
+        and ReturnEvent.
+        """
+        rec = Recorder()
+        if rec.enabled:
+            start = time.monotonic()
+            call_event = TemplateEvent(self.origin.name, self)
+            rec.add_event(call_event)
+        try:
+            return orig(self, *args)
+        finally:
+            if rec.enabled:
+                rec.add_event(
+                    ReturnEvent(call_event.id, time.monotonic() - start)
+                )

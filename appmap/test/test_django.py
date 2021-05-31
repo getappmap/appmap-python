@@ -1,10 +1,13 @@
 # flake8: noqa: E402
 # pylint: disable=unused-import, redefined-outer-name, missing-function-docstring
 
+from pathlib import Path
+
 import django
 import django.conf
 import django.db
 import django.http
+from django.template.loader import render_to_string
 import django.test
 from django.test.client import MULTIPART_CONTENT
 from django.urls import include, path, re_path
@@ -47,6 +50,18 @@ def test_framework_metadata(client, events):  # pylint: disable=unused-argument
 def test_app_can_read_body(client, events):  # pylint: disable=unused-argument
     response = client.post('/echo', json={'test': 'json'})
     assert response.content == b'{"test": "json"}'
+
+
+@pytest.mark.appmap_enabled
+def test_template(events):
+    render_to_string('appmap.yml')
+    assert events[0].to_dict() == DictIncluding({
+        'path': 'appmap/test/data/appmap.yml',
+        'event': 'call',
+        'defined_class': '<templates>.AppmapTestDataAppmapYml',
+        'method_id': 'render',
+        'static': False
+    })
 
 
 # pylint: disable=arguments-differ
@@ -138,5 +153,11 @@ def test_included_view(client, events):
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
     MIDDLEWARE=['django.middleware.http.ConditionalGetMiddleware'],
-    ROOT_URLCONF='appmap.test.test_django'
+    ROOT_URLCONF='appmap.test.test_django',
+    TEMPLATES=[{
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [Path(__file__).parent / 'data'],
+    }],
 )
+
+django.setup()

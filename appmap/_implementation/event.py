@@ -3,6 +3,7 @@ import inspect
 from inspect import Parameter, Signature
 from itertools import chain
 import logging
+import re
 import threading
 
 from .env import Env
@@ -10,6 +11,7 @@ from .utils import (
     appmap_tls,
     compact_dict,
     get_function_location,
+    root_relative_path,
     split_function_name,
     fqname,
     FnType
@@ -285,6 +287,25 @@ class CallEvent(Event):
                                           'path', 'lineno']))
 
         return ret
+
+class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
+    """A special call event that records template rendering."""
+    __slots__ = ['receiver', 'path']
+
+    def __init__(self, path, instance=None):
+        super().__init__('call')
+        self.receiver = describe_value(instance)
+        self.path = root_relative_path(path)
+
+    def to_dict(self, attrs=None):
+        result = super().to_dict(attrs)
+        classlike_name = re.sub(r'\W', '', self.path.title())
+        result.update({
+            'defined_class': f'<templates>.{classlike_name}',
+            'method_id': 'render',
+            'static': False,
+        })
+        return result
 
 class SqlEvent(Event):
     __slots__ = ['sql_query']
