@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   function call to raise ArgumentError if appropriate.
 - Handle the case when a method is called with self=None.
 
+### Changed
+- Update tox config to test Django 2.2
+
 ## [1.0.0] - 2021-05-27
 ### Added
 - [#105] django integration now captures `normalized_path_info` for `http_server_request`

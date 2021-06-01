@@ -8,6 +8,12 @@ import pytest
 import appmap
 from .normalize import normalize_appmap
 
+def content_type(res):
+    # headers attribute is available in Flask, and in Django as of
+    # 3.2. For Django 2.2, headers are accessed from the response
+    # directly.
+    getter = res.headers.get if hasattr(res, 'headers') else res.get
+    return getter('Content-Type')
 
 @pytest.mark.appmap_enabled
 class TestRequestCapture:
@@ -229,7 +235,9 @@ class TestRecording:
     def test_starts_disabled(client):
         res = client.get('/_appmap/record')
         assert res.status_code == 200
-        assert res.headers['Content-Type'] == 'application/json'
+
+        assert content_type(res) == 'application/json'
+
         data = res.json
         if callable(data):
             data = data()
@@ -263,7 +271,7 @@ class TestRecording:
 
         res = client.delete('/_appmap/record')
         assert res.status_code == 200
-        assert res.headers['Content-Type'] == 'application/json'
+        assert content_type(res) == 'application/json'
         data = res.data if hasattr(res, 'data') else res.content
         generated_appmap = normalize_appmap(data)
 
