@@ -68,6 +68,10 @@ class Env(metaclass=_EnvMeta):
     def enabled(self):
         return self.get("APPMAP", "false").lower() == "true"
 
+    @enabled.setter
+    def enabled(self, value):
+        self.set("APPMAP", "true" if value else "false")
+
     @property
     def display_params(self):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
@@ -97,7 +101,7 @@ class Env(metaclass=_EnvMeta):
                 'appmap': {
                     'level': log_level,
                     'handlers': ['default'],
-                    'propagate': False
+                    'propagate': True
                 }
             }
         }
@@ -107,7 +111,7 @@ class Env(metaclass=_EnvMeta):
                 name: {
                     'level': level.upper(),
                     'handlers': ['default'],
-                    'propagate': False
+                    'propagate': True
                 }
             })
         logging.config.dictConfig(config_dict)

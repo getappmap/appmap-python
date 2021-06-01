@@ -2,6 +2,10 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+from pathlib import Path
+import re
+from textwrap import dedent
+
 import importlib_metadata
 from functools import lru_cache
 import inspect
@@ -15,6 +19,24 @@ from .instrument import instrument
 from .recording import Recorder, Filter
 
 logger = logging.getLogger(__name__)
+
+
+def warn_config_missing(path):
+    """Display a warning about missing config file in path."""
+    name = path.resolve().parent.name
+    package = re.sub(r'\W', '.', name).lower()
+    logger.warning(dedent(f'''
+        Config file "{path}" is missing; AppMaps won't be recorded.
+        You need to create the file, for example:
+
+        name: {name}  # your project name
+        packages:
+        - {package}  # your main package
+
+        For details, please refer to
+        https://github.com/applandinc/appmap-python/#configuration
+        '''
+    ))
 
 
 class Config:
@@ -53,11 +75,19 @@ class Config:
     @property
     @lru_cache(maxsize=None)
     def _config(self):
-        config_file = Env.current.get("APPMAP_CONFIG", "appmap.yml")
-        with open(config_file) as file:
-            ret = yaml.safe_load(file)
+        path = Path(Env.current.get("APPMAP_CONFIG", "appmap.yml"))
+        if path.is_file():
+            ret = yaml.safe_load(path.read_text())
             logger.info('config: %s', ret)
             return ret
+
+        warn_config_missing(path)
+
+        # disable appmap and return a dummy config
+        # so the errors don't accumulate
+        Env.current.enabled = False
+        return {'name': None, 'packages': []}
+
 
 def startswith(prefix, sequence):
     """

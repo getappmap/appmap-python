@@ -1,8 +1,11 @@
 """Test Configuration"""
+# pylint: disable=missing-function-docstring
+
 import pytest
 
 import appmap
-from appmap._implementation.configuration import ConfigFilter
+import appmap._implementation
+from appmap._implementation.configuration import Config, ConfigFilter
 from appmap._implementation.env import Env
 from appmap._implementation.recording import NullFilter, Filterable
 
@@ -23,6 +26,16 @@ def test_is_disabled_when_false():
     """Test that recording is disabled when APPMAP=false"""
     Env.current.set("APPMAP", "false")
     assert not appmap.enabled()
+
+
+def test_config_not_found(caplog):
+    appmap._implementation.initialize({  # pylint: disable=protected-access
+        'APPMAP': 'true', 'APPMAP_CONFIG': 'notfound.yml'
+    })
+    assert Config().name is None
+    assert not appmap.enabled()
+    assert '"notfound.yml" is missing' in caplog.text
+
 
 cf = lambda: ConfigFilter(NullFilter())
 
