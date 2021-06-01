@@ -12,8 +12,8 @@ from django.db.backends.utils import CursorDebugWrapper
 from django.db.backends.signals import connection_created
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from django.urls import resolve
-from django.urls.resolvers import _route_to_regex
+from django.urls import get_resolver, resolve
+
 
 import time
 import json
@@ -132,26 +132,37 @@ def request_params(request):
 
     return values_dict(params.lists())
 
+def get_resolved_match(path_info, resolver):
+    # Look through the resolver's cache of reverse
+    # route mappings and find the regex that matches the current
+    # request. The route mappings are tuples of the form:
+    #   (format string, regex, args, kwargs)
+    regex = None
+    for _,values in resolver.reverse_dict.lists():
+        for _,regex,_,_ in values:
+            match = re.match(regex, path_info[1:])
+            if match:
+                return (regex, match)
+
 def normalize_path_info(path_info, resolved):
-    # Prior to django 3.2, there doesn't appear to be a good way to
-    # determine whether the pattern that matched a request was a path
-    # or a re_path. To figure it out, just try to use the route as a
-    # regex. If that fails, assume it's a path, and use django's
-    # internal parser to turn it into a regex.
-    regex = resolved.route
-    match = re.match(regex, path_info[1:])
+    if not resolved.kwargs:
+        # No kwargs mean no parameters to normalize
+        return path_info
+
+    resolver = get_resolver()
+    regex, match = get_resolved_match(path_info, resolver)
+
+    # Given that we're processing a resolved request, there must be
+    # one that matches.
     if not match:
-        regex = _route_to_regex(resolved.route)[0]
-        match = re.match(regex, path_info[1:])
+        raise RuntimeError('No match for %s found with resolver %r' %
+                           (path_info, resolver))
 
     # Compile the regex so we can see what groups it contains.
     groups = re.compile(regex).groupindex
-    if len(groups) == 0:
-        # No named groups means no parameters to normalize.
-        return path_info
 
-    # For each parameter, insert the portion of the path that
-    # precedes, followed by the name of the parameter.
+    # For each parameter, insert the portion of the path that precedes
+    # it, followed by the name of the parameter.
     np = '/'
     pos = 0
     for i,g in enumerate(groups):
@@ -169,7 +180,10 @@ class Middleware:
         self.recorder = Recorder()
 
     def __call__(self, request):
-        if Env.current.enabled and request.path_info == '/_appmap/record':
+        if not Env.current.enabled:
+            return self.get_response(request)
+
+        if request.path_info == '/_appmap/record':
             return self.recording(request)
         if self.recorder.enabled:
             add_metadata()
@@ -240,6 +254,5 @@ def load_middleware(*args, **kwargs):
     inject_middleware()
     BaseHandler.load_middleware = original_load_middleware
     return original_load_middleware(*args, **kwargs)
-
 
 BaseHandler.load_middleware = load_middleware

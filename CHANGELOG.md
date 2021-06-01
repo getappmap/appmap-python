@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update tox config to test Django 2.2
 
+### Fixed
+- [#122] Path normalization for Django requests works in the presence of included
+  URLconfs.
+
 ## [1.0.0] - 2021-05-27
 ### Added
 - [#105] django integration now captures `normalized_path_info` for `http_server_request`
