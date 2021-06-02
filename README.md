@@ -8,12 +8,14 @@
   - [pytest](#pytest)
   - [unittest](#unittest)
   - [Run your tests](#run-your-tests)
+- [OpenAPI documentation](#openapi-documentation)
 - [Remote Recording](#remote-recording)
   - [Django](#django)
   - [Flask](#flask)
   - [Run your web app](#run-your-web-app)
 - [Context manager](#context-manager)
 - [Development](#development)
+  - [Getting the code](#getting-the-code)
   - [Python version support](#python-version-support)
   - [Dependency management](#dependency-management)
   - [Linting](#linting)
@@ -21,6 +23,7 @@
     - [pytest](#pytest-1)
     - [tox](#tox)
   - [Code Coverage](#code-coverage)
+
 # About
 `appmap-python` is a Python package for recording
 [AppMaps](https://github.com/applandinc/appmap) of your code. "AppMap" is a data format
@@ -117,7 +120,7 @@ You can also use `shallow: true` on `path` entries.
   `tmp/appmap`.
 
 * `APPMAP_DISPLAY_PARAMS` enables rendering of parameters as strings. If `true` (the
-  default, not case-sensitive), parameters are rendered using `str` and/or `repr`. If
+  default, not case-sensitive), parameters are rendered using `repr`. If
   `false`, a generic string is used instead.
 
 # Labels
@@ -206,6 +209,12 @@ Once you've configured your tests to generate AppMaps, run the tests with the
 $ APPMAP=true pytest
 ```
 
+# OpenAPI documentation
+
+After you run the test suite of your flask or Django web application,
+[appmap-swagger](https://github.com/applandinc/appmap-swagger/) can be used
+to automatically generate OpenAPI documentation for all routes covered by the
+tests. Please refer to that project for usage instructions.
 
 # Remote Recording
 `appmap-python` supports remote recording of Django and Flask web applications. Import the
@@ -369,7 +378,7 @@ MANIFEST.in	README.rst	blog		setup.py	tddium.yml	tox.ini
 ## Python version support
 As a package intended to be installed in as many environments as possible, `appmap-python`
 needs to avoid using features of Python or the standard library that were added after the
-oldest version currently supported (see [above](#supported-version)).
+oldest version currently supported (see [above](#supported-versions)).
 
 ## Dependency management
 
