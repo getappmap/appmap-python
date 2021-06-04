@@ -7,10 +7,10 @@ import django.db
 import django.http
 import django.test
 from django.test.client import MULTIPART_CONTENT
-import django.urls
+from django.urls import include, path, re_path
 import pytest
 
-
+import appmap
 import appmap.django  # noqa: F401
 from .._implementation.metadata import Metadata
 
@@ -99,23 +99,40 @@ def user_post_view(_request, username, post_id):
 def echo_view(request):
     return django.http.HttpResponse(request.body)
 
+def user_included_view(_request, username):
+    return django.http.HttpResponse(f'user {username}, included')
+
 urlpatterns = [
-    django.urls.path('test', view),
-    django.urls.path('', view),
-    django.urls.re_path('^user/(?P<username>[^/]+)$', user_view),
-    django.urls.path('post/<int:post_id>', post_view),
-    django.urls.path('post/<username>/<int:post_id>/summary', user_post_view),
-    django.urls.re_path(r'^post/unnamed/(\d+)$', post_unnamed_view),
-    django.urls.path('echo', echo_view),
+    path('test', view),
+    path('', view),
+    re_path('^user/(?P<username>[^/]+)$', user_view),
+    path('post/<int:post_id>', post_view),
+    path('post/<username>/<int:post_id>/summary', user_post_view),
+    re_path(r'^post/unnamed/(\d+)$', post_unnamed_view),
+    path('echo', echo_view),
+    re_path(r'^post/included/', include([
+            path('<username>', user_view)]))
 ]
 
+
+@pytest.mark.appmap_enabled
 def test_unnamed(client, events):
     client.get('/post/unnamed/5')
 
+    assert appmap.enabled()     # sanity check
     # unnamed captures in a re_path don't show up in the event's
     # message attribute.
     assert len(events[0].message) == 0
 
+@pytest.mark.appmap_enabled
+def test_included_view(client, events):
+    client.get('/post/included/test_user')
+
+    assert len(events) == 2
+    assert events[0].http_server_request.items() >= {
+        'path_info': '/post/included/test_user',
+        'normalized_path_info': '/post/included/{username}'
+    }.items()
 
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},

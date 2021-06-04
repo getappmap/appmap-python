@@ -387,7 +387,7 @@ oldest version currently supported (see [above](#supported-versions)).
 ```
 % brew install poetry
 % cd appmap-python
-% poetry install
+% poetry install --extras test
 ```
 
 ## Linting
@@ -418,16 +418,23 @@ should be reenabled as soon as possible.]
 
 ### tox
 Additionally, the `tox` configuration provides the ability to run the tests for all
-supported versions of Python and django:
+supported versions of Python and djanggo. 
+
+`tox` requires that all the correct versions of Python to be available to create
+the test environments. [pyenv](https://github.com/pyenv/pyenv) is an easy way to manage
+multiple versions of Python, and the [xxenv-latest
+plugin](https://github.com/momo-lab/xxenv-latest) can help get all the latest versions.
+
+
 
 ```sh
+% brew install pyenv
+% git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)"/plugins/xxenv-latest
 % cd appmap-python
+% pyenv latest local 3.{9,6,7,8}
+% for v in 3.{9,6,7,8}; do pyenv latest install $v; done
 % poetry run tox
 ```
-
-Note that `tox` requires the correct version of Python to be installed before it can
-create a test environment. [pyenv](https://github.com/pyenv/pyenv) is an easy way to
-manage multiple versions of Python.
 
 ## Code Coverage
 [coverage](https://coverage.readthedocs.io/) for coverage:
