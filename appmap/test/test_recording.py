@@ -7,7 +7,7 @@ import pytest
 import appmap
 
 from appmap._implementation.recording import Recorder, wrap_exec_module
-from .normalize import normalize_appmap
+from .normalize import normalize_appmap, remove_line_numbers
 
 
 @pytest.mark.appmap_enabled
@@ -31,7 +31,7 @@ class TestRecordingWhenEnabled:
             ExampleClass.call_yaml()
 
         generated_appmap = normalize_appmap(appmap.generation.dump(r))
-        assert generated_appmap == expected_appmap
+        assert remove_line_numbers(generated_appmap) == expected_appmap
 
     def test_recording_clears(self):
         from example_class import ExampleClass  # pylint: disable=import-error

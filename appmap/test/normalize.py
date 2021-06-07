@@ -1,6 +1,7 @@
 from operator import itemgetter
 import platform
 import re
+from typing import List
 
 import json
 import pytest
@@ -104,3 +105,22 @@ def normalize_appmap(generated_appmap):
         return dct
 
     return json.loads(generated_appmap, object_hook=normalize)
+
+
+def remove_line_numbers(appmap: dict):
+    """Remove all line numbers from an appmap (in place).
+    Makes the tests easier to modify.
+    """
+
+    def do_classmap(classmap: List[dict]):
+        location_re = re.compile(r':\d+$')
+        for entry in classmap:
+            if 'location' in entry:
+                entry['location'] = location_re.sub('', entry['location'])
+            do_classmap(entry.get('children', []))
+
+    do_classmap(appmap['classMap'])
+    for event in appmap['events']:
+        assert isinstance(event.pop('lineno', 42), int)
+
+    return appmap
