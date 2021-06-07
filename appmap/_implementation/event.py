@@ -158,9 +158,9 @@ class CallEvent(Event):
         try:
             fn = filterable.obj
             if filterable.fntype != FnType.CLASS:
-                sig = inspect.signature(fn, follow_wrapped=False)
+                sig = inspect.signature(fn, follow_wrapped=True)
             else:
-                sig = inspect.signature(filterable.static_fn.__func__, follow_wrapped=False)
+                sig = inspect.signature(filterable.static_fn.__func__, follow_wrapped=True)
         except ValueError:
             # Can't get signatures built-ins
             return []

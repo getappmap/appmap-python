@@ -1,4 +1,9 @@
-from functools import wraps
+"""A class using all the slightly different ways a function could be defined
+and called. Used for testing appmap instrumentation.
+"""
+# pylint: disable=missing-function-docstring
+
+from functools import lru_cache, wraps
 import time
 
 
@@ -64,6 +69,11 @@ class ExampleClass(Super, ClassMethodMixin):
     @wrap_fn
     def wrapped_instance_method(self):
         return 'wrapped_instance_method'
+
+    @staticmethod
+    @lru_cache(maxsize=1)
+    def static_cached(value):
+        return value + 1
 
     def instance_with_param(self, p):
         return p

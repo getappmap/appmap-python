@@ -1,3 +1,6 @@
+"""Test recording functions called and defined in various ways."""
+# pylint: disable=missing-function-docstring
+
 import json
 import os
 import sys
@@ -105,3 +108,15 @@ def test_exec_module_protection(monkeypatch):
 
     f()
     assert True
+
+
+@pytest.mark.appmap_enabled
+@pytest.mark.usefixtures('with_data_dir')
+def test_static_cached(events):
+    from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+    ExampleClass.static_cached(42)
+    assert events[0].parameters[0].items() >= {
+        'name': 'value',
+        'class': 'builtins.int',
+        'value': '42'
+    }.items()

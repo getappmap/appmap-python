@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   appmap code. Instead omit the missing parameter and allow the original
   function call to raise ArgumentError if appropriate.
 - Handle the case when a method is called with self=None.
+- Function signature reflection now follows wrappers. This allows eg. functions
+  decorated with functools.lru_cache to have their parameters captured.
 
 ### Changed
 - Update tox config to test Django 2.2
