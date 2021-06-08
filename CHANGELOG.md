@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.1.0] - 2021-06-08
 ### Added
 - [#55] Informative message is displayed when appmap.yml is missing.
 - [#119] Record template rendering in Django and flask.
@@ -261,7 +262,8 @@ testing. Also adds a Travis config to run them all.
 - Deploy release to PyPI
 
 
-[Unreleased]: https://github.com/applandinc/appmap-python/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/applandinc/appmap-python/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/applandinc/appmap-python/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/applandinc/appmap-python/compare/0.10.0...1.0.0
 [0.10.0]: https://github.com/applandinc/appmap-python/compare/0.9.0...0.10.0
 [0.9.0]: https://github.com/applandinc/appmap-python/compare/0.8.0...0.9.0
