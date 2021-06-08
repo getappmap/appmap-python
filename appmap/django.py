@@ -18,10 +18,12 @@ from django.urls import get_resolver, resolve
 import time
 import json
 import re
+import sys
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
+    ExceptionEvent,
     HttpServerRequestEvent,
     HttpServerResponseEvent,
     ReturnEvent,
@@ -206,7 +208,18 @@ class Middleware:
             )
             self.recorder.add_event(call_event)
 
-        response = self.get_response(request)
+        try:
+            response = self.get_response(request)
+        except:
+            if self.recorder.enabled:
+                duration = time.monotonic() - start
+                exception_event = ExceptionEvent(
+                    parent_id=call_event.id,
+                    elapsed=duration,
+                    exc_info=sys.exc_info()
+                )
+                self.recorder.add_event(exception_event)
+            raise
 
         if self.recorder.enabled:
             duration = time.monotonic() - start

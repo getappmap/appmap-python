@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#119] Record template rendering in Django and flask.
 
 ### Fixed
+- [#70] Django integration now records an ExceptionEvent when an unhandled
+  exception is raised within Django itself while processing a request.
 - When an argument to a method is missing, don't raise an exception in the
   appmap code. Instead omit the missing parameter and allow the original
   function call to raise ArgumentError if appropriate.
