@@ -26,7 +26,7 @@ def warn_config_missing(path):
     name = path.resolve().parent.name
     package = re.sub(r'\W', '.', name).lower()
     logger.warning(dedent(f'''
-        Config file "{path}" is missing; AppMaps won't be recorded.
+        Config file "{path.absolute()}" is missing; AppMaps won't be recorded.
         You need to create the file, for example:
 
         name: {name}  # your project name
