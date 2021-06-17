@@ -75,7 +75,7 @@ class Config:
     @property
     @lru_cache(maxsize=None)
     def _config(self):
-        path = Path(Env.current.get("APPMAP_CONFIG", "appmap.yml"))
+        path = Path(Env.current.get("APPMAP_CONFIG", "appmap.yml")).resolve()
         if path.is_file():
             ret = yaml.safe_load(path.read_text())
             logger.info('config: %s', ret)

@@ -1,6 +1,7 @@
 """Test Configuration"""
 # pylint: disable=missing-function-docstring
 
+from pathlib import Path
 import pytest
 
 import appmap
@@ -34,7 +35,8 @@ def test_config_not_found(caplog):
     })
     assert Config().name is None
     assert not appmap.enabled()
-    assert '"notfound.yml" is missing' in caplog.text
+    not_found = Path('notfound.yml').resolve()
+    assert f'"{not_found}" is missing' in caplog.text
 
 
 cf = lambda: ConfigFilter(NullFilter())
