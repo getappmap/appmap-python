@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+- [#128] The error message for a missing config file now shows the full path where the
+  file was expected to be found.
+
 ## [1.1.0] - 2021-06-08
 ### Added
 - [#55] Informative message is displayed when appmap.yml is missing.
