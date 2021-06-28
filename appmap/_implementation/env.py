@@ -20,16 +20,16 @@ class _EnvMeta(type):
 
         return cls._instance
 
-    def reset(cls, env=None):
-        cls._instance = Env(env)
+    def reset(cls, **kwargs):
+        cls._instance = Env(**kwargs)
 
 
 class Env(metaclass=_EnvMeta):
-    def __init__(self, env=None):
+    def __init__(self, env=None, cwd=None):
         # root_dir and root_dir_len are going to be used when
         # instrumenting every function, so preprocess them as
         # much as possible.
-        self._cwd = _cwd
+        self._cwd = cwd or _cwd
         self._env = _bootenv.copy()
         if env:
             self._env.update(env)
@@ -117,6 +117,6 @@ class Env(metaclass=_EnvMeta):
         logging.config.dictConfig(config_dict)
 
 
-def initialize(env=None):
-    Env.reset(env)
+def initialize(**kwargs):
+    Env.reset(**kwargs)
     logging.info('appmap enabled: %s', Env.current.enabled)

@@ -6,9 +6,9 @@ from . import recording
 from .py_version_check import check_py_version
 
 
-def initialize(env=None):
+def initialize(**kwargs):
     check_py_version()
-    appmapenv.initialize(env)
+    appmapenv.initialize(**kwargs)
     event.initialize()
     recording.initialize()
     configuration.initialize()  # needs to be initialized after recording

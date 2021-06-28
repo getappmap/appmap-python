@@ -1,36 +1,11 @@
 """Test Metadata"""
 # pylint: disable=protected-access, missing-function-docstring
 
-from distutils.dir_util import copy_tree
 import pytest
 
-from appmap._implementation import utils
 from appmap._implementation.metadata import Metadata
 
 from appmap.test.helpers import DictIncluding
-
-
-@pytest.fixture(scope='session', name='git_directory')
-def git_directory_fixture(tmp_path_factory):
-    git_dir = tmp_path_factory.mktemp('test-project')
-    (git_dir / 'README.metadata').write_text('Read me')
-    (git_dir / 'new_file').write_text('new_file')
-
-    git = utils.git(cwd=git_dir)
-    git('init')
-    git('config --local user.email test@test')
-    git('config --local user.name Test')
-    git('add README.metadata')
-    git('commit -m "initial commit"')
-    git('remote add origin https://www.example.test/repo.git')
-
-    return git_dir
-
-
-@pytest.fixture(name='git')
-def tmp_git(git_directory, tmp_path):
-    copy_tree(git_directory, str(tmp_path))
-    return utils.git(cwd=tmp_path)
 
 
 def test_missing_git(git, monkeypatch):

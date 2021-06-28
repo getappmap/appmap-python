@@ -2,7 +2,8 @@
 
 set -x
 docker run -i --rm\
-  -v $PWD/dist:/dist -v $PWD/appmap/test/data/pytest:/appmap/test/data/pytest\
+  -v $PWD/dist:/dist -v $PWD/appmap/test/data/unittest:/appmap/test/data/unittest\
+  -v $PWD/ci:/ci\
   --entrypoint /bin/bash\
-  -w /appmap/test/data/pytest\
-  python:3.9 -c 'pip install pytest && pip install /dist/appmap-0.0.0-py3-none-any.whl && APPMAP=true APPMAP_OUTPUT_DIR=/tmp pytest -k test_hello_world'
+  -w /tmp\
+  python:3.9 /ci/smoketest.sh

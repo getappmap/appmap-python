@@ -13,9 +13,10 @@ import logging
 
 import yaml
 
+from . import utils
 from .env import Env
 from .instrument import instrument
-
+from .metadata import Metadata
 from .recording import Recorder, Filter
 
 logger = logging.getLogger(__name__)
@@ -25,19 +26,75 @@ def warn_config_missing(path):
     """Display a warning about missing config file in path."""
     name = path.resolve().parent.name
     package = re.sub(r'\W', '.', name).lower()
-    logger.warning(dedent(f'''
-        Config file "{path}" is missing; AppMaps won't be recorded.
-        You need to create the file, for example:
 
-        name: {name}  # your project name
-        packages:
-        - {package}  # your main package
+def default_app_name(rootdir):
+    rootdir = Path(rootdir)
+    if not (rootdir / '.git').exists():
+        return rootdir.name
 
-        For details, please refer to
-        https://github.com/applandinc/appmap-python/#configuration
-        '''
-    ))
+    git = utils.git(cwd=str(rootdir))
+    repo_root = git('rev-parse --show-toplevel')
+    return Path(repo_root).name
 
+def find_top_packages(rootdir):
+    """
+    Scan a directory tree for packages that should appear in the
+    default config file.
+
+    Examine each non-hidden directory in rootdir, and see if it
+    contains an __init__.py.  If it does, add it to the list of
+    packages and don't scan any of its subdirectories.  If it doesn't,
+    scan its subdirectories to find __init__.py.
+
+    For example, in a directory like this
+
+        % ls -F
+        LICENSE Makefile appveyor.yml docs/ src/ tests/
+        MANIFEST.in README.rst blog/ setup.py tddium.yml tox.ini
+
+    docs, src, tests, and blog will get scanned.
+
+    Only src has a subdirectory containing an __init__.py:
+
+        % for f in docs src tests blog; do find $f | head -5; done
+        docs
+        docs/index.rst
+        docs/testing.rst
+        docs/_templates
+        docs/_templates/.gitkeep
+        src
+        src/wrapt
+        src/wrapt/importer.py
+        src/wrapt/__init__.py
+        src/wrapt/wrappers.py
+        tests
+        tests/test_outer_classmethod.py
+        tests/test_inner_classmethod.py
+        tests/conftest.py
+        tests/test_class.py
+        blog
+        blog/04-implementing-a-universal-decorator.md
+        blog/03-implementing-a-factory-for-creating-decorators.md
+        blog/05-decorators-which-accept-arguments.md
+        blog/09-performance-overhead-of-using-decorators.md
+
+    Thus, the list of top packages returned will be ['wrapt'].
+    """
+
+    # Use a set so we don't get duplicates, e.g. if the project's
+    # build process copies its source to a subdirectory.
+    packages = set()
+    import os
+
+    for dir,dirs,files in os.walk(rootdir):
+        logger.debug('dir %s dirs %s', dir, dirs)
+        if '__init__.py' in files:
+            packages.add(Path(dir).name)
+            dirs.clear()
+        else:
+            dirs[:] = [d for d in dirs if d[0] != '.']
+
+    return packages
 
 class Config:
     """ Singleton Config class """
@@ -74,19 +131,44 @@ class Config:
 
     @property
     @lru_cache(maxsize=None)
+    def default(self):
+        root_dir = Env.current.root_dir
+        return {
+            'name': default_app_name(root_dir),
+            'packages': [{'path': p} for p in find_top_packages(root_dir)],
+        }
+
+    @property
+    @lru_cache(maxsize=None)
     def _config(self):
-        path = Path(Env.current.get("APPMAP_CONFIG", "appmap.yml")).resolve()
+        # Only use a default config if the user hasn't specified a
+        # config.
+        env_config = Env.current.get("APPMAP_CONFIG")
+        use_default_config = not env_config
+        if use_default_config:
+            env_config = 'appmap.yml'
+
+        path = Path(env_config).resolve()
         if path.is_file():
             ret = yaml.safe_load(path.read_text())
             logger.info('config: %s', ret)
             return ret
 
-        warn_config_missing(path)
+        logger.warning(dedent(f'Config file "{path}" is missing.'))
+        if use_default_config:
+            logger.warning(dedent(f'''
+This default configuration will be used:
 
-        # disable appmap and return a dummy config
-        # so the errors don't accumulate
-        Env.current.enabled = False
-        return {'name': None, 'packages': []}
+{yaml.dump(self.default)}
+            '''))
+            ret = self.default
+        else:
+            # disable appmap and return a dummy config
+            # so the errors don't accumulate
+            Env.current.enabled = False
+            ret = {'name': None, 'packages': []}
+
+        return ret
 
 
 def startswith(prefix, sequence):
