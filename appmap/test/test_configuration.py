@@ -14,10 +14,33 @@ from appmap._implementation.recording import NullFilter, Filterable
 
 
 def test_can_be_enabled():
-    """Test that recording is enabled when APPMAP=true"""
+    """
+    Test that recording is enabled when APPMAP=true.
+    """
     Env.current.set("APPMAP", "true")
 
     assert appmap.enabled()
+
+@pytest.mark.appmap_enabled
+def test_can_be_configured():
+    """
+    Test the happy path: APPMAP is true, appmap.yml is found, and the
+    YAML is valid.
+    """
+    assert appmap.enabled()
+
+    c = Config()
+    assert c.file_present
+    assert c.file_valid
+
+@pytest.mark.appmap_enabled(config="appmap-broken.yml")
+def test_reports_invalid():
+    """
+    Test that a parse error keeps recording from being enabled, and
+    indicates that the config is not valid.
+    """
+    assert not appmap.enabled()
+    assert not Config().file_valid
 
 def test_is_disabled_when_unset():
     """Test that recording is disabled when APPMAP is unset"""
@@ -36,10 +59,23 @@ def test_config_not_found(caplog):
         'APPMAP': 'true', 'APPMAP_CONFIG': 'notfound.yml'
     })
     assert Config().name is None
+    assert not Config().file_present
+    assert not Config().file_valid
+
     assert not appmap.enabled()
     not_found = Path('notfound.yml').resolve()
     assert not not_found.exists()
     assert f'"{not_found}" is missing' in caplog.text
+
+def test_config_no_message(caplog):
+    """
+    Messages about a missing config should only be logged when
+    recording is enabled
+    """
+
+    assert Config().name is None
+    assert not appmap.enabled()
+    assert caplog.text is ""
 
 cf = lambda: ConfigFilter(NullFilter())
 

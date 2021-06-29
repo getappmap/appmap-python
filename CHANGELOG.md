@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- The `appmap-agent-init` internal command is now available for the code-editor
-  extensions.
+- The `appmap-agent-init` and `appmap-agent-status` internal commands are now available
+  for the code-editor extensions.
 
 ### Fixed
 - [#141] Ensure `appmap.django.Middleware` is always in the middleware stack.

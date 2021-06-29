@@ -2,22 +2,21 @@
 Manage Configuration AppMap recorder for Python.
 """
 
-from pathlib import Path
+import inspect
+import logging
 import re
+from pathlib import Path
 from textwrap import dedent
 
 import importlib_metadata
-from functools import lru_cache
-import inspect
-import logging
-
 import yaml
+from yaml.parser import ParserError
 
 from . import utils
 from .env import Env
 from .instrument import instrument
 from .metadata import Metadata
-from .recording import Recorder, Filter
+from .recording import Filter, FilterableCls, Recorder
 
 logger = logging.getLogger(__name__)
 
@@ -105,16 +104,18 @@ class Config:
             logger.debug('Creating the Config object')
             cls._instance = super(Config, cls).__new__(cls)
 
-            # If we're not enabled, no more initialization needs to be
-            # done.
-            cls._instance._initialized = not Env.current.enabled
+            cls._instance._initialized = False
 
         return cls._instance
 
     def __init__(self):
-        if self.__getattribute__('_initialized'):  # keep pylint happy
+        if self._initialized:
             return
 
+        self.file_present = False
+        self.file_valid = False
+        
+        self._load_config()
         self._initialized = True
 
     @classmethod
@@ -130,7 +131,6 @@ class Config:
         return self._config['packages']
 
     @property
-    @lru_cache(maxsize=None)
     def default(self):
         root_dir = Env.current.root_dir
         return {
@@ -138,9 +138,9 @@ class Config:
             'packages': [{'path': p} for p in find_top_packages(root_dir)],
         }
 
-    @property
-    @lru_cache(maxsize=None)
-    def _config(self):
+    def _load_config(self):
+        self._config = {'name': None, 'packages': []}
+
         # Only use a default config if the user hasn't specified a
         # config.
         env_config = Env.current.get("APPMAP_CONFIG")
@@ -150,9 +150,21 @@ class Config:
 
         path = Path(env_config).resolve()
         if path.is_file():
-            ret = yaml.safe_load(path.read_text())
-            logger.info('config: %s', ret)
-            return ret
+            self.file_present = True
+
+            Env.current.enabled = False
+            self.file_valid = False
+            try:
+                self._config = yaml.safe_load(path.read_text())
+                self.file_valid = True
+                Env.current.enabled = True
+            except ParserError:
+                pass
+            logger.info('config: %s', self._config)
+            return
+
+        if not Env.current.enabled:
+            return
 
         logger.warning(dedent(f'Config file "{path}" is missing.'))
         if use_default_config:
@@ -161,15 +173,11 @@ This default configuration will be used:
 
 {yaml.dump(self.default)}
             '''))
-            ret = self.default
+            self._config = self.default
         else:
             # disable appmap and return a dummy config
             # so the errors don't accumulate
             Env.current.enabled = False
-            ret = {'name': None, 'packages': []}
-
-        return ret
-
 
 def startswith(prefix, sequence):
     """
