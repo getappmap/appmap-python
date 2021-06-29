@@ -34,8 +34,8 @@ packages = [
 # Please update the documentation if changing the supported python version
 # https://github.com/applandinc/applandinc.github.io/blob/master/_docs/reference/appmap-python.md#supported-versions
 python = "^3.6"
-PyYAML = "~5.3.0"
-inflection = "~0.3.0"
+PyYAML = "^5.3.0"
+inflection = "^0.3.0"
 importlib-metadata = ">=0.8"
 Django = { version = "^3.1.6", python = "^3.6", optional = true }
 
