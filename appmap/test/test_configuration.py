@@ -1,11 +1,13 @@
 """Test Configuration"""
 # pylint: disable=missing-function-docstring
 
+from distutils.dir_util import copy_tree
 from pathlib import Path
 import pytest
 
 import appmap
 import appmap._implementation
+import appmap._implementation.env as impl_env
 from appmap._implementation.configuration import Config, ConfigFilter
 from appmap._implementation.env import Env
 from appmap._implementation.recording import NullFilter, Filterable
@@ -30,14 +32,14 @@ def test_is_disabled_when_false():
 
 
 def test_config_not_found(caplog):
-    appmap._implementation.initialize({  # pylint: disable=protected-access
+    appmap._implementation.initialize(env={  # pylint: disable=protected-access
         'APPMAP': 'true', 'APPMAP_CONFIG': 'notfound.yml'
     })
     assert Config().name is None
     assert not appmap.enabled()
     not_found = Path('notfound.yml').resolve()
+    assert not not_found.exists()
     assert f'"{not_found}" is missing' in caplog.text
-
 
 cf = lambda: ConfigFilter(NullFilter())
 
@@ -70,3 +72,46 @@ class TestConfiguration:
     def test_class_prefix_doesnt_match(self):
         f = Filterable('package1_prefix.cls', None)
         assert cf().filter(f) is False
+
+
+class TestDefaultConfig:
+    def check_default_config(self, expected_name):
+        assert appmap.enabled()
+
+        default_config = Config()
+        assert default_config.name == expected_name
+        assert len(default_config.packages) == 2
+        for path in [{'path': 'package'}, {'path': 'test'}]:
+            assert path in default_config.packages
+
+    def test_created(self, git, data_dir, monkeypatch):
+        repo_root = git.cwd
+        copy_tree(data_dir / 'config', str(repo_root))
+        monkeypatch.chdir(repo_root)
+
+        # pylint: disable=protected-access
+        appmap._implementation.initialize(cwd=repo_root,
+                                          env={
+                                              'APPMAP': 'true'
+                                          })
+
+        self.check_default_config(repo_root.name)
+
+    def test_created_outside_repo(self, data_dir, tmpdir, monkeypatch):
+        copy_tree(data_dir / 'config', str(tmpdir))
+        monkeypatch.chdir(tmpdir)
+
+        # pylint: disable=protected-access
+        appmap._implementation.initialize(cwd=tmpdir,
+                                          env={
+                                              'APPMAP': 'true'
+                                          })
+        self.check_default_config(Path(tmpdir).name)
+
+    def test_skipped_when_overridden(self):
+        appmap._implementation.initialize(env={  # pylint: disable=protected-access
+            'APPMAP': 'true',
+            'APPMAP_CONFIG': '/tmp/appmap.yml'
+        })
+        assert not Config().name
+        assert not appmap.enabled()
