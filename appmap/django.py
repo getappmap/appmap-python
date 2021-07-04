@@ -14,6 +14,8 @@ from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import Template
 from django.urls import get_resolver, resolve
+from django.urls.resolvers import _route_to_regex
+from django.urls.exceptions import Resolver404
 
 import time
 import json
@@ -140,16 +142,31 @@ def request_params(request):
     return values_dict(params.lists())
 
 def get_resolved_match(path_info, resolver):
-    # Look through the resolver's cache of reverse
-    # route mappings and find the regex that matches the current
-    # request. The route mappings are tuples of the form:
-    #   (format string, regex, args, kwargs)
-    regex = None
-    for _,values in resolver.reverse_dict.lists():
-        for _,regex,_,_ in values:
-            match = re.match(regex, path_info[1:])
-            if match:
-                return (regex, match)
+    resolver_match = resolver.resolve(path_info)
+
+    # Sometimes the route returned by resolve is a regex, sometimes
+    # it's a url pattern.
+
+    # Start by assuming it's a regex.
+    regex = resolver_match.route
+
+    match = re.match(regex, path_info[1:])
+    if match:
+        return (regex, match)
+
+    # If it didn't match, it's a url pattern. Use _route_to_regex to
+    # turn it into a regex.  (url patterns sometimes start with a
+    # caret, which needs to be stripped before conversion.)
+    if regex[0] == '^':
+        regex = regex[1:]
+    regex = _route_to_regex(regex)[0]
+
+    match = re.match(regex, path_info[1:])
+    if not match:
+        raise RuntimeError('No match for %s found with resolver %r, regex %s' %
+                           (path_info, resolver, regex))
+
+    return (regex, match)
 
 def normalize_path_info(path_info, resolved):
     if not resolved.kwargs:
@@ -158,12 +175,6 @@ def normalize_path_info(path_info, resolved):
 
     resolver = get_resolver()
     regex, match = get_resolved_match(path_info, resolver)
-
-    # Given that we're processing a resolved request, there must be
-    # one that matches.
-    if not match:
-        raise RuntimeError('No match for %s found with resolver %r' %
-                           (path_info, resolver))
 
     # Compile the regex so we can see what groups it contains.
     groups = re.compile(regex).groupindex
@@ -195,14 +206,21 @@ class Middleware:
         if self.recorder.enabled:
             add_metadata()
             start = time.monotonic()
-            resolved = resolve(request.path_info)
             params = request_params(request)
-            params.update(resolved.kwargs)
+            try:
+                resolved = resolve(request.path_info)
+                params.update(resolved.kwargs)
+                normalized_path_info = normalize_path_info(request.path_info, resolved)
+            except Resolver404:
+                # If the request was for a bad path (e.g. when an app
+                # is testing 404 handling), resolving will fail.
+                normalized_path_info = None
+
             call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path_info,
                 message_parameters=params,
-                normalized_path_info=normalize_path_info(request.path_info, resolved),
+                normalized_path_info=normalized_path_info,
                 protocol=request.META['SERVER_PROTOCOL'],
                 headers=request.headers
             )
