@@ -153,3 +153,18 @@ def test_deeply_nested_routes(client, events):
         'normalized_path_info': '/admincp/permissions/edit/{pk}'
     })
 
+def test_middleware_reset(pytester, monkeypatch):
+    monkeypatch.setenv('PYTHONPATH', 'init')
+    monkeypatch.setenv('APPMAP', 'true')
+
+    pytester.copy_example('django')
+
+    # To really check middleware reset, the tests must run in order,
+    # so disable randomly.
+    pytester.runpytest('-svv', '-p', 'no:randomly')
+
+    # Look for the http_server_request event in test_app's appmap. If
+    # middleware reset is broken, it won't be there.
+    appmap_file = pytester.path / 'tmp' / 'appmap' / 'pytest' / 'test_app.appmap.json'
+    events = json.loads(appmap_file.read_text())['events']
+    assert 'http_server_request' in events[0]
