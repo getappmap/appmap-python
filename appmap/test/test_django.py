@@ -1,6 +1,8 @@
 # flake8: noqa: E402
 # pylint: disable=unused-import, redefined-outer-name, missing-function-docstring
 
+from django.urls import get_resolver, resolve
+
 from pathlib import Path
 
 import django
@@ -12,6 +14,8 @@ from django.template.loader import render_to_string
 import django.test
 from django.test.client import MULTIPART_CONTENT
 from django.urls import include, path, re_path
+from django.conf.urls import url
+
 import pytest
 
 import appmap
@@ -122,6 +126,18 @@ def exception_view(_request):
 def user_included_view(_request, username):
     return django.http.HttpResponse(f'user {username}, included')
 
+def acl_edit(_request, pk):
+    return django.http.HttpResponse(f'acl_edit {pk}')
+
+# replicate a problematic bit of misago's routing
+admincp_patterns = [
+    url('^', include([
+        url(r'^permissions/', include(([
+            url(r'^edit/(?P<pk>\d+)$', acl_edit, name='edit')
+        ], "permissions"), namespace="permissions"))
+    ]))
+]
+
 urlpatterns = [
     path('test', view),
     path('', view),
@@ -132,9 +148,10 @@ urlpatterns = [
     path('echo', echo_view),
     path('exception', exception_view),
     re_path(r'^post/included/', include([
-            path('<username>', user_view)]))
-]
+            path('<username>', user_view)])),
 
+    url(r'^admincp/', include((admincp_patterns, 'admin'), namespace="admin"))
+]
 
 @pytest.mark.appmap_enabled
 def test_unnamed(client, events):
@@ -175,6 +192,15 @@ def test_exception(client, events, monkeypatch):
             'class': 'builtins.RuntimeError',
             'message': 'An error'
     })]
+
+@pytest.mark.appmap_enabled
+def test_deeply_nested_routes(client, events):
+    client.get('/admincp/permissions/edit/1')
+
+    assert len(events) == 2
+    assert events[0].http_server_request == DictIncluding({
+        'normalized_path_info': '/admincp/permissions/edit/{pk}'
+    })
 
 django.conf.settings.configure(
     DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},

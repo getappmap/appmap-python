@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   extensions.
 
 ### Fixed
+- [#138] Path normalization for django requests is now more robust.
 - [#128] The error message for a missing config file now shows the full path where the
   file was expected to be found.
 
