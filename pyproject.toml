@@ -56,6 +56,7 @@ tox-pyenv = "^1.1.0"
 tox-travis = "^0.12"
 Twisted = "^21.2.0"
 requests = "^2.25.1"
+pytest-django = "^4.4.0"
 
 [tool.poetry.extras]
 test = ["Django"]
