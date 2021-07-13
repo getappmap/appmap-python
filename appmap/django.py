@@ -288,7 +288,6 @@ original_load_middleware = BaseHandler.load_middleware
 def load_middleware(*args, **kwargs):
     """Patched wrapper to inject AppMap middleware first"""
     inject_middleware()
-    BaseHandler.load_middleware = original_load_middleware
     return original_load_middleware(*args, **kwargs)
 
 BaseHandler.load_middleware = load_middleware

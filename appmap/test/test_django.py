@@ -1,8 +1,7 @@
 # flake8: noqa: E402
 # pylint: disable=unused-import, redefined-outer-name, missing-function-docstring
 
-from django.urls import get_resolver, resolve
-
+import json
 from pathlib import Path
 
 import django
@@ -13,14 +12,16 @@ import django.http
 from django.template.loader import render_to_string
 import django.test
 from django.test.client import MULTIPART_CONTENT
-from django.urls import include, path, re_path
-from django.conf.urls import url
 
 import pytest
 
 import appmap
 import appmap.django  # noqa: F401
 from appmap.test.helpers import DictIncluding
+
+import sys
+sys.path += [str(Path(__file__).parent / 'data' / 'django')]
+import app
 from .._implementation.metadata import Metadata
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
@@ -28,6 +29,7 @@ from .._implementation.metadata import Metadata
 pytest.register_assert_rewrite('appmap.test.web_framework')
 from .web_framework import TestRequestCapture, TestRecording
 
+@pytest.mark.django_db
 def test_sql_capture(events):
     conn = django.db.connections['default']
     conn.cursor().execute('SELECT 1').fetchall()
@@ -59,11 +61,11 @@ def test_app_can_read_body(client, events):  # pylint: disable=unused-argument
 
 @pytest.mark.appmap_enabled
 def test_template(events):
-    render_to_string('appmap.yml')
+    render_to_string('hello_world.html')
     assert events[0].to_dict() == DictIncluding({
-        'path': 'appmap/test/data/appmap.yml',
+        'path': 'appmap/test/data/django/app/hello_world.html',
         'event': 'call',
-        'defined_class': '<templates>.AppmapTestDataAppmapYml',
+        'defined_class': '<templates>.AppmapTestDataDjangoAppHello_WorldHtml',
         'method_id': 'render',
         'static': False
     })
@@ -101,57 +103,6 @@ class ClientAdaptor(django.test.Client):
 def client():
     return ClientAdaptor()
 
-
-def view(_request):
-    return django.http.HttpResponse('testing')
-
-def user_view(_request, username):
-    return django.http.HttpResponse(f'user {username}')
-
-def post_view(_request, post_id):
-    return django.http.HttpResponse(f'post {post_id}')
-
-def post_unnamed_view(_request, arg):
-    return django.http.HttpResponse(f'post with unnamed, {arg}')
-
-def user_post_view(_request, username, post_id):
-    return django.http.HttpResponse(f'post {username} {post_id}')
-
-def echo_view(request):
-    return django.http.HttpResponse(request.body)
-    
-def exception_view(_request):
-    raise RuntimeError("An error")
-
-def user_included_view(_request, username):
-    return django.http.HttpResponse(f'user {username}, included')
-
-def acl_edit(_request, pk):
-    return django.http.HttpResponse(f'acl_edit {pk}')
-
-# replicate a problematic bit of misago's routing
-admincp_patterns = [
-    url('^', include([
-        url(r'^permissions/', include(([
-            url(r'^edit/(?P<pk>\d+)$', acl_edit, name='edit')
-        ], "permissions"), namespace="permissions"))
-    ]))
-]
-
-urlpatterns = [
-    path('test', view),
-    path('', view),
-    re_path('^user/(?P<username>[^/]+)$', user_view),
-    path('post/<int:post_id>', post_view),
-    path('post/<username>/<int:post_id>/summary', user_post_view),
-    re_path(r'^post/unnamed/(\d+)$', post_unnamed_view),
-    path('echo', echo_view),
-    path('exception', exception_view),
-    re_path(r'^post/included/', include([
-            path('<username>', user_view)])),
-
-    url(r'^admincp/', include((admincp_patterns, 'admin'), namespace="admin"))
-]
 
 @pytest.mark.appmap_enabled
 def test_unnamed(client, events):
@@ -202,14 +153,18 @@ def test_deeply_nested_routes(client, events):
         'normalized_path_info': '/admincp/permissions/edit/{pk}'
     })
 
-django.conf.settings.configure(
-    DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': ':memory:'}},
-    MIDDLEWARE=['django.middleware.http.ConditionalGetMiddleware'],
-    ROOT_URLCONF='appmap.test.test_django',
-    TEMPLATES=[{
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [Path(__file__).parent / 'data'],
-    }],
-)
+def test_middleware_reset(pytester, monkeypatch):
+    monkeypatch.setenv('PYTHONPATH', 'init')
+    monkeypatch.setenv('APPMAP', 'true')
 
-django.setup()
+    pytester.copy_example('django')
+
+    # To really check middleware reset, the tests must run in order,
+    # so disable randomly.
+    pytester.runpytest('-svv', '-p', 'no:randomly')
+
+    # Look for the http_server_request event in test_app's appmap. If
+    # middleware reset is broken, it won't be there.
+    appmap_file = pytester.path / 'tmp' / 'appmap' / 'pytest' / 'test_app.appmap.json'
+    events = json.loads(appmap_file.read_text())['events']
+    assert 'http_server_request' in events[0]
