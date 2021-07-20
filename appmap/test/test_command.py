@@ -44,12 +44,14 @@ class TestAgentStatus:
         assert appmap_agent_status.discover_pytest_tests.call_count == call_count
 
 
-    @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
-    def test_agent_status(self, cmd_setup, capsys):
-        rc = appmap_agent_status._run(discover_tests=True)
-        assert rc == 0
-        output = capsys.readouterr()
-        status = json.loads(output.out)
+    # @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
+    def test_agent_status(self, data_dir, virtualenv):
+        # virtualenv.run('pip install poetry')
+        virtualenv.run(f'cd {os.getcwd()}; poetry install --no-dev')
+        virtualenv.run('pip install pytest')
+        copy_tree(data_dir / 'pytest', str(virtualenv.workspace))
+        out = virtualenv.run("python -c 'from appmap.command import appmap_agent_status as cmd; cmd._run(discover_tests=True)'", capture=True)
+        status = json.loads(out)
         # XXX This will detect pytest as the test framework, because
         # appmap-python uses it. We need a better mechanism to handle
         # testing more broadly.
@@ -63,7 +65,7 @@ class TestAgentStatus:
             "project": {
                 "agentVersion": "0.0.0",
                 "language": "python",
-                "remoteRecordingCapable": True,
+                "remoteRecordingCapable": False,
                 "integrationTests": True
             }
             },
@@ -77,7 +79,7 @@ class TestAgentStatus:
             }]})
 
     @pytest.mark.parametrize("cmd_setup", ["package1"], indirect=True)
-    def test_agent_status(self, cmd_setup, capsys):
+    def test_no_tests(self, cmd_setup, capsys):
         rc = appmap_agent_status._run(discover_tests=True)
         assert rc == 0
         output = capsys.readouterr()
