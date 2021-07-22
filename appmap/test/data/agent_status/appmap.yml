@@ -1,0 +1,9 @@
+name: agent_status_test
+packages: []
+test_commands:
+- framework: "pytest"
+  command:
+    program: pytest
+    environment:
+      APPMAP: "true"
+      

@@ -138,6 +138,10 @@ class Config:
             'packages': [{'path': p} for p in find_top_packages(root_dir)],
         }
 
+    @property
+    def test_commands(self):
+        return self._config.get('test_commands', None)
+
     def _load_config(self):
         self._config = {'name': None, 'packages': []}
 

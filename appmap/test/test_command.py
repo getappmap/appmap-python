@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 
+import yaml
 import pytest
 
 import appmap._implementation
@@ -21,7 +22,7 @@ def cmd_setup(request, git, data_dir, monkeypatch):
     return monkeypatch
 
 @pytest.mark.parametrize("cmd_setup", ["config"], indirect=True)
-def test_agent_init(cmd_setup, capsys):
+def test_agent_init_config(cmd_setup, capsys):
     rc = appmap_agent_init._run()
     assert rc == 0
     output = capsys.readouterr()
@@ -33,56 +34,59 @@ def test_agent_init(cmd_setup, capsys):
     assert config['configuration']['filename'] == 'appmap.yml'
     assert config['configuration']['contents'] is not None
 
-class TestAgentStatus:
-    @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
-    @pytest.mark.parametrize("do_discovery", [True, False])
-    def test_test_discovery_control(self, cmd_setup, do_discovery, mocker):
-        mocker.patch("appmap.command.appmap_agent_status.discover_pytest_tests")
-        rc = appmap_agent_status._run(discover_tests=do_discovery)
-        assert rc == 0
-        call_count = 1 if do_discovery else 0
-        assert appmap_agent_status.discover_pytest_tests.call_count == call_count
-
-
+class TestAgentInit:
     # @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
-    def test_agent_status(self, data_dir, virtualenv):
-        # virtualenv.run('pip install poetry')
-        virtualenv.run(f'cd {os.getcwd()}; poetry install --no-dev')
+    def test_with_pytest_tests(self, data_dir, virtualenv):
+        virtualenv.run(f'cd {os.getcwd()}; poetry install --no-dev') # install appmap in the virtual env
         virtualenv.run('pip install pytest')
         copy_tree(data_dir / 'pytest', str(virtualenv.workspace))
-        out = virtualenv.run("python -c 'from appmap.command import appmap_agent_status as cmd; cmd._run(discover_tests=True)'", capture=True)
-        status = json.loads(out)
-        # XXX This will detect pytest as the test framework, because
-        # appmap-python uses it. We need a better mechanism to handle
-        # testing more broadly.
-        assert status == DictIncluding({
-            "properties": {
-                "config": {
-                    "app": "Simple",
-                    "present": True,
-                    "valid": True
-                },
-            "project": {
-                "agentVersion": "0.0.0",
-                "language": "python",
-                "remoteRecordingCapable": False,
-                "integrationTests": True
-            }
-            },
-            "test_commands": [{
-                "args": [],
-                "framework": "pytest",
-                "command": "pytest",
+        out = virtualenv.run("python -c 'from appmap.command import appmap_agent_init as cmd; cmd._run()'", capture=True)
+        config = yaml.safe_load(json.loads(out)["configuration"]["contents"])
+        assert config["test_commands"][0] == DictIncluding({
+            "framework": "pytest",
+            "command": {
+                "program": "pytest",
                 "environment": {
                     "APPMAP": "true"
                 }
-            }]})
+            }
+        })
 
     @pytest.mark.parametrize("cmd_setup", ["package1"], indirect=True)
     def test_no_tests(self, cmd_setup, capsys):
-        rc = appmap_agent_status._run(discover_tests=True)
+        rc = appmap_agent_init._run()
         assert rc == 0
         output = capsys.readouterr()
-        status = json.loads(output.out)
+        config = yaml.safe_load(json.loads(output.out)["configuration"]["contents"])
 
-        assert 'test_commands' not in status
+        assert 'test_commands' not in config
+
+@pytest.mark.parametrize("cmd_setup", ["agent_status"], indirect=True)
+def test_agent_status(cmd_setup, capsys):
+    rc = appmap_agent_status._run()
+    assert rc == 0
+    output = capsys.readouterr()
+    status = json.loads(output.out)
+
+    assert status == DictIncluding({
+        "properties": {
+            "config": {
+                "app": "agent_status_test",
+                "present": True,
+                "valid": True
+            },
+            "project": {
+                "agentVersion": "0.0.0",
+                "language": "python",
+                "remoteRecordingCapable": True,
+            }},
+        "test_commands": [{
+            "framework": "pytest",
+            "command": {
+                "program": "pytest",
+                "environment": {
+                    "APPMAP": "true"
+                }
+            }
+        }]
+    })
