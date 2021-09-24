@@ -37,16 +37,24 @@ script:
 - ci/test_install.sh
 
 before_deploy:
-- awk -i inplace -v travis_tag=$TRAVIS_TAG '/# @@appmap-python-version@@/ {getline; printf("version = \"%s\"\n", travis_tag)}; !/version = "0.0.0"/ {print $0}' pyproject.toml
+- |
+  nvm install --lts \
+    && nvm use --lts \
+    && npm i -g \
+      semantic-release \
+      @semantic-release/exec \
+      @semantic-release/git \
+      @semantic-release/changelog \
+      @google/semantic-release-replace-plugin
+
+
 # Note publishing this way requires the PyPI credentials to be
 # present in the environment. Travis doesn't currently support
 # providing environment variables to deploy providers through
 # the build config (i.e. in this file). So, they must be
 # provided through the build settings instead.
 deploy:
-  # Don't undo the changes we just made to pyproject.toml
-  skip_cleanup: true
-  provider: script
-  script: poetry publish --build
+- provider: script
+  script: semantic-release
   on:
-    tags: true
+    branch: master
