@@ -71,3 +71,4 @@ appmap = "appmap.pytest"
 [tool.poetry.scripts]
 appmap-agent-init = "appmap.command.appmap_agent_init:run"
 appmap-agent-status = "appmap.command.appmap_agent_status:run"
+appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
