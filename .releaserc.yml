@@ -5,8 +5,8 @@ plugins:
 - - '@google/semantic-release-replace-plugin'
   - replacements:
     - files: [pyproject.toml]
-      from: (?<=version\s*=\s*").*(?<!")
-      to: ${nextRelease.version}
+      from: ^version = ".*?"
+      to: version = "${nextRelease.version}"
       countMatches: true
       results:
       - file: pyproject.toml
