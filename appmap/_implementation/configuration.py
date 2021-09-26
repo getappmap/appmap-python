@@ -4,8 +4,10 @@ Manage Configuration AppMap recorder for Python.
 
 import inspect
 import logging
-import re
+from os.path import realpath
 from pathlib import Path
+import re
+import sys
 from textwrap import dedent
 
 import importlib_metadata
@@ -35,15 +37,25 @@ def default_app_name(rootdir):
     repo_root = git('rev-parse --show-toplevel')
     return Path(repo_root).name
 
+
+# Make it easy to mock sys.prefix
+def _get_sys_prefix():
+    return realpath(sys.prefix)
+
 def find_top_packages(rootdir):
     """
     Scan a directory tree for packages that should appear in the
     default config file.
 
-    Examine each non-hidden directory in rootdir, and see if it
-    contains an __init__.py.  If it does, add it to the list of
-    packages and don't scan any of its subdirectories.  If it doesn't,
-    scan its subdirectories to find __init__.py.
+    Examine directories in rootdir, to see if they contains an
+    __init__.py.  If it does, add it to the list of packages and don't
+    scan any of its subdirectories.  If it doesn't, scan its
+    subdirectories to find __init__.py.
+
+    Some directories are automatically excluded from the search:
+      * sys.prefix
+      * Hidden directories (i.e. those that start with a '.')
+      * node_modules
 
     For example, in a directory like this
 
@@ -85,13 +97,27 @@ def find_top_packages(rootdir):
     packages = set()
     import os
 
+    def excluded(dir):
+        excluded = dir == 'node_modules' or dir[0] == '.'
+        if excluded:
+            logger.debug('excluding dir %s', dir)
+        return excluded
+
+
+    sys_prefix = _get_sys_prefix()
+
     for dir,dirs,files in os.walk(rootdir):
         logger.debug('dir %s dirs %s', dir, dirs)
+        if realpath(dir) == sys_prefix:
+            logger.debug('skipping sys.prefix %s', sys_prefix)
+            dirs.clear()
+            continue
+
         if '__init__.py' in files:
             packages.add(Path(dir).name)
             dirs.clear()
         else:
-            dirs[:] = [d for d in dirs if d[0] != '.']
+            dirs[:] = [d for d in dirs if not excluded(d)]
 
     return packages
 

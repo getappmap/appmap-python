@@ -2,11 +2,14 @@ from distutils.dir_util import copy_tree
 import os
 import json
 from pathlib import Path
+import re
 
+
+from importlib_metadata import version
 import pytest
 
 import appmap._implementation
-from appmap.command import appmap_agent_init, appmap_agent_status
+from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_validate
 from .helpers import DictIncluding
 
 @pytest.fixture
@@ -84,3 +87,43 @@ class TestAgentStatus:
         status = json.loads(output.out)
 
         assert 'test_commands' not in status
+
+class TestAgentValidate:
+    def check_errors(self, capsys, status, count, msg):
+        rc = appmap_agent_validate._run()
+        assert rc == status
+
+        output = capsys.readouterr()
+        errors = json.loads(output.out)
+
+        assert len(errors) == count
+        if count > 0:
+            err = errors[0]
+            assert err['level'] == 'error'
+            assert re.match(msg , err['message']) != None
+
+
+    def test_no_errors(self, capsys, mocker):
+        # Both Django and flask are installed in a dev environment, so
+        # validation will succeed.
+        self.check_errors(capsys, 0, 0, None)
+
+
+    def test_python_version(self, capsys, mocker):
+        mocker.patch('appmap._implementation.py_version_check._get_py_version', return_value=(3,5))
+        mocker.patch('appmap._implementation.py_version_check._get_platform_version', return_value='3.5')
+
+        self.check_errors(capsys, 1, 1, r'Minimum Python version supported is \d\.\d, found')
+
+    def test_django_version(self, capsys, mocker):
+        m = mocker.patch('appmap.command.appmap_agent_validate.version',
+                         side_effect=lambda d:  '3.1' if d == 'django' else version(d))
+
+        self.check_errors(capsys, 1, 1, 'django must have version >= 3.2, found 3.1')
+
+
+    def test_flask_version(self, capsys, mocker):
+        m = mocker.patch('appmap.command.appmap_agent_validate.version',
+                         side_effect=lambda d:  '1.0' if d == 'flask' else version(d))
+
+        self.check_errors(capsys, 1, 1,  'flask must have version >= 1.1, found 1.0')

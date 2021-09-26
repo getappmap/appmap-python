@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-pip install -U pip pytest
+pip install -U pip pytest flask
 pip install /dist/appmap-0.0.0-py3-none-any.whl
 
 cp -R /appmap/test/data/unittest/simple ./.
@@ -9,6 +9,8 @@ cp -R /appmap/test/data/unittest/simple ./.
 appmap-agent-init |\
   python -c 'import json,sys; print(json.load(sys.stdin)["configuration"]["contents"])' > /tmp/appmap.yml
 cat /tmp/appmap.yml
+
+appmap-agent-validate
 
 APPMAP=true pytest -v -k test_hello_world
 

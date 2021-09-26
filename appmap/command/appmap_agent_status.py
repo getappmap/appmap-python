@@ -123,7 +123,7 @@ def _run(*, discover_tests):
     return 0
 
 def run():
-    parser = ArgumentParser(description="Report project status for AppMap agen.")
+    parser = ArgumentParser(description="Report project status for AppMap agent.")
     parser.add_argument("--discover-tests", action='store_true',
                         help="Scan the project for tests")
     args = parser.parse_args()

@@ -1,0 +1,21 @@
+plugins:
+- '@semantic-release/commit-analyzer'
+- '@semantic-release/release-notes-generator'
+- '@semantic-release/changelog'
+- - '@google/semantic-release-replace-plugin'
+  - replacements:
+    - files: [pyproject.toml]
+      from: (?<=version\s*=\s*").*(?<!")
+      to: ${nextRelease.version}
+      countMatches: true
+      results:
+      - file: pyproject.toml
+        hasChanged: true
+        numMatches: 1
+        numReplacements: 1
+- - '@semantic-release/git'
+  - assets:
+    - CHANGELOG.md
+    - pyproject.toml
+- - '@semantic-release/exec'
+  - publishCmd: poetry publish --build

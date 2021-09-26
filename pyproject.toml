@@ -1,6 +1,5 @@
 [tool.poetry]
 name = "appmap"
-# @@appmap-python-version@@
 version = "0.0.0"
 description = "Create AppMap files by recording a Python application."
 readme = "README.md"
@@ -71,3 +70,4 @@ appmap = "appmap.pytest"
 [tool.poetry.scripts]
 appmap-agent-init = "appmap.command.appmap_agent_init:run"
 appmap-agent-status = "appmap.command.appmap_agent_status:run"
+appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
