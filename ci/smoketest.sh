@@ -2,7 +2,7 @@
 
 set -e
 pip install -U pip pytest flask
-pip install /dist/appmap-0.0.0-py3-none-any.whl
+pip install /dist/appmap-*-py3-none-any.whl
 
 cp -R /appmap/test/data/unittest/simple ./.
 
