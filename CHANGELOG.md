@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/applandinc/appmap-python/compare/v1.2.1...v1.3.0) (2021-09-26)
+
+
+### Bug Fixes
+
+* appmap-agent-init excludes more directories ([3691fb1](https://github.com/applandinc/appmap-python/commit/3691fb1fb0c7e2809b8be3047f4b1df46c62e444))
+
+
+### Features
+
+* Add appmap-agent-validate ([9f8da52](https://github.com/applandinc/appmap-python/commit/9f8da520b45ff511c8a55ac621d36321fb317d31))
+
 # Changelog
 All notable changes to this project will be documented in this file.
 
