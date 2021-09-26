@@ -3,6 +3,8 @@
 
 from distutils.dir_util import copy_tree
 from pathlib import Path
+import sys
+
 import pytest
 
 import appmap
@@ -117,8 +119,10 @@ class TestDefaultConfig:
         default_config = Config()
         assert default_config.name == expected_name
         assert len(default_config.packages) == 2
-        for path in [{'path': 'package'}, {'path': 'test'}]:
-            assert path in default_config.packages
+        assert sorted(default_config.packages, key=lambda p: p['path']) == [
+            { 'path': 'package'},
+            { 'path': 'test' }
+        ]
 
     def test_created(self, git, data_dir, monkeypatch):
         repo_root = git.cwd
@@ -151,3 +155,15 @@ class TestDefaultConfig:
         })
         assert not Config().name
         assert not appmap.enabled()
+
+    def test_exclusions(self, data_dir, tmpdir, mocker, monkeypatch):
+        copy_tree(data_dir / 'config-exclude', str(tmpdir))
+        monkeypatch.chdir(tmpdir)
+        mocker.patch('appmap._implementation.configuration._get_sys_prefix', return_value=str(tmpdir / 'venv'))
+
+        # pylint: disable=protected-access
+        appmap._implementation.initialize(cwd=tmpdir,
+                                          env={
+                                              'APPMAP': 'true'
+                                          })
+        self.check_default_config(Path(tmpdir).name)

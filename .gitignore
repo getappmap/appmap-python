@@ -13,3 +13,7 @@ __pycache__/
 htmlcov/
 
 .vscode/
+
+/.tox
+/node_modules
+
