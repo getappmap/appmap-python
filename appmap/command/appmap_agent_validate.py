@@ -23,31 +23,37 @@ def check_python_version():
     except AppMapPyVerException as e:
         raise ValidationFailure(str(e))
 
-def _check_version(dist, v):
+def _check_version(dist, versions):
     dist_version = None
-    try:
-        dist_version = version(dist)
+    for v in versions:
+        try:
+            dist_version = version(dist)
 
-        required = parse(v)
-        actual = parse(dist_version)
+            required = parse(v)
+            actual = parse(dist_version)
+            if required.major != actual.major:
+                dist_version = None
+                continue
 
-        if actual < required:
-            raise ValidationFailure(f'{dist} must have version >= {required}, found {actual}')
-    except PackageNotFoundError:
-        pass
+            if actual < required:
+                raise ValidationFailure(f'{dist} must have version >= {required}, found {actual}')
+
+            return dist_version
+        except PackageNotFoundError:
+            dist_version = None
 
     return dist_version
 
 # Note that, per https://www.python.org/dev/peps/pep-0426/#name,
 # comparison of distribution names are case-insensitive.
 def check_django_version():
-    return _check_version('django', '3.2')
+    return _check_version('django', ['2.2', '3.2'])
 
 def check_flask_version():
-    return _check_version('flask', '1.1')
+    return _check_version('flask', ['1.1', '2.0'])
 
 def check_pytest_version():
-    return _check_version('pytest', '6.2')
+    return _check_version('pytest', ['6.2'])
 
 def _run():
     errors = [ValidationFailure('internal error')] # shouldn't ever see this
