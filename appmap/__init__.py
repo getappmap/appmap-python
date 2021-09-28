@@ -10,6 +10,11 @@ except ImportError:
     # not using flask
     pass
 
+try:
+    from . import django
+except ImportError:
+    # not using django
+    pass
 
 def enabled():
     return Env.current.enabled
