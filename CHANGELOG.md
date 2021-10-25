@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/applandinc/appmap-python/compare/v1.3.0...v1.3.1) (2021-10-25)
+
+
+### Bug Fixes
+
+* Loosen version for some dependencies ([1159985](https://github.com/applandinc/appmap-python/commit/1159985aeb9c97972c2c40164c30c7177618ab2f))
+
 # [1.3.0](https://github.com/applandinc/appmap-python/compare/v1.2.1...v1.3.0) (2021-09-26)
 
 
