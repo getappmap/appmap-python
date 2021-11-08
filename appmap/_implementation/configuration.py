@@ -178,12 +178,13 @@ class Config:
         if path.is_file():
             self.file_present = True
 
+            should_enable = Env.current.enabled
             Env.current.enabled = False
             self.file_valid = False
             try:
                 self._config = yaml.safe_load(path.read_text())
                 self.file_valid = True
-                Env.current.enabled = True
+                Env.current.enabled = should_enable
             except ParserError:
                 pass
             logger.info('config: %s', self._config)
