@@ -56,6 +56,14 @@ def test_is_disabled_when_false():
     assert not appmap.enabled()
 
 
+@pytest.mark.appmap_enabled(appmap_enabled=None)
+def test_is_disabled_with_valid_config():
+    c = Config()
+    assert c.file_present
+    assert c.file_valid
+
+    assert not appmap.enabled()
+
 def test_config_not_found(caplog):
     appmap._implementation.initialize(env={  # pylint: disable=protected-access
         'APPMAP': 'true', 'APPMAP_CONFIG': 'notfound.yml'

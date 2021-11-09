@@ -38,7 +38,10 @@ def pytest_runtest_setup(item):
         d = _data_dir(item.config)
         config = d / appmap_yml
         Env.current.set('APPMAP_CONFIG', config)
-        env = {'APPMAP': 'true', 'APPMAP_CONFIG': config}
+        appmap_enabled = mark.kwargs.get('appmap_enabled', 'true')
+        env = {'APPMAP_CONFIG': config}
+        if isinstance(appmap_enabled, str):
+            env['APPMAP'] = appmap_enabled
 
     appmap._implementation.initialize(env=env)  # pylint: disable=protected-access
 
