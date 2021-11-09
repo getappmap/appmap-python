@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/applandinc/appmap-python/compare/v1.3.1...v1.3.2) (2021-11-09)
+
+
+### Bug Fixes
+
+* Honor APPMAP env var when config is present ([45cac9d](https://github.com/applandinc/appmap-python/commit/45cac9d4d96775deb3ade357e7c265228356f862))
+
 ## [1.3.1](https://github.com/applandinc/appmap-python/compare/v1.3.0...v1.3.1) (2021-10-25)
 
 
