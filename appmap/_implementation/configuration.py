@@ -2,6 +2,7 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+from functools import lru_cache
 import inspect
 import logging
 from os.path import realpath
@@ -17,6 +18,7 @@ from yaml.parser import ParserError
 from . import utils
 from .env import Env
 from .instrument import instrument
+from .labels import labels
 from .metadata import Metadata
 from .recording import Filter, FilterableCls, Recorder
 
@@ -140,7 +142,7 @@ class Config:
 
         self.file_present = False
         self.file_valid = False
-        
+
         self._load_config()
         self._initialized = True
 
@@ -155,6 +157,15 @@ class Config:
     @property
     def packages(self):
         return self._config['packages']
+
+    @property
+    @lru_cache(maxsize=None)
+    def labels(self):
+        """ A map of fqname -> labels decorators defined in the configuration. """
+        if 'labels' not in self._config:
+            return {}
+        return { k: labels(*(v,) if isinstance(v, str) else v)
+                for k, v in self._config['labels'].items() }
 
     @property
     def default(self):
@@ -282,6 +293,9 @@ class MatcherFilter(Filter):
             wrapped = getattr(filterable.obj, '_appmap_wrapped', None)
             if wrapped is None:
                 logger.debug('  wrapping %s', filterable.fqname)
+                label = Config().labels.get(filterable.fqname, None)
+                if label:
+                    label(filterable.obj)
                 ret = instrument(filterable)
                 if rule.shallow:
                     setattr(ret, '_appmap_shallow', rule)

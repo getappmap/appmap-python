@@ -6,3 +6,6 @@ packages:
 - path: example_class
 - path: package1
 - dist: PyYAML
+labels:
+  yaml.dump: serialization
+  example_class.ExampleClass.test_exception: [two, labels]

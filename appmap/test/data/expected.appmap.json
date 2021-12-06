@@ -291,7 +291,8 @@
               "name": "test_exception",
               "type": "function",
               "location": "appmap/test/data/example_class.py",
-              "static": false
+              "static": false,
+              "labels": ["two", "labels"]
             }
           ]
         },
@@ -318,7 +319,8 @@
           "type": "function",
           "comment": "function comment",
           "location": "yaml/__init__.py",
-          "static": true
+          "static": true,
+          "labels": ["serialization"]
         }
       ]
     }
