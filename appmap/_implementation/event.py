@@ -279,6 +279,8 @@ class CallEvent(Event):
 
     def to_dict(self, attrs=None):
         ret = super().to_dict() # get the attrs defined in __slots__
+        if 'labels' in ret:
+            del ret['labels']  # labels should only appear in the classmap
 
         # update with the computed properties
         ret.update(super().to_dict(attrs=['defined_class', 'method_id',
