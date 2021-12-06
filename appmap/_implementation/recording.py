@@ -90,7 +90,7 @@ class FilterableFn(
     __slots__ = ()
 
     def __new__(c, scope, fn, static_fn):
-        fqname = '%s.%s' % (scope.fqname, fn.__qualname__)
+        fqname = '%s.%s' % (scope.fqname, fn.__name__)
         self = super(FilterableFn, c).__new__(c, fqname, fn, scope, static_fn)
         return self
 
