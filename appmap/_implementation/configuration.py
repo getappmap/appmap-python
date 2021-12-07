@@ -164,8 +164,13 @@ class Config:
         """ A map of fqname -> labels decorators defined in the configuration. """
         if 'labels' not in self._config:
             return {}
-        return { k: labels(*(v,) if isinstance(v, str) else v)
-                for k, v in self._config['labels'].items() }
+        function_labels = {}
+        for label, functions in self._config['labels'].items():
+            if isinstance(functions, str):
+                functions = (functions,)
+            for function in functions:
+                function_labels.setdefault(function, []).append(label)
+        return { k: labels(*v) for k, v in function_labels.items() }
 
     @property
     def default(self):
