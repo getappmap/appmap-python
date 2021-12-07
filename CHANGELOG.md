@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/applandinc/appmap-python/compare/v1.3.2...v1.4.0) (2021-12-07)
+
+
+### Bug Fixes
+
+* Don't duplicate class name in fully qualified name ([d7f4bd3](https://github.com/applandinc/appmap-python/commit/d7f4bd38d66b4472fe177711ded225070c9341df))
+* Don't include function labels in call events ([6f00a24](https://github.com/applandinc/appmap-python/commit/6f00a247547b2354199cf4618207395f034ecf3f))
+
+
+### Features
+
+* Allow specifying function labels in the config file ([3ae44f4](https://github.com/applandinc/appmap-python/commit/3ae44f43fe368af0b398671bc9623e0bc55e509f))
+
 ## [1.3.2](https://github.com/applandinc/appmap-python/compare/v1.3.1...v1.3.2) (2021-11-09)
 
 
