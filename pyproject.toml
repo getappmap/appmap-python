@@ -37,6 +37,7 @@ PyYAML = "^5.3.0"
 inflection = ">=0.3.0"
 importlib-metadata = ">=0.8"
 Django = { version = "^3.1.6", python = "^3.6", optional = true }
+flask = { version = "^1.1.2", python = "^3.6", optional = true }
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
@@ -48,7 +49,6 @@ pyfakefs = "^4.3.2"
 pprintpp = ">=0.4.0"
 coverage = "^5.3"
 pytest-mock = "^3.5.1"
-flask = "^1.1.2"
 SQLAlchemy = { version = "^1.4.11", python = "^3.6"}
 tox = "^3.22.0"
 tox-pyenv = "^1.1.0"
@@ -58,7 +58,7 @@ requests = "^2.25.1"
 pytest-django = "^4.4.0"
 
 [tool.poetry.extras]
-test = ["Django"]
+test = ["Django", "flask"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

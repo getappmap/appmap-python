@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 
 
-from importlib_metadata import version
+from importlib_metadata import PackageNotFoundError, version
 import pytest
 
 import appmap._implementation
@@ -115,15 +115,60 @@ class TestAgentValidate:
 
         self.check_errors(capsys, 1, 1, r'Minimum Python version supported is \d\.\d, found')
 
-    def test_django_version(self, capsys, mocker):
+    @pytest.mark.parametrize('django_version', ['3.2.1', '2.2.1'])
+    def test_django_version_current(self, capsys, mocker, django_version):
+        def side_effect(dist):
+            if dist == 'django':
+                return django_version
+            elif dist == 'flask':
+                raise PackageNotFoundError()
+            return version(dist)
+
         m = mocker.patch('appmap.command.appmap_agent_validate.version',
-                         side_effect=lambda d:  '3.1' if d == 'django' else version(d))
+                         side_effect=side_effect)
 
-        self.check_errors(capsys, 1, 1, 'django must have version >= 3.2, found 3.1')
+        self.check_errors(capsys, 0, 0, None)
 
 
-    def test_flask_version(self, capsys, mocker):
+    @pytest.mark.parametrize('django_version', ['3.1.0', '2.1.0'])
+    def test_django_version_old(self, capsys, mocker, django_version):
+        def side_effect(dist):
+            if dist == 'django':
+                return django_version
+            elif dist == 'flask':
+                raise PackageNotFoundError()
+            return version(dist)
+
         m = mocker.patch('appmap.command.appmap_agent_validate.version',
-                         side_effect=lambda d:  '1.0' if d == 'flask' else version(d))
+                         side_effect=side_effect)
 
-        self.check_errors(capsys, 1, 1,  'flask must have version >= 1.1, found 1.0')
+        self.check_errors(capsys, 1, 1, 'django must have version >=')
+
+
+    @pytest.mark.parametrize('flask_version', ['1.1.4', '2.0.1'])
+    def test_flask_version_current(self, capsys, mocker, flask_version):
+        def side_effect(dist):
+            if dist == 'django':
+                raise PackageNotFoundError()
+            elif dist == 'flask':
+                return flask_version
+            return version(dist)
+
+        m = mocker.patch('appmap.command.appmap_agent_validate.version',
+                         side_effect=side_effect)
+
+        self.check_errors(capsys, 0, 0, None)
+
+    @pytest.mark.parametrize('flask_version', ['1.0', '2.0.0.alpha1'])
+    def test_flask_version_old(self, capsys, mocker, flask_version):
+        def side_effect(dist):
+            if dist == 'django':
+                raise PackageNotFoundError()
+            elif dist == 'flask':
+                return flask_version
+            return version(dist)
+
+        m = mocker.patch('appmap.command.appmap_agent_validate.version',
+                         side_effect=side_effect)
+
+        self.check_errors(capsys, 1, 1,  'flask must have version >=')
