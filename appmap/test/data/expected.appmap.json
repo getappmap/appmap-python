@@ -292,7 +292,7 @@
               "type": "function",
               "location": "appmap/test/data/example_class.py",
               "static": false,
-              "labels": ["two", "labels"]
+              "labels": ["example-label"]
             }
           ]
         },
@@ -320,7 +320,7 @@
           "comment": "function comment",
           "location": "yaml/__init__.py",
           "static": true,
-          "labels": ["serialization"]
+          "labels": ["serialization", "example-label"]
         }
       ]
     }
