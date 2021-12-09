@@ -18,7 +18,7 @@ from yaml.parser import ParserError
 from . import utils
 from .env import Env
 from .instrument import instrument
-from .labels import labels
+from .labels import LabelSet
 from .metadata import Metadata
 from .recording import Filter, FilterableCls, Recorder
 
@@ -161,16 +161,8 @@ class Config:
     @property
     @lru_cache(maxsize=None)
     def labels(self):
-        """ A map of fqname -> labels decorators defined in the configuration. """
-        if 'labels' not in self._config:
-            return {}
-        function_labels = {}
-        for label, functions in self._config['labels'].items():
-            if isinstance(functions, str):
-                functions = (functions,)
-            for function in functions:
-                function_labels.setdefault(function, []).append(label)
-        return { k: labels(*v) for k, v in function_labels.items() }
+        """ The LabelSet defined in the configuration. """
+        return LabelSet(self._config['labels'])
 
     @property
     def default(self):
@@ -298,9 +290,7 @@ class MatcherFilter(Filter):
             wrapped = getattr(filterable.obj, '_appmap_wrapped', None)
             if wrapped is None:
                 logger.debug('  wrapping %s', filterable.fqname)
-                label = Config().labels.get(filterable.fqname, None)
-                if label:
-                    label(filterable.obj)
+                Config().labels.apply(filterable)
                 ret = instrument(filterable)
                 if rule.shallow:
                     setattr(ret, '_appmap_shallow', rule)
