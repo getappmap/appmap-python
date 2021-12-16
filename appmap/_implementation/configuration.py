@@ -19,6 +19,7 @@ from . import utils
 from .env import Env
 from .instrument import instrument
 from .labels import LabelSet
+from ..labeling import presets as label_presets
 from .metadata import Metadata
 from .recording import Filter, FilterableCls, Recorder
 
@@ -161,8 +162,11 @@ class Config:
     @property
     @lru_cache(maxsize=None)
     def labels(self):
-        """ The LabelSet defined in the configuration. """
-        return LabelSet(self._config['labels'])
+        """ The LabelSet defined in the configuration, plus any presets. """
+        labels = label_presets()
+        if 'labels' in self._config:
+            labels.append(self._config['labels'])
+        return labels
 
     @property
     def default(self):

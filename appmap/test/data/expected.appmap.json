@@ -320,7 +320,7 @@
           "comment": "function comment",
           "location": "yaml/__init__.py",
           "static": true,
-          "labels": ["serialization", "example-label"]
+          "labels": ["format.yaml.generate", "serialization", "example-label"]
         }
       ]
     }
