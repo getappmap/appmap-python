@@ -1,3 +1,15 @@
+# [1.5.0](https://github.com/applandinc/appmap-python/compare/v1.4.0...v1.5.0) (2021-12-16)
+
+
+### Bug Fixes
+
+* Swap label declarations in the config file ([2214599](https://github.com/applandinc/appmap-python/commit/2214599f7f48d1749a610029a6fe41b0ccaecd0d))
+
+
+### Features
+
+* Preset labels for known library functions ([3b49925](https://github.com/applandinc/appmap-python/commit/3b49925c072d0c5f40e2a7e33a5d2f956100e002))
+
 # [1.4.0](https://github.com/applandinc/appmap-python/compare/v1.3.2...v1.4.0) (2021-12-07)
 
 
