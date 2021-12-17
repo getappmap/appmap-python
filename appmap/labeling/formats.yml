@@ -8,3 +8,9 @@ format.yaml.parse:
   - yaml.compose
   - yaml.load
   - yaml.load_all
+format.json.generate:
+  - json.dumps
+  - json.dump
+format.json.parse:
+  - json.loads
+  - json.load
