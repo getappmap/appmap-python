@@ -1,0 +1,8 @@
+job.create:
+- rq.queue.Queue.create_job
+- celery.app.task.Task.apply_async
+- huey.api.Huey.enqueue
+job.cancel:
+- rq.job.Job.cancel
+- celery.result.AsyncResult.revoke
+- huey.api.TaskWrapper.revoke
