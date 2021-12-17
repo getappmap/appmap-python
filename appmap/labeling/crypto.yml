@@ -1,0 +1,25 @@
+# Labels for cryptography.
+#
+# This file is by no means complete.
+# There are several competing crypto libraries for python,
+# and specific functions are often implementation details
+# exposed through abstract interfaces, which makes it
+# difficult and brittle to fully enumerate.
+# For this reason, the attempt was to only list the most
+# commonly used functions from built-in libraries,
+# pycrypto(dome) and cryptography.
+# Please open an issue or a pull request if there's any
+# commonly used function missing from here.
+crypto.pkey:
+- Crypto.PublicKey.pubkey.pubkey.sign
+crypto.x509:
+- cryptography.x509.base.CertificateBuilder.sign
+- cryptography.x509.base.CertificateSigningRequestBuilder.sign
+crypto.pkcs5:
+- hashlib.pbkdf2_hmac
+crypto.encrypt:
+- Crypto.Cipher.blockalgo.BlockAlgo.encrypt
+- cryptography.fernet.Fernet.encrypt
+crypto.decrypt:
+- Crypto.Cipher.blockalgo.BlockAlgo.decrypt
+- cryptography.fernet.Fernet.decrypt
