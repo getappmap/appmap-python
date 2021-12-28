@@ -73,4 +73,6 @@ crypto.decrypt:
 - Crypto.Cipher._mode_gcm.GcmMode.decrypt_and_verify
 - Crypto.Cipher._mode_ocb.OcbMode.decrypt_and_verify
 - Crypto.Cipher._mode_siv.SivMode.decrypt_and_verify
-
+crypto.secure_compare:
+- hmac.compare_digest
+- secrets.compare_digest
