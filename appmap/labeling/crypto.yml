@@ -1,0 +1,78 @@
+# Labels for cryptography.
+#
+# This file is by no means complete.
+# There are several competing crypto libraries for python,
+# and specific functions are often implementation details
+# exposed through abstract interfaces, which makes it
+# difficult and brittle to fully enumerate.
+# For this reason, the attempt was to only list the most
+# commonly used functions from built-in libraries,
+# pycrypto(dome) and cryptography.
+# Please open an issue or a pull request if there's any
+# commonly used function missing from here.
+crypto.pkey:
+- Crypto.PublicKey.pubkey.pubkey.sign
+- Crypto.Signature.pkcs1_15.PKCS115_SigScheme.sign
+- Crypto.Signature.pss.PSS_SigScheme.sign
+- Crypto.Signature.DSS.DssSigScheme.sign
+crypto.x509:
+- cryptography.x509.base.CertificateBuilder.sign
+- cryptography.x509.base.CertificateSigningRequestBuilder.sign
+crypto.pkcs5:
+- hashlib.pbkdf2_hmac
+- Crypto.Protocol.KDF.PBKDF2
+crypto.encrypt:
+- Crypto.Cipher.blockalgo.BlockAlgo.encrypt
+- cryptography.fernet.Fernet.encrypt
+- Crypto.Cipher.ARC4.ARC4Cipher.encrypt
+- Crypto.Cipher.ChaCha20.ChaCha20Cipher.encrypt
+- Crypto.Cipher.ChaCha20_Poly1305.ChaCha20Poly1305Cipher.encrypt
+- Crypto.Cipher.PKCS1_OAEP.PKCS1OAEP_Cipher.encrypt
+- Crypto.Cipher.PKCS1_v1_5.PKCS115_Cipher.encrypt
+- Crypto.Cipher.Salsa20.Salsa20Cipher.encrypt
+- Crypto.Cipher._mode_cbc.CbcMode.encrypt
+- Crypto.Cipher._mode_ccm.CcmMode.encrypt
+- Crypto.Cipher._mode_cfb.CfbMode.encrypt
+- Crypto.Cipher._mode_ctr.CtrMode.encrypt
+- Crypto.Cipher._mode_eax.EaxMode.encrypt
+- Crypto.Cipher._mode_ecb.EcbMode.encrypt
+- Crypto.Cipher._mode_gcm.GcmMode.encrypt
+- Crypto.Cipher._mode_ocb.OcbMode.encrypt
+- Crypto.Cipher._mode_ofb.OfbMode.encrypt
+- Crypto.Cipher._mode_openpgp.OpenPgpMode.encrypt
+- Crypto.Cipher._mode_siv.SivMode.encrypt
+- Crypto.Cipher.ChaCha20_Poly1305.ChaCha20Poly1305Cipher.encrypt_and_digest
+- Crypto.Cipher._mode_ccm.CcmMode.encrypt_and_digest
+- Crypto.Cipher._mode_eax.EaxMode.encrypt_and_digest
+- Crypto.Cipher._mode_gcm.GcmMode.encrypt_and_digest
+- Crypto.Cipher._mode_ocb.OcbMode.encrypt_and_digest
+- Crypto.Cipher._mode_siv.SivMode.encrypt_and_digest
+crypto.decrypt:
+- Crypto.Cipher.blockalgo.BlockAlgo.decrypt
+- cryptography.fernet.Fernet.decrypt
+- Crypto.Cipher.ARC4.ARC4Cipher.decrypt
+- Crypto.Cipher.ChaCha20.ChaCha20Cipher.decrypt
+- Crypto.Cipher.ChaCha20_Poly1305.ChaCha20Poly1305Cipher.decrypt
+- Crypto.Cipher.PKCS1_OAEP.PKCS1OAEP_Cipher.decrypt
+- Crypto.Cipher.PKCS1_v1_5.PKCS115_Cipher.decrypt
+- Crypto.Cipher.Salsa20.Salsa20Cipher.decrypt
+- Crypto.Cipher._mode_cbc.CbcMode.decrypt
+- Crypto.Cipher._mode_ccm.CcmMode.decrypt
+- Crypto.Cipher._mode_cfb.CfbMode.decrypt
+- Crypto.Cipher._mode_ctr.CtrMode.decrypt
+- Crypto.Cipher._mode_eax.EaxMode.decrypt
+- Crypto.Cipher._mode_ecb.EcbMode.decrypt
+- Crypto.Cipher._mode_gcm.GcmMode.decrypt
+- Crypto.Cipher._mode_ocb.OcbMode.decrypt
+- Crypto.Cipher._mode_ofb.OfbMode.decrypt
+- Crypto.Cipher._mode_openpgp.OpenPgpMode.decrypt
+- Crypto.Cipher._mode_siv.SivMode.decrypt
+- Crypto.Cipher.ChaCha20_Poly1305.ChaCha20Poly1305Cipher.decrypt_and_verify
+- Crypto.Cipher._mode_ccm.CcmMode.decrypt_and_verify
+- Crypto.Cipher._mode_eax.EaxMode.decrypt_and_verify
+- Crypto.Cipher._mode_gcm.GcmMode.decrypt_and_verify
+- Crypto.Cipher._mode_ocb.OcbMode.decrypt_and_verify
+- Crypto.Cipher._mode_siv.SivMode.decrypt_and_verify
+crypto.secure_compare:
+- hmac.compare_digest
+- secrets.compare_digest
