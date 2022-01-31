@@ -34,7 +34,7 @@ script:
 - tox
 - poetry build
 - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-- ci/test_install.sh
+- ci/run_tests.sh
 
 before_deploy:
 - |

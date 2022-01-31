@@ -38,6 +38,7 @@ inflection = ">=0.3.0"
 importlib-metadata = ">=0.8"
 Django = { version = "^3.1.6", python = "^3.6", optional = true }
 importlib-resources = "^5.4.0"
+packaging = "^21.3"
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
@@ -57,6 +58,7 @@ tox-travis = ">=0.12"
 Twisted = "^21.2.0"
 requests = "^2.25.1"
 pytest-django = "^4.4.0"
+python-decouple = "^3.5"
 
 [tool.poetry.extras]
 test = ["Django"]
