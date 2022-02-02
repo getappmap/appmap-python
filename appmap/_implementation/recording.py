@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
 
+import functools
 import inspect
 import logging
 import sys
@@ -286,7 +287,8 @@ class Recorder:
 
 def wrap_finder_function(fn, decorator):
     ret = fn
-    marker = '_appmap_wrapped_%s' % fn.__name__
+    fn_name = fn.func.__name__ if isinstance(fn, functools.partial) else fn.__name__
+    marker = '_appmap_wrapped_%s' % fn_name
 
     # Figure out which object should get the marker attribute. If fn
     # is a bound function, put it on the object it's bound to,

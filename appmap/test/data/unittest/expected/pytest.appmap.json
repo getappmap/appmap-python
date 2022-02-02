@@ -12,7 +12,7 @@
     "recording": {
       "defined_class": "simple.test_simple.UnitTestTest",
       "method_id": "test_hello_world",
-      "source_location": "simple/test_simple.py:9"
+      "source_location": "simple/test_simple.py:13"
     },
     "name": "Unit test test hello world",
     "feature": "Hello world",
@@ -27,7 +27,7 @@
       "defined_class": "simple.test_simple.UnitTestTest",
       "method_id": "test_hello_world",
       "path": "simple/test_simple.py",
-      "lineno": 10,
+      "lineno": 14,
       "static": false,
       "receiver": {
         "name": "self",
@@ -177,7 +177,7 @@
                 {
                   "name": "test_hello_world",
                   "type": "function",
-                  "location": "simple/test_simple.py:10",
+                  "location": "simple/test_simple.py:14",
                   "static": false
                 }
               ]

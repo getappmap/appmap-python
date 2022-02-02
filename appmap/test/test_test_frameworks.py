@@ -26,6 +26,14 @@ def test_appmap_unittest_runner(testdir):
     verify_expected_appmap(testdir)
     verify_expected_metadata(testdir)
 
+def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
+    monkeypatch.delenv('APPMAP', raising=False)
+
+    result = testdir.run(sys.executable, '-m', 'appmap.unittest', '-vv',
+                         'simple.test_simple.UnitTestTest.test_hello_world')
+    assert result.ret == 0
+    r = re.compile(r'AppMap disabled')
+    assert [l for l in filter(r.search, result.errlines)], "Warning not found"
 
 def test_pytest_runner_unittests(testdir):
     testdir.test_type = 'pytest'

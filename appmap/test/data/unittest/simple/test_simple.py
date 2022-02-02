@@ -1,6 +1,10 @@
 import unittest
 from unittest.mock import patch
 
+# Importing from decouple will cause a failure if we're not hooking
+# finders correctly.
+from decouple import config
+
 import appmap.unittest
 
 import simple
