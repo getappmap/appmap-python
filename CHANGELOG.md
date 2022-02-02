@@ -1,3 +1,11 @@
+## [1.5.1](https://github.com/applandinc/appmap-python/compare/v1.5.0...v1.5.1) (2022-02-02)
+
+
+### Bug Fixes
+
+* Don't hook unittest tests when disabled ([b6feab6](https://github.com/applandinc/appmap-python/commit/b6feab6a7d12ef9df86fffcf0c1155a3e89b6a5a))
+* Handle finder that's a functools.partial ([913c7a9](https://github.com/applandinc/appmap-python/commit/913c7a9d16100060ae7f8e054690ca47ae99c042))
+
 # [1.5.0](https://github.com/applandinc/appmap-python/compare/v1.4.0...v1.5.0) (2021-12-16)
 
 
