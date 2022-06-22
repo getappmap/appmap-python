@@ -117,6 +117,11 @@ CursorDebugWrapper.execute = wrapped_execute
 @receiver(connection_created)
 def connected(sender, connection, **_):
     # pylint: disable=unused-argument
+
+    # warm the version cache in the backend to avoid running
+    # additional queries in the middle of processing client queries
+    database_version(connection)
+
     wrappers = connection.execute_wrappers
     if not any(isinstance(x, ExecuteWrapper) for x in wrappers):
         wrappers.append(ExecuteWrapper())
