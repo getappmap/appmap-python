@@ -36,9 +36,15 @@ python = "^3.6"
 PyYAML = "^5.3.0"
 inflection = ">=0.3.0"
 importlib-metadata = ">=0.8"
-Django = { version = "^3.1.6", python = "^3.6", optional = true }
 importlib-resources = "^5.4.0"
 packaging = "^21.3"
+# If you include "Django" as an optional dependency here, you'll be able to use
+# poetry to install it in your dev environment. However, doing so causes poetry
+# v1.2.0 to remove it from the virtualenv *created and managed by tox*, i.e. not
+# your dev environment. 
+# 
+# So, if you'd like to run the tests outside of tox,
+# you'll need to `pip install` the appropriate version of Django.
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
@@ -57,14 +63,10 @@ tox-pyenv = "^1.1.0"
 tox-travis = ">=0.12"
 Twisted = "^21.2.0"
 requests = "^2.25.1"
-pytest-django = "^4.4.0"
 python-decouple = "^3.5"
 
-[tool.poetry.extras]
-test = ["Django"]
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.plugins."pytest11"]
