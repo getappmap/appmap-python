@@ -1,3 +1,11 @@
+## [1.5.2](https://github.com/applandinc/appmap-python/compare/v1.5.1...v1.5.2) (2022-09-16)
+
+
+### Bug Fixes
+
+* Avoid querying database version when executing client queries ([51ffd44](https://github.com/applandinc/appmap-python/commit/51ffd44368efa5ddbb0bfa174f1681e60e60eb59)), closes [#158](https://github.com/applandinc/appmap-python/issues/158)
+* drop python 3.6 ([d9c70a3](https://github.com/applandinc/appmap-python/commit/d9c70a36cb41f22f448bd70e7969336549b0227b))
+
 ## [1.5.1](https://github.com/applandinc/appmap-python/compare/v1.5.0...v1.5.1) (2022-02-02)
 
 
