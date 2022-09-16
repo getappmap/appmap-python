@@ -6,7 +6,7 @@
   - [Dependency management](#dependency-management)
   - [Linting](#linting)
   - [Testing](#testing)
-    - [pytest](#pytest-1)
+    - [pytest](#pytest)
     - [tox](#tox)
   - [Code Coverage](#code-coverage)
 
@@ -68,7 +68,7 @@ oldest version currently supported (see the
 ```
 % brew install poetry
 % cd appmap-python
-% poetry install --extras test
+% poetry install
 ```
 
 ## Linting
@@ -90,10 +90,16 @@ should be reenabled as soon as possible.]
 
 ## Testing
 ### pytest
+
+Note that you must install the dependencies contained in
+[requirements-test.txt](requirements-test.txt) before running tests. See the explanation in
+[pyproject.toml](pyproject.toml) for details.
+
 [pytest](https://docs.pytest.org/en/stable/) for testing:
 
 ```
 % cd appmap-python
+% pip install -r requirements-test.txt
 % poetry run pytest
 ```
 

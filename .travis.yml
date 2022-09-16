@@ -15,8 +15,8 @@ install: |
   export PATH="$PYENV_ROOT/bin:$PATH"
   pyenv update
   git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
-  for v in {6..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
-  pyenv latest local 3.{9,{6..8}}
+  for v in {7..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
+  pyenv latest local 3.{7..9}
   pip install --upgrade pip
   pip install poetry tox
 

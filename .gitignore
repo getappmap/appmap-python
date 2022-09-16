@@ -1,3 +1,6 @@
+.envrc
+.tool-versions
+
 poetry.lock
 
 __pycache__/
