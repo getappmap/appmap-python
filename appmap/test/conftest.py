@@ -37,17 +37,31 @@ def events():
 
 @pytest.hookimpl
 def pytest_runtest_setup(item):
-    mark = item.get_closest_marker("appmap_enabled")
+    mark_enabled = item.get_closest_marker("appmap_enabled")
+    mark_record_requests = item.get_closest_marker("appmap_record_requests")
     env = {}
-    if mark:
+
+    if mark_enabled or mark_record_requests:
+        mark = mark_enabled
+        if not mark:
+            mark = mark_record_requests
         appmap_yml = mark.kwargs.get("config", "appmap.yml")
         d = _data_dir(item.config)
         config = d / appmap_yml
         Env.current.set("APPMAP_CONFIG", config)
-        appmap_enabled = mark.kwargs.get("appmap_enabled", "true")
         env = {"APPMAP_CONFIG": config}
+
+    if mark_enabled:
+        appmap_enabled = mark_enabled.kwargs.get("appmap_enabled", "true")
         if isinstance(appmap_enabled, str):
             env["APPMAP"] = appmap_enabled
+
+    if mark_record_requests:
+        appmap_record_requests = mark_record_requests.kwargs.get(
+            "appmap_record_requests", "true"
+        )
+        if isinstance(appmap_record_requests, str):
+            env["APPMAP_RECORD_REQUESTS"] = appmap_record_requests
 
     appmap._implementation.initialize(env=env)  # pylint: disable=protected-access
 

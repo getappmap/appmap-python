@@ -1,6 +1,8 @@
 """Shared infrastructure for testing framework integration."""
 
+import datetime
 import os
+import os.path
 import re
 from contextlib import contextmanager
 from hashlib import sha256
@@ -9,7 +11,8 @@ from tempfile import NamedTemporaryFile
 import inflection
 
 from appmap._implementation import configuration, env, generation, recording
-from appmap._implementation.utils import fqname
+from appmap._implementation.env import Env
+from appmap._implementation.utils import fqname, scenario_filename
 
 from .metadata import Metadata
 
@@ -120,6 +123,34 @@ def write_appmap(basedir, basename, contents):
         tmp.write(contents)
     os.replace(tmp.name, basedir / filename)
 
+def create_appmap_file(request_method, request_path_info, request_full_path, response, headers, rec):
+    start_time = datetime.datetime.now()
+    appmap_name = (
+        request_method
+        + " "
+        + request_path_info
+        + " ("
+        + str(response.status_code)
+        + ") - "
+        + start_time.strftime("%T.%f")[:-3]
+    )
+    output_dir = Env.current.output_dir
+    appmap_basename = scenario_filename(
+        "_".join([str(start_time.timestamp()), request_full_path])
+    )
+    appmap_file_path = os.path.join(output_dir, appmap_basename)
+    metadata = {
+        "name": appmap_name,
+        "timestamp": start_time.timestamp(),
+        "recorder": {"name": "record_requests"},
+    }
+    write_appmap(
+        output_dir, appmap_basename, generation.dump(rec, metadata)
+    )
+    headers["AppMap-Name"] = os.path.abspath(appmap_name)
+    headers["AppMap-File-Name"] = (
+        os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
+    )
 
 class session:
     def __init__(self, name, recorder_type, version=None):

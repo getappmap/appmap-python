@@ -27,7 +27,15 @@ from .._implementation.metadata import Metadata
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
 pytest.register_assert_rewrite("appmap.test.web_framework")
-from .web_framework import TestRecording, TestRequestCapture
+from threading import Thread
+
+from .web_framework import (
+    TestRecording,
+    TestRecordRequests,
+    TestRequestCapture,
+    exec_cmd,
+    wait_until_port_is,
+)
 
 
 @pytest.mark.django_db
@@ -182,3 +190,52 @@ def test_middleware_reset(pytester, monkeypatch):
     appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_app.appmap.json"
     events = json.loads(appmap_file.read_text())["events"]
     assert "http_server_request" in events[0]
+
+
+class TestRecordRequestsDjango(TestRecordRequests):
+    @staticmethod
+    def setup_class():
+        TestRecordRequestsDjango.server_stop()  # ensure it's not running
+        TestRecordRequestsDjango.server_start()
+
+    @staticmethod
+    def teardown_class():
+        TestRecordRequestsDjango.server_stop()
+
+    @staticmethod
+    def server_start_thread():
+        exec_cmd(
+            """
+# use appmap from our working copy, not the module installed by virtualenv
+export PYTHONPATH=`pwd`
+
+cd appmap/test/data/django/
+<<<<<<< HEAD
+APPMAP=true APPMAP_RECORD_REQUESTS=true python manage.py runserver 127.0.0.1:"""
+            + str(TestRecordRequests.server_port)
+=======
+python manage.py runserver 127.0.0.1:"""
+                + str(TestRecordRequests.server_port)
+            )
+>>>>>>> 6049aba... test: record_request with multiple threads
+        )
+
+    @staticmethod
+    def server_start():
+        # start as background thread so running the tests can continue
+        thread = Thread(target=TestRecordRequestsDjango.server_start_thread)
+        thread.start()
+        wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "open")
+
+    @staticmethod
+    def server_stop():
+        exec_cmd(
+            "ps -ef | grep -i 'manage.py runserver' | grep -v grep | awk '{ print $2 }' | xargs kill -9"
+        )
+        wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
+
+    def test_record_request_no_remote(client, events):
+        TestRecordRequests.record_request(client, events, False)
+
+    def test_record_request_and_remote(client, events):
+        TestRecordRequests.record_request(client, events, True)
