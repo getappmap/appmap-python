@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/getappmap/appmap-python/compare/v1.5.2...v1.5.3) (2022-09-22)
+
+
+### Bug Fixes
+
+* Instrumented functions can now be deepcopy'ed ([3bc9da6](https://github.com/getappmap/appmap-python/commit/3bc9da686bccbb97c1ca5991ff3884fab6dcd47c))
+
 ## [1.5.2](https://github.com/applandinc/appmap-python/compare/v1.5.1...v1.5.2) (2022-09-16)
 
 
