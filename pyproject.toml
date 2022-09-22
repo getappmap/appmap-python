@@ -44,7 +44,9 @@ packaging = "^21.3"
 # your dev environment. 
 # 
 # So, if you'd like to run the tests outside of tox,
-# you'll need to `pip install` the appropriate version of Django.
+# you'll need to `pip install` the appropriate version of Django, e.g.
+#   pip install django '~=3.2'
+#   pip install pytest-django
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
