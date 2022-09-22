@@ -85,6 +85,19 @@ class TestRecordingWhenEnabled:
         rec.start()
         with pytest.raises(RuntimeError):
             rec.start()
+    
+    def test_can_deepcopy_function(self):
+        from example_class import modfunc  # pylint: disable=import-error
+        from copy import deepcopy
+        from appmap.wrapt import FunctionWrapper
+        rec = appmap.Recording()
+        with rec:
+            f1 = deepcopy(modfunc)
+            f1()
+
+        evt = rec.events[-2]
+        assert evt.event == 'call'
+        assert evt.method_id == 'modfunc'
 
 def test_exec_module_protection(monkeypatch):
     """
