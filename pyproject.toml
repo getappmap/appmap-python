@@ -45,7 +45,7 @@ packaging = "^21.3"
 # 
 # So, if you'd like to run the tests outside of tox,
 # you'll need to `pip install` the appropriate version of Django, e.g.
-#   pip install django '~=3.2'
+#   pip install django'>=3.2,<4.0'
 #   pip install pytest-django
 
 [tool.poetry.dev-dependencies]
@@ -60,6 +60,9 @@ coverage = "^5.3"
 pytest-mock = "^3.5.1"
 flask = "^1.1.2"
 MarkupSafe = "2.0.1"
+jinja2 = ">=2.10.1,<3"
+itsdangerous = ">=0.24,<2"
+Werkzeug = ">=0.15,<2"
 SQLAlchemy = { version = "^1.4.11", python = "^3.7"}
 tox = "^3.22.0"
 tox-pyenv = "^1.1.0"
