@@ -35,7 +35,7 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
             sql = statement
         dialect = conn.dialect
         call_event = SqlEvent(sql, vendor=dialect.name, version=dialect.server_version_info)
-        recorder.add_event(call_event)
+        Recorder.add_event(call_event)
         setattr(
             context, 'appmap',
             { 'start_time': time.monotonic(), 'call_event_id': call_event.id }
@@ -56,4 +56,4 @@ def capture_sql(conn, cursor, statement, parameters, context, executemany):
         duration = stop - context.appmap['start_time']
         return_event = ReturnEvent(parent_id=context.appmap['call_event_id'], elapsed=duration)
         del context.appmap
-        recorder.add_event(return_event)
+        Recorder.add_event(return_event)

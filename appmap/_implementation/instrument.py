@@ -85,7 +85,7 @@ def call_instrumented(f, instance, args, kwargs):
         params = CallEvent.set_params(f.params, instance, args, kwargs)
         call_event = f.make_call_event(parameters=params)
     call_event_id = call_event.id
-    Recorder().add_event(call_event)
+    Recorder.add_event(call_event)
     start_time = time.time()
     try:
         ret = f.fn(*args, **kwargs)
@@ -94,11 +94,11 @@ def call_instrumented(f, instance, args, kwargs):
         return_event = event.FuncReturnEvent(return_value=ret,
                                              parent_id=call_event_id,
                                              elapsed=elapsed_time)
-        Recorder().add_event(return_event)
+        Recorder.add_event(return_event)
         return ret
     except Exception:  # noqa: E722
         elapsed_time = time.time() - start_time
-        Recorder().add_event(event.ExceptionEvent(parent_id=call_event_id,
+        Recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
                                                   elapsed=elapsed_time,
                                                   exc_info=sys.exc_info()))
         raise

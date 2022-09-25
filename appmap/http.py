@@ -65,13 +65,13 @@ class HTTPConnectionPatch:
 
         recorder = Recorder()
         if recorder.enabled:
-            recorder.add_event(event)
+            Recorder.add_event(event)
 
         start = time.monotonic()
         response = orig(self)
 
         if recorder.enabled:
-            recorder.add_event(HttpClientResponseEvent(
+            Recorder.add_event(HttpClientResponseEvent(
                 response.status,
                 headers=response.headers,
                 elapsed=(time.monotonic() - start),

@@ -93,9 +93,9 @@ class ExecuteWrapper:
                     cursor = context['cursor']
                     sql = conn.ops.last_executed_query(cursor, sql, params)
                 call_event = SqlEvent(sql, vendor=conn.vendor, version=database_version(conn))
-                self.recorder.add_event(call_event)
+                Recorder.add_event(call_event)
                 return_event = ReturnEvent(parent_id=call_event.id, elapsed=duration)
-                self.recorder.add_event(return_event)
+                Recorder.add_event(return_event)
 
 
 # CursorDebugWrapper is used in tests to capture and examine queries.
@@ -229,7 +229,7 @@ class Middleware:
                 protocol=request.META['SERVER_PROTOCOL'],
                 headers=request.headers
             )
-            self.recorder.add_event(call_event)
+            Recorder.add_event(call_event)
 
         try:
             response = self.get_response(request)
@@ -241,7 +241,7 @@ class Middleware:
                     elapsed=duration,
                     exc_info=sys.exc_info()
                 )
-                self.recorder.add_event(exception_event)
+                Recorder.add_event(exception_event)
             raise
 
         if self.recorder.enabled:
@@ -252,7 +252,7 @@ class Middleware:
                 status_code=response.status_code,
                 headers=dict(response.items())
             )
-            self.recorder.add_event(return_event)
+            Recorder.add_event(return_event)
 
         return response
 

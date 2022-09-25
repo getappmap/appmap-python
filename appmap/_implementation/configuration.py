@@ -343,8 +343,8 @@ class BuiltinFilter(MatcherFilter):
 
 def initialize():
     Config().initialize()
-    Recorder().use_filter(BuiltinFilter)
-    Recorder().use_filter(ConfigFilter)
+    Recorder.use_filter(BuiltinFilter)
+    Recorder.use_filter(ConfigFilter)
 
 
 initialize()

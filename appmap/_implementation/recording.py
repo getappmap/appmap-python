@@ -6,13 +6,14 @@ import functools
 import inspect
 import logging
 import sys
+import threading
 import traceback
 import types
 
 import appmap.wrapt as wrapt
 
 from .env import Env
-from .event import _EventIds
+from .event import _EventIds, Event
 from .metadata import Metadata
 from .utils import FnType
 
@@ -188,35 +189,46 @@ def get_members(cls):
 
 
 class Recorder:
-    """ Singleton Recorder class """
-    _instance = None
+    
+    # _recorders is a dict of the in-progress recordings. It's keys are an thread-specific
+    # recorders, and None if a global recorder was created.
+    _recorders = None
+    _lock = threading.Lock()
 
-    def __new__(cls):
-        if cls._instance is None:
-            logger.debug('Creating the Recorder object')
-            cls._instance = super(Recorder, cls).__new__(cls)
+    filter_stack = [NullFilter]
+    filter_chain = []
+    
+    def get_filter_stack(self):
+        return self.filter_stack
 
-            # Put any __init__ here.
-            cls._instance._initialized = False
+    def __new__(cls, tid = None):
+        with cls._lock:
+            if cls._recorders is None:
+                cls._recorders = {}
+            if tid not in cls._recorders:
+                recorder = super(Recorder, cls).__new__(cls)
 
-        return cls._instance
+                # Do initialization of the new instance here, rather than in __init__. The latter
+                # will be called every time the contstruct Recorder() is used, but we only want to
+                # initialize the instance once.
+                recorder.enabled = False
+                recorder.start_tb = None
+                recorder._events = []
+                cls._recorders[tid] = recorder
 
-    def __init__(self):
-        if self.__getattribute__('_initialized'):  # keep pylint happy
-            return
-        self._initialized = True
-        self.enabled = False
-        self.start_tb = None
-        self.filter_stack = [NullFilter]
-        self.filter_chain = []
-        self._events = []
+            return cls._recorders[tid]
+
 
     @classmethod
     def initialize(cls):
-        cls._instance = None
+        cls._recorders = None
+        cls.filter_stack = [NullFilter]
+        cls.filter_chain = []
 
-    def use_filter(self, filter_class):
-        self.filter_stack.append(filter_class)
+
+    @classmethod
+    def use_filter(cls, filter_class):
+        cls.filter_stack.append(filter_class)
 
     def clear(self):
         self._events = []
@@ -238,10 +250,17 @@ class Recorder:
         self.start_tb = None
         return self._events
 
-    def add_event(self, event):
+    @classmethod
+    def add_event(cls, event: Event):
         """
-        Add an event to the current recording
+        Add the given event to the global recorder, as well as the recorder for the thread
+        identified in the event.
         """
+        for tid in [None, event.thread_id]:
+            if tid in cls._recorders:
+                cls._recorders[tid]._add_event(event)
+
+    def _add_event(self, event: Event):
         self._events.append(event)
 
     @property
@@ -251,21 +270,22 @@ class Recorder:
         """
         return self._events
 
-    def do_import(self, *args, **kwargs):
+    @classmethod
+    def do_import(cls, *args, **kwargs):
         mod = args[0]
         if mod.__name__.startswith('appmap'):
             return
 
         logger.debug('do_import, mod %s args %s kwargs %s', mod, args, kwargs)
-        if not self.filter_chain:
-            logger.debug('  filter_stack %s', self.filter_stack)
-            self.filter_chain = self.filter_stack[0](None)
-            for filter_ in self.filter_stack[1:]:
-                self.filter_chain = filter_(self.filter_chain)
-                logger.debug('  self.filter chain: %s', self.filter_chain)
+        if not cls.filter_chain:
+            logger.debug('  filter_stack %s', cls.filter_stack)
+            cls.filter_chain = cls.filter_stack[0](None)
+            for filter_ in cls.filter_stack[1:]:
+                cls.filter_chain = filter_(cls.filter_chain)
+                logger.debug('  self.filter chain: %s', cls.filter_chain)
 
         def instrument_functions(filterable):
-            if not self.filter_chain.filter(filterable):
+            if not cls.filter_chain.filter(filterable):
                 return
 
             logger.info('  looking for members of %s', filterable.obj)
@@ -273,7 +293,7 @@ class Recorder:
             logger.debug('  functions %s', functions)
 
             for fn_name, static_fn, fn in functions:
-                new_fn = self.filter_chain.wrap(
+                new_fn = cls.filter_chain.wrap(
                     FilterableFn(filterable, fn, static_fn))
                 if fn != new_fn:
                     wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
@@ -314,7 +334,7 @@ def wrapped_exec_module(exec_module, _, args, kwargs):
     # handles the case where we previously hooked the finders, but
     # were subsequently disabled (e.g. during testing).
     if Env.current.enabled:
-        Recorder().do_import(*args, **kwargs)
+        Recorder.do_import(*args, **kwargs)
 
 
 def wrap_exec_module(exec_module):

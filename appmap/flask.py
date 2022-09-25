@@ -102,7 +102,7 @@ class AppmapFlask:
                 protocol=request.environ.get('SERVER_PROTOCOL'),
                 headers=request.headers
             )
-            Recorder().add_event(call_event)
+            Recorder.add_event(call_event)
 
             appctx = _app_ctx_stack.top
             appctx.appmap_request_event = call_event
@@ -120,7 +120,7 @@ class AppmapFlask:
                 status_code=response.status_code,
                 headers=response.headers
             )
-            Recorder().add_event(return_event)
+            Recorder.add_event(return_event)
 
         return response
 

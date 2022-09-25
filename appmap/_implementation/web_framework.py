@@ -50,11 +50,11 @@ class TemplateHandler:  # pylint: disable=too-few-public-methods
         if rec.enabled:
             start = time.monotonic()
             call_event = TemplateEvent(self.filename, self)  # pylint: disable=no-member
-            rec.add_event(call_event)
+            Recorder.add_event(call_event)
         try:
             return orig(self, *args, **kwargs)
         finally:
             if rec.enabled:
-                rec.add_event(
+                Recorder.add_event(
                     ReturnEvent(call_event.id, time.monotonic() - start)
                 )
