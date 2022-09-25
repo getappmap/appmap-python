@@ -5,8 +5,9 @@ import json
 import os
 import sys
 
-import appmap
 import pytest
+
+import appmap
 from appmap._implementation.event import Event
 from appmap._implementation.recording import Recorder, wrap_exec_module
 
@@ -22,9 +23,9 @@ class TestRecordingWhenEnabled:
 
         r = appmap.Recording()
         with r:
-            from example_class import (
+            from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
                 ExampleClass,
-            )  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+            )
 
             ExampleClass.static_method()
             ExampleClass.class_method()
@@ -40,9 +41,9 @@ class TestRecordingWhenEnabled:
         assert remove_line_numbers(generated_appmap) == expected_appmap
 
     def test_recording_clears(self):
-        from example_class import (
+        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
             ExampleClass,
-        )  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        )
 
         with appmap.Recording():
             ExampleClass.static_method()
@@ -61,9 +62,9 @@ class TestRecordingWhenEnabled:
         assert rec.events[2].method_id == "instance_method"
 
     def test_recording_shallow(self):
-        from example_class import (
+        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
             ExampleClass,
-        )  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        )
 
         rec = appmap.Recording()
         with rec:
@@ -75,9 +76,9 @@ class TestRecordingWhenEnabled:
         assert len(rec.events) == 8
 
     def test_recording_wrapped(self):
-        from example_class import (
+        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
             ExampleClass,
-        )  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        )
 
         rec = appmap.Recording()
         with rec:
@@ -100,10 +101,11 @@ class TestRecordingWhenEnabled:
     def test_can_deepcopy_function(self):
         from copy import deepcopy
 
-        from appmap.wrapt import FunctionWrapper
-        from example_class import (
+        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
             modfunc,
-        )  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        )
+
+        from appmap.wrapt import FunctionWrapper
 
         rec = appmap.Recording()
         with rec:
@@ -143,9 +145,9 @@ def test_exec_module_protection(monkeypatch):
 @pytest.mark.appmap_enabled
 @pytest.mark.usefixtures("with_data_dir")
 def test_static_cached(events):
-    from example_class import (
+    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel
         ExampleClass,
-    )  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel
+    )
 
     ExampleClass.static_cached(42)
     assert (

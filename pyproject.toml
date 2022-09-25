@@ -68,6 +68,10 @@ Twisted = "^21.2.0"
 requests = "^2.25.1"
 python-decouple = "^3.5"
 
+[tool.poetry.group.dev.dependencies]
+black = "^22.8.0"
+isort = "^5.10.1"
+
 [build-system]
 requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.core.masonry.api"
@@ -79,3 +83,10 @@ appmap = "appmap.pytest"
 appmap-agent-init = "appmap.command.appmap_agent_init:run"
 appmap-agent-status = "appmap.command.appmap_agent_status:run"
 appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
+
+[tool.black]
+extend-exclude = "vendor"
+
+[tool.isort]
+profile = "black"
+extend_skip = "vendor"

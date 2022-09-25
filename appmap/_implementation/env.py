@@ -1,12 +1,13 @@
 """Initialize from the environment"""
 
-from pathlib import Path
 import logging
 import logging.config
 from os import environ
+from pathlib import Path
 
 _cwd = Path.cwd()
 _bootenv = environ.copy()
+
 
 class _EnvMeta(type):
     def __init__(cls, *args, **kwargs):
@@ -34,14 +35,13 @@ class Env(metaclass=_EnvMeta):
         if env:
             self._env.update(env)
 
-        self._root_dir = str(self._cwd) + '/'
+        self._root_dir = str(self._cwd) + "/"
         self._root_dir_len = len(self._root_dir)
 
-        output_dir = Path(self.get('APPMAP_OUTPUT_DIR', 'tmp/appmap'))
+        output_dir = Path(self.get("APPMAP_OUTPUT_DIR", "tmp/appmap"))
         self._output_dir = output_dir.resolve()
 
         self._configure_logging()
-
 
     def set(self, name, value):
         self._env[name] = value
@@ -81,42 +81,41 @@ class Env(metaclass=_EnvMeta):
 
         log_config = self.get("APPMAP_LOG_CONFIG")
         log_stream = self.get("APPMAP_LOG_STREAM", "stderr")
-        log_stream = 'ext://sys.%s' % (log_stream)
+        log_stream = "ext://sys.%s" % (log_stream)
         config_dict = {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'default': {
-                    'style': '{',
-                    'format': '[{asctime}] {levelname} {name}: {message}'
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "default": {
+                    "style": "{",
+                    "format": "[{asctime}] {levelname} {name}: {message}",
                 }
             },
-            'handlers': {
-                'default': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'default'
+            "handlers": {
+                "default": {"class": "logging.StreamHandler", "formatter": "default"}
+            },
+            "loggers": {
+                "appmap": {
+                    "level": log_level,
+                    "handlers": ["default"],
+                    "propagate": True,
                 }
             },
-            'loggers': {
-                'appmap': {
-                    'level': log_level,
-                    'handlers': ['default'],
-                    'propagate': True
-                }
-            }
         }
         if log_config is not None:
-            name, level = log_config.split('=', 2)
-            config_dict['loggers'].update({
-                name: {
-                    'level': level.upper(),
-                    'handlers': ['default'],
-                    'propagate': True
+            name, level = log_config.split("=", 2)
+            config_dict["loggers"].update(
+                {
+                    name: {
+                        "level": level.upper(),
+                        "handlers": ["default"],
+                        "propagate": True,
+                    }
                 }
-            })
+            )
         logging.config.dictConfig(config_dict)
 
 
 def initialize(**kwargs):
     Env.reset(**kwargs)
-    logging.info('appmap enabled: %s', Env.current.enabled)
+    logging.info("appmap enabled: %s", Env.current.enabled)

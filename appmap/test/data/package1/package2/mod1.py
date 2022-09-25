@@ -1,3 +1,3 @@
 class Mod1Class:
     def func(self):
-        return 'Mod1Class.func'
+        return "Mod1Class.func"

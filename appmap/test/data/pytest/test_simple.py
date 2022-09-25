@@ -1,10 +1,13 @@
 import os
+
 import pytest
+
 
 def test_hello_world():
     import simple
-    os.chdir('/tmp')
-    assert simple.Simple().hello_world() == 'Hello world!'
+
+    os.chdir("/tmp")
+    assert simple.Simple().hello_world() == "Hello world!"
 
 
 def test_status_failed():
@@ -22,4 +25,4 @@ def test_status_xsucceeded():
 
 
 def test_status_errored():
-    raise RuntimeError('test error')
+    raise RuntimeError("test error")

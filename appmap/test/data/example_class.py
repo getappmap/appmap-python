@@ -3,9 +3,8 @@ and called. Used for testing appmap instrumentation.
 """
 # pylint: disable=missing-function-docstring
 
-from functools import lru_cache, wraps
 import time
-
+from functools import lru_cache, wraps
 
 import appmap
 
@@ -13,7 +12,7 @@ import appmap
 class ClassMethodMixin:
     @classmethod
     def class_method(cls):
-        return 'ClassMethodMixin#class_method, cls %s' % (cls.__name__)
+        return "ClassMethodMixin#class_method, cls %s" % (cls.__name__)
 
 
 class Super:
@@ -21,24 +20,24 @@ class Super:
         return self.method_not_called_directly()
 
     def method_not_called_directly(self):
-        return 'Super#instance_method'
+        return "Super#instance_method"
 
 
 def wrap_fn(fn):
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
         try:
-            print('calling %s' % (fn.__name__))
+            print("calling %s" % (fn.__name__))
             return fn(*args, **kwargs)
         finally:
-            print('called %s' % (fn.__name__))
+            print("called %s" % (fn.__name__))
 
     return wrapped_fn
 
 
 class ExampleClass(Super, ClassMethodMixin):
     def __repr__(self):
-        return 'ExampleClass and %s' % (self.another_method())
+        return "ExampleClass and %s" % (self.another_method())
 
     # Include some lines so the line numbers in the expected appmap
     # don't change:
@@ -48,27 +47,27 @@ class ExampleClass(Super, ClassMethodMixin):
         return "ExampleClass#another_method"
 
     def test_exception(self):
-        raise Exception('test exception')
+        raise Exception("test exception")
 
     what_time_is_it = time.gmtime
 
-    @appmap.labels('super', 'important')
+    @appmap.labels("super", "important")
     def labeled_method(self):
-        return 'super important'
+        return "super important"
 
     @staticmethod
     @wrap_fn
     def wrapped_static_method():
-        return 'wrapped_static_method'
+        return "wrapped_static_method"
 
     @classmethod
     @wrap_fn
     def wrapped_class_method(cls):
-        return 'wrapped_class_method'
+        return "wrapped_class_method"
 
     @wrap_fn
     def wrapped_instance_method(self):
-        return 'wrapped_instance_method'
+        return "wrapped_instance_method"
 
     @staticmethod
     @lru_cache(maxsize=1)
@@ -80,12 +79,16 @@ class ExampleClass(Super, ClassMethodMixin):
 
     @staticmethod
     def static_method():
-        import yaml, io # Formatting is funky to minimize changes to expected appmap
-        yaml.Dumper(io.StringIO()).open(); return 'ExampleClass.static_method\n...\n'
+        import io
+
+        import yaml  # Formatting is funky to minimize changes to expected appmap
+
+        yaml.Dumper(io.StringIO()).open()
+        return "ExampleClass.static_method\n...\n"
 
     @staticmethod
     def call_yaml():
-        return ExampleClass.dump_yaml('ExampleClass.call_yaml')
+        return ExampleClass.dump_yaml("ExampleClass.call_yaml")
 
     @staticmethod
     def dump_yaml(data):
@@ -107,5 +110,6 @@ class ExampleClass(Super, ClassMethodMixin):
     def with_comment(self):
         return True
 
+
 def modfunc():
-    return 'Hello world!'
+    return "Hello world!"

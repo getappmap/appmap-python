@@ -1,13 +1,14 @@
-from collections.abc import MutableMapping
-from enum import IntFlag, auto
 import inspect
-import threading
-import types
+import os
 import shlex
 import subprocess
-import os
+import threading
+import types
+from collections.abc import MutableMapping
+from enum import IntFlag, auto
 
 from .env import Env
+
 
 def compact_dict(dictionary):
     """Return a copy of dictionary with None values filtered out."""
@@ -20,6 +21,7 @@ def values_dict(items):
     """
     return {k: v[0] if len(v) == 1 else v for k, v in items}
 
+
 class FnType(IntFlag):
     STATIC = auto()
     CLASS = auto()
@@ -29,11 +31,9 @@ class FnType(IntFlag):
     @staticmethod
     def classify(fn):
         fn_type = type(fn)
-        if (fn_type == staticmethod
-            or fn_type == types.BuiltinMethodType):
+        if fn_type == staticmethod or fn_type == types.BuiltinMethodType:
             return FnType.STATIC
-        elif (fn_type == classmethod
-              or fn_type == types.BuiltinMethodType):
+        elif fn_type == classmethod or fn_type == types.BuiltinMethodType:
             return FnType.CLASS
         else:
             return FnType.INSTANCE
@@ -68,7 +68,7 @@ def appmap_tls():
 
 
 def fqname(cls):
-    return '%s.%s' % (cls.__module__, cls.__qualname__)
+    return "%s.%s" % (cls.__module__, cls.__qualname__)
 
 
 def split_function_name(fn):
@@ -77,9 +77,9 @@ def split_function_name(fn):
     class name and the method name.
     """
     qualname = fn.__qualname__
-    if '.' in qualname:
-        class_name, fn_name = qualname.rsplit('.', 1)
-        class_name = '%s.%s' % (fn.__module__, class_name)
+    if "." in qualname:
+        class_name, fn_name = qualname.rsplit(".", 1)
+        class_name = "%s.%s" % (fn.__module__, class_name)
     else:
         class_name = fn.__module__
         fn_name = qualname
@@ -93,7 +93,7 @@ def root_relative_path(path):
     If it's not under the current root_dir, it's returned unchanged.
     """
     if path.startswith(Env.current.root_dir):
-        path = path[Env.current.root_dir_len:]
+        path = path[Env.current.root_dir_len :]
     return path
 
 
@@ -102,7 +102,7 @@ def get_function_location(fn):
     try:
         path = root_relative_path(inspect.getsourcefile(fn))
     except TypeError:
-        path = '<builtin>'
+        path = "<builtin>"
 
     try:
         __, lineno = inspect.getsourcelines(fn)
@@ -110,8 +110,9 @@ def get_function_location(fn):
         lineno = 0
     return (path, lineno)
 
+
 class ProcRet:
-    def __init__(self, returncode=0, stdout='', stderr=''):
+    def __init__(self, returncode=0, stdout="", stderr=""):
         self._returncode = returncode
         self._stdout = stdout
         self._stderr = stderr
@@ -128,13 +129,17 @@ class ProcRet:
     def stderr(self):
         return self._stderr
 
+
 def subprocess_run(command_args, cwd=None):
     if not cwd:
         cwd = os.getcwd()
     try:
-        out = subprocess.check_output(command_args,
-                                      stderr=subprocess.STDOUT,
-                                      cwd=str(cwd), universal_newlines=True)
+        out = subprocess.check_output(
+            command_args,
+            stderr=subprocess.STDOUT,
+            cwd=str(cwd),
+            universal_newlines=True,
+        )
         return ProcRet(stdout=out, returncode=0)
     except subprocess.CalledProcessError as exc:
         return ProcRet(stderr=exc.stdout, returncode=exc.returncode)
@@ -145,10 +150,7 @@ class git:
         self._cwd = cwd if cwd else os.getcwd()
 
     def __call__(self, cmd):
-        return subprocess_run(
-            shlex.split('git ' + cmd),
-            cwd=self._cwd
-        ).stdout.strip()
+        return subprocess_run(shlex.split("git " + cmd), cwd=self._cwd).stdout.strip()
 
     @property
     def cwd(self):
@@ -171,13 +173,16 @@ def patch_class(cls):
 
     Methods without an implementation in the original are copied verbatim.
     """
+
     def _wrap_fun(wrapper, original):
         def wrapped(self, *args, **kwargs):
             return wrapper(self, original, *args, **kwargs)
+
         return wrapped
+
     def _wrap_cls(patch):
         for func in dir(patch):
-            if not func.startswith('__'):
+            if not func.startswith("__"):
                 wrapper = getattr(patch, func)
                 original = getattr(cls, func, None)
                 if original:
@@ -185,4 +190,5 @@ def patch_class(cls):
                 else:
                     setattr(cls, func, wrapper)
         return patch
+
     return _wrap_cls

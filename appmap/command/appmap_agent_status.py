@@ -1,17 +1,18 @@
-from argparse import ArgumentParser
-from importlib_metadata import distribution, version, PackageNotFoundError
 import json
 import logging
 import os
-from pathlib import Path
 import sys
 import time
+from argparse import ArgumentParser
+from pathlib import Path
 
 import yaml
+from importlib_metadata import PackageNotFoundError, distribution, version
 
 from .._implementation.configuration import Config
 
 logger = logging.getLogger(__name__)
+
 
 def has_dist(dist):
     try:
@@ -21,6 +22,7 @@ def has_dist(dist):
         pass
     return False
 
+
 class AgentFileCollector:
     def __init__(self):
         self.collected = set()
@@ -29,6 +31,7 @@ class AgentFileCollector:
         for item in items:
             self.collected.add(item.fspath)
         items.clear()
+
 
 def discover_pytest_tests():
     """
@@ -46,22 +49,32 @@ def discover_pytest_tests():
     collector = AgentFileCollector()
 
     import pytest
-    pytest.main(['--collect-only',
-                 '--capture=no', '--verbosity=-2', '--disable-warnings',
-                 ], plugins=[collector])
+
+    pytest.main(
+        [
+            "--collect-only",
+            "--capture=no",
+            "--verbosity=-2",
+            "--disable-warnings",
+        ],
+        plugins=[collector],
+    )
 
     logger.info("found %d pytest test(s)", len(collector.collected))
     return collector.collected
 
+
 def has_pytest_tests():
     return len(discover_pytest_tests()) > 0
+
 
 def has_unittest_tests():
     return False
 
+
 def _run(*, discover_tests):
     config = Config()
-    uses_pytest = has_dist('pytest')
+    uses_pytest = has_dist("pytest")
 
     has_tests = None
     if discover_tests:
@@ -71,41 +84,35 @@ def _run(*, discover_tests):
             has_tests = has_unittest_tests()
 
     if has_tests:
-        test_command = {
-            "args": [],
-            "environment": {
-                "APPMAP": "true"
-            }
-        }
+        test_command = {"args": [], "environment": {"APPMAP": "true"}}
 
         if uses_pytest:
-            test_command.update({
-                "framework": "pytest",
-                "command": 'pytest'
-            })
+            test_command.update({"framework": "pytest", "command": "pytest"})
         else:
-            test_command.update({
-                "framework": "unittest",
-                "command": "python",
-                "args": ["-m", "unittest"]
-            })
+            test_command.update(
+                {
+                    "framework": "unittest",
+                    "command": "python",
+                    "args": ["-m", "unittest"],
+                }
+            )
     else:
         test_command = None
 
-    can_record = has_dist('Django') or has_dist('Flask')
+    can_record = has_dist("Django") or has_dist("Flask")
 
     properties = {
-        'properties': {
-            'config': {
-                'app': config.name,
-                'present': config.file_present,
-                'valid': config.file_valid
+        "properties": {
+            "config": {
+                "app": config.name,
+                "present": config.file_present,
+                "valid": config.file_valid,
             },
-            'project': {
-                'agentVersion': version('appmap'),
-                'language': 'python',
-                'remoteRecordingCapable': can_record,
-            }
+            "project": {
+                "agentVersion": version("appmap"),
+                "language": "python",
+                "remoteRecordingCapable": can_record,
+            },
         }
     }
 
@@ -115,16 +122,17 @@ def _run(*, discover_tests):
             properties["test_commands"] = [test_command]
 
     if test_command:
-        properties.update({
-        })
+        properties.update({})
 
     print(json.dumps(properties))
 
     return 0
 
+
 def run():
     parser = ArgumentParser(description="Report project status for AppMap agent.")
-    parser.add_argument("--discover-tests", action='store_true',
-                        help="Scan the project for tests")
+    parser.add_argument(
+        "--discover-tests", action="store_true", help="Scan the project for tests"
+    )
     args = parser.parse_args()
     sys.exit(_run(discover_tests=args.discover_tests))

@@ -1,22 +1,24 @@
 """
 Test event functionality
 """
+import re
 from functools import partial
 from queue import Queue
-import re
 from threading import Thread
 
 import pytest
 
 import appmap
 import appmap._implementation
-from appmap._implementation.event import _EventIds
 from appmap._implementation.env import Env
+from appmap._implementation.event import _EventIds
+
 
 # pylint: disable=import-error
 def test_per_thread_id():
-    """ thread ids should be constant for a  thread """
+    """thread ids should be constant for a  thread"""
     assert _EventIds.get_thread_id() == _EventIds.get_thread_id()
+
 
 def test_thread_ids():
     """thread ids should be different per thread"""
@@ -37,13 +39,15 @@ def test_thread_ids():
     all_tids = [tids.get() for _ in range(tids.qsize())]
     assert len(set(all_tids)) == len(all_tids)  # Should all be unique
 
+
 @pytest.mark.appmap_enabled
-@pytest.mark.usefixtures('with_data_dir')
+@pytest.mark.usefixtures("with_data_dir")
 class TestEvents:
     def test_recursion_protection(self):
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass
+
             ExampleClass().instance_method()
 
         # If we get here, recursion protection for rendering the receiver
@@ -54,29 +58,31 @@ class TestEvents:
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass
+
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
-            param.__repr__ = mocker.Mock(return_value='param.__repr__')
+            param.__repr__ = mocker.Mock(return_value="param.__repr__")
 
             ExampleClass().instance_with_param(param)
 
         assert len(r.events) > 0
-        expected_value = 'param.__repr__'
-        actual_value = r.events[0].parameters[0]['value']
+        expected_value = "param.__repr__"
+        actual_value = r.events[0].parameters[0]["value"]
         assert expected_value == actual_value
 
     def test_when_both_raise(self, mocker):
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass
+
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
             param.__repr__ = mocker.Mock(side_effect=Exception)
 
             ExampleClass().instance_with_param(param)
 
-        expected_re = r'<.*? object at .*?>'
-        actual_value = r.events[0].parameters[0]['value']
+        expected_re = r"<.*? object at .*?>"
+        actual_value = r.events[0].parameters[0]["value"]
         assert re.fullmatch(expected_re, actual_value)
 
     def test_when_display_disabled(self, mocker):
@@ -84,6 +90,7 @@ class TestEvents:
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass
+
             param = mocker.MagicMock()
 
             # unittest.mock.MagicMock doesn't mock __repr__ by default

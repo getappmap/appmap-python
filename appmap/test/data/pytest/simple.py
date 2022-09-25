@@ -1,9 +1,9 @@
 class Simple:
     def hello(self):
-        return 'Hello'
+        return "Hello"
 
     def world(self):
-        return 'world!'
+        return "world!"
 
     def hello_world(self):
-        return '%s %s' % (self.hello(), self.world())
+        return "%s %s" % (self.hello(), self.world())

@@ -1,8 +1,8 @@
-from collections import namedtuple
-from contextlib import contextmanager
 import logging
 import sys
 import time
+from collections import namedtuple
+from contextlib import contextmanager
 
 from . import event
 from .event import CallEvent
@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def recording_disabled():
     tls = appmap_tls()
-    tls['instrumentation_disabled'] = True
+    tls["instrumentation_disabled"] = True
     try:
         yield
     finally:
-        tls['instrumentation_disabled'] = False
+        tls["instrumentation_disabled"] = False
 
 
 def is_instrumentation_disabled():
-    return appmap_tls().setdefault('instrumentation_disabled', False)
+    return appmap_tls().setdefault("instrumentation_disabled", False)
 
 
 def track_shallow(fn):
@@ -47,10 +47,10 @@ def track_shallow(fn):
     and postprocess the appmap to your liking.
     """
     tls = appmap_tls()
-    rule = getattr(fn, '_appmap_shallow', None)
-    logger.debug('track_shallow(%r) [%r]', fn, rule)
-    result = rule and tls.get('last_rule', None) == rule
-    tls['last_rule'] = rule
+    rule = getattr(fn, "_appmap_shallow", None)
+    logger.debug("track_shallow(%r) [%r]", fn, rule)
+    result = rule and tls.get("last_rule", None) == rule
+    tls["last_rule"] = rule
     return result
 
 
@@ -61,15 +61,16 @@ def saved_shallow_rule():
     rule around the call to an instrumented function.
     """
     tls = appmap_tls()
-    current_rule = tls.get('last_rule', None)
+    current_rule = tls.get("last_rule", None)
     try:
         yield
     finally:
-        tls['last_rule'] = current_rule
+        tls["last_rule"] = current_rule
 
 
-_InstrumentedFn = namedtuple('_InstrumentedFn',
-                             'fn fntype instrumented_fn make_call_event params')
+_InstrumentedFn = namedtuple(
+    "_InstrumentedFn", "fn fntype instrumented_fn make_call_event params"
+)
 
 
 def call_instrumented(f, instance, args, kwargs):
@@ -81,7 +82,7 @@ def call_instrumented(f, instance, args, kwargs):
         return f.fn(*args, **kwargs)
 
     with recording_disabled():
-        logger.debug('%s args %s kwargs %s', f.fn, args, kwargs)
+        logger.debug("%s args %s kwargs %s", f.fn, args, kwargs)
         params = CallEvent.set_params(f.params, instance, args, kwargs)
         call_event = f.make_call_event(parameters=params)
     call_event_id = call_event.id
@@ -91,22 +92,24 @@ def call_instrumented(f, instance, args, kwargs):
         ret = f.fn(*args, **kwargs)
         elapsed_time = time.time() - start_time
 
-        return_event = event.FuncReturnEvent(return_value=ret,
-                                             parent_id=call_event_id,
-                                             elapsed=elapsed_time)
+        return_event = event.FuncReturnEvent(
+            return_value=ret, parent_id=call_event_id, elapsed=elapsed_time
+        )
         Recorder.add_event(return_event)
         return ret
     except Exception:  # noqa: E722
         elapsed_time = time.time() - start_time
-        Recorder.add_event(event.ExceptionEvent(parent_id=call_event_id,
-                                                  elapsed=elapsed_time,
-                                                  exc_info=sys.exc_info()))
+        Recorder.add_event(
+            event.ExceptionEvent(
+                parent_id=call_event_id, elapsed=elapsed_time, exc_info=sys.exc_info()
+            )
+        )
         raise
 
 
 def instrument(filterable):
     """return an instrumented function"""
-    logger.info('hooking %s', filterable.fqname)
+    logger.info("hooking %s", filterable.fqname)
     fn = filterable.obj
 
     make_call_event = event.CallEvent.make(fn, filterable.fntype)
@@ -120,9 +123,11 @@ def instrument(filterable):
     # Going forward, we should consider how to make this more general.
     def instrumented_fn(wrapped, instance, args, kwargs):
         with saved_shallow_rule():
-            f = _InstrumentedFn(wrapped, filterable.fntype, instrumented_fn, make_call_event, params)
+            f = _InstrumentedFn(
+                wrapped, filterable.fntype, instrumented_fn, make_call_event, params
+            )
             return call_instrumented(f, instance, args, kwargs)
 
     ret = instrumented_fn
-    setattr(ret, '_appmap_wrapped', True)
+    setattr(ret, "_appmap_wrapped", True)
     return ret
