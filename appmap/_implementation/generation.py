@@ -1,8 +1,8 @@
 """Generate an AppMap"""
 import json
 
-from .metadata import Metadata
 from .event import Event
+from .metadata import Metadata
 
 
 # ClassMapDict needs to quack a little like a dict. If it's actually a
@@ -34,32 +34,33 @@ class ClassMapEntry:
 
 class PackageEntry(ClassMapEntry):
     def __init__(self, name):
-        super().__init__(name, 'package')
+        super().__init__(name, "package")
         self.children = ClassMapDict()
 
 
 class ClassEntry(ClassMapEntry):
     def __init__(self, name):
-        super().__init__(name, 'class')
+        super().__init__(name, "class")
         self.children = ClassMapDict()
 
 
 class FuncEntry(ClassMapEntry):
     def __init__(self, e):
-        super().__init__(e.method_id, 'function')
-        self.location = '%s:%s' % (e.path, e.lineno)
+        super().__init__(e.method_id, "function")
+        self.location = "%s:%s" % (e.path, e.lineno)
         self.static = e.static
         self.labels = e.labels
         self.comment = e.comment
+
 
 def classmap(recording):
     ret = ClassMapDict()
     for e in recording.events:
         try:
-            if e.event != 'call':
+            if e.event != "call":
                 continue
 
-            packages, *classes = e.defined_class.rsplit('.', 1)
+            packages, *classes = e.defined_class.rsplit(".", 1)
             # If there's only a single component in the name
             # (e.g. it's a module name), use it as a class.
             if len(classes) == 0:
@@ -67,7 +68,7 @@ def classmap(recording):
                 packages = []
             else:
                 class_ = classes[0]
-                packages = packages.split('.')
+                packages = packages.split(".")
 
             children = ret
             for p in packages:
@@ -77,7 +78,7 @@ def classmap(recording):
             entry = children.setdefault(class_, ClassEntry(class_))
             children = entry.children
 
-            loc = '%s:%s' % (e.path, e.lineno)
+            loc = "%s:%s" % (e.path, e.lineno)
             children.setdefault(loc, FuncEntry(e))
         except AttributeError:
             # Event might not have a defined_class attribute;
@@ -94,10 +95,10 @@ def appmap(recording, metadata):
         appmap_metadata.update(metadata)
 
     return {
-        'version': '1.4',
-        'metadata': appmap_metadata,
-        'events': recording.events,
-        'classMap': list(classmap(recording).values())
+        "version": "1.4",
+        "metadata": appmap_metadata,
+        "events": recording.events,
+        "classMap": list(classmap(recording).values()),
     }
 
 

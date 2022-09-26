@@ -1,22 +1,22 @@
-from functools import wraps
 import json
 import time
+from functools import wraps
 
 import flask
 import flask.cli
-from flask import _app_ctx_stack, request
 import jinja2
-from werkzeug.routing import parse_rule
+from flask import _app_ctx_stack, request
 from werkzeug.exceptions import BadRequest
+from werkzeug.routing import parse_rule
 
-from appmap._implementation.env import Env
 from appmap._implementation import generation
+from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
-from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
-from ._implementation.metadata import Metadata
 from appmap._implementation.recording import Recorder, Recording
-from ._implementation.utils import values_dict, patch_class
+from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
+from ._implementation.metadata import Metadata
+from ._implementation.utils import patch_class, values_dict
 
 try:
     # pylint: disable=unused-import
@@ -56,29 +56,44 @@ class AppmapFlask:
 
         self.recording = Recording()
 
-        self.record_url = '/_appmap/record'
+        self.record_url = "/_appmap/record"
 
         # print('in init_app')
-        app.add_url_rule(self.record_url, 'appmap_record_get', view_func=self.record_get, methods=['GET'])
-        app.add_url_rule(self.record_url, 'appmap_record_post', view_func=self.record_post, methods=['POST'])
-        app.add_url_rule(self.record_url, 'appmap_record_delete', view_func=self.record_delete, methods=['DELETE'])
+        app.add_url_rule(
+            self.record_url,
+            "appmap_record_get",
+            view_func=self.record_get,
+            methods=["GET"],
+        )
+        app.add_url_rule(
+            self.record_url,
+            "appmap_record_post",
+            view_func=self.record_post,
+            methods=["POST"],
+        )
+        app.add_url_rule(
+            self.record_url,
+            "appmap_record_delete",
+            view_func=self.record_delete,
+            methods=["DELETE"],
+        )
 
         app.before_request(self.before_request)
         app.after_request(self.after_request)
 
     def record_get(self):
-        return {'enabled': self.recording.is_running()}
+        return {"enabled": self.recording.is_running()}
 
     def record_post(self):
         if self.recording.is_running():
-            return 'Recording is already in progress', 409
+            return "Recording is already in progress", 409
 
         self.recording.start()
-        return '', 200
+        return "", 200
 
     def record_delete(self):
         if not self.recording.is_running():
-            return 'No recording is in progress', 404
+            return "No recording is in progress", 404
 
         self.recording.stop()
 
@@ -86,23 +101,27 @@ class AppmapFlask:
 
     def before_request(self):
         if self.recording.is_running() and request.path != self.record_url:
-            Metadata.add_framework('flask', flask.__version__)
+            Metadata.add_framework("flask", flask.__version__)
             np = None
             # See
             # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213
             # for a description of parse_rule.
             if request.url_rule:
-                np = ''.join([f'{{{p}}}' if c else p
-                              for c,_,p in parse_rule(request.url_rule.rule)])
+                np = "".join(
+                    [
+                        f"{{{p}}}" if c else p
+                        for c, _, p in parse_rule(request.url_rule.rule)
+                    ]
+                )
             call_event = HttpServerRequestEvent(
                 request_method=request.method,
                 path_info=request.path,
                 message_parameters=request_params(request),
                 normalized_path_info=np,
-                protocol=request.environ.get('SERVER_PROTOCOL'),
-                headers=request.headers
+                protocol=request.environ.get("SERVER_PROTOCOL"),
+                headers=request.headers,
             )
-            Recorder().add_event(call_event)
+            Recorder.add_event(call_event)
 
             appctx = _app_ctx_stack.top
             appctx.appmap_request_event = call_event
@@ -118,9 +137,9 @@ class AppmapFlask:
                 parent_id=parent_id,
                 elapsed=duration,
                 status_code=response.status_code,
-                headers=response.headers
+                headers=response.headers,
             )
-            Recorder().add_event(return_event)
+            Recorder.add_event(return_event)
 
         return response
 
@@ -139,6 +158,7 @@ def wrap_cli_fn(fn):
             appmap_flask = AppmapFlask()
             appmap_flask.init_app(app)
         return app
+
     return install_middleware
 
 

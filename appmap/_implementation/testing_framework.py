@@ -1,17 +1,17 @@
 """Shared infrastructure for testing framework integration."""
 
-from hashlib import sha256
-import inflection
 import os
 import re
+from contextlib import contextmanager
+from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
-from contextlib import contextmanager
+import inflection
 
 from appmap._implementation import configuration, env, generation, recording
 from appmap._implementation.utils import fqname
-from .metadata import Metadata
 
+from .metadata import Metadata
 
 try:
     # Make sure we have hooks installed if we're testing a django app.
@@ -38,12 +38,13 @@ class FuncItem:
 
     def is_in_class(self):
         return self.cls is not None
+
     has_feature_group = is_in_class
 
     @property
     def feature_group(self):
         test_name = self.class_name
-        if test_name.startswith('Test'):
+        if test_name.startswith("Test"):
             test_name = test_name[4:]
         return inflection.humanize(inflection.titleize(test_name))
 
@@ -53,23 +54,23 @@ class FuncItem:
 
     @property
     def scenario_name(self):
-        name = '%s%s' % (self.feature[0].lower(), self.feature[1:])
+        name = "%s%s" % (self.feature[0].lower(), self.feature[1:])
         if self.has_feature_group():
-            name = ' '.join([self.feature_group, name])
+            name = " ".join([self.feature_group, name])
         return name
 
     @property
     def test_name(self):
         ret = self.name
-        return re.sub('^test.?_', '', ret)
+        return re.sub("^test.?_", "", ret)
 
     @property
     def filename(self):
         fname = self.name
         if self.cls:
-            fname = '%s_%s' % (self.defined_class, fname)
-        fname = re.sub('[^a-zA-Z0-9-_]', '_', fname)
-        if fname.endswith('_'):
+            fname = "%s_%s" % (self.defined_class, fname)
+        fname = re.sub("[^a-zA-Z0-9-_]", "_", fname)
+        if fname.endswith("_"):
             fname = fname[:-1]
         return fname
 
@@ -77,25 +78,22 @@ class FuncItem:
     def metadata(self):
         ret = {}
         if self.is_in_class():
-            ret['feature_group'] = self.feature_group
-            ret['recording'] = {
-                'defined_class': self.defined_class,
-                'method_id': self.method_id
+            ret["feature_group"] = self.feature_group
+            ret["recording"] = {
+                "defined_class": self.defined_class,
+                "method_id": self.method_id,
             }
         if self.location:
-            ret.setdefault('recording', {}).update({
-                'source_location': '%s:%d' % self.location[0:2]
-            })
-        ret.update({
-            'name': self.scenario_name,
-            'feature': self.feature
-        })
+            ret.setdefault("recording", {}).update(
+                {"source_location": "%s:%d" % self.location[0:2]}
+            )
+        ret.update({"name": self.scenario_name, "feature": self.feature})
         return ret
 
 
 NAME_MAX = 255  # true for most filesystems
 HASH_LEN = 7  # arbitrary, but git proves it's a reasonable value
-APPMAP_SUFFIX = '.appmap.json'
+APPMAP_SUFFIX = ".appmap.json"
 
 
 def name_hash(namepart):
@@ -112,13 +110,13 @@ def write_appmap(basedir, basename, contents):
 
     if len(basename) > NAME_MAX - len(APPMAP_SUFFIX):
         part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
-        basename = basename[:part] + '-' + name_hash(basename[part:])[:HASH_LEN]
+        basename = basename[:part] + "-" + name_hash(basename[part:])[:HASH_LEN]
     filename = basename + APPMAP_SUFFIX
 
     if not basedir.exists():
         basedir.mkdir(parents=True, exist_ok=True)
 
-    with NamedTemporaryFile(mode='w', dir=basedir, delete=False) as tmp:
+    with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
         tmp.write(contents)
     os.replace(tmp.name, basedir / filename)
 
@@ -140,12 +138,9 @@ class session:
         item = FuncItem(klass, method, **kwds)
 
         metadata = item.metadata
-        metadata.update({
-            'app': configuration.Config().name,
-            'recorder': {
-                'name': self.name
-            }
-        })
+        metadata.update(
+            {"app": configuration.Config().name, "recorder": {"name": self.name}}
+        )
 
         rec = recording.Recording()
         try:
@@ -164,11 +159,8 @@ def collect_result_metadata(metadata):
     """
     try:
         yield
-        metadata['test_status'] = 'succeeded'
+        metadata["test_status"] = "succeeded"
     except Exception as exn:
-        metadata['test_status'] = 'failed'
-        metadata['exception'] = {
-            'class': exn.__class__.__name__,
-            'message': str(exn)
-        }
+        metadata["test_status"] = "failed"
+        metadata["exception"] = {"class": exn.__class__.__name__, "message": str(exn)}
         raise

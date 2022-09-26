@@ -13,7 +13,7 @@
       "name": "pytest"
     },
     "recording": {
-      "source_location": "test_simple.py:3"
+      "source_location": "test_simple.py:5"
     },
     "name": "hello world",
     "feature": "Hello world",
@@ -62,7 +62,6 @@
         "class": "builtins.str",
         "value": "'Hello'"
       },
-
       "thread_id": 1
     },
     {

@@ -1,19 +1,20 @@
 """Test cases dealing with various test framework runners and cases."""
 # pylint: disable=missing-function-docstring
 
+import json
 import re
 import sys
 
-import json
 import pytest
 
 from appmap.test.helpers import DictIncluding
-from .normalize import normalize_appmap
+
 from .._implementation import testing_framework
+from .normalize import normalize_appmap
 
 
 def test_unittest_runner(testdir):
-    testdir.run(sys.executable, '-m', 'unittest', '-vv')
+    testdir.run(sys.executable, "-m", "unittest", "-vv")
 
     assert len(list(testdir.output().iterdir())) == 6
     verify_expected_appmap(testdir)
@@ -21,36 +22,43 @@ def test_unittest_runner(testdir):
 
 
 def test_appmap_unittest_runner(testdir):
-    testdir.run(sys.executable, '-m', 'appmap.unittest', '-vv')
+    testdir.run(sys.executable, "-m", "appmap.unittest", "-vv")
 
     verify_expected_appmap(testdir)
     verify_expected_metadata(testdir)
 
-def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
-    monkeypatch.delenv('APPMAP', raising=False)
 
-    result = testdir.run(sys.executable, '-m', 'appmap.unittest', '-vv',
-                         'simple.test_simple.UnitTestTest.test_hello_world')
+def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
+    monkeypatch.delenv("APPMAP", raising=False)
+
+    result = testdir.run(
+        sys.executable,
+        "-m",
+        "appmap.unittest",
+        "-vv",
+        "simple.test_simple.UnitTestTest.test_hello_world",
+    )
     assert result.ret == 0
-    r = re.compile(r'AppMap disabled')
+    r = re.compile(r"AppMap disabled")
     assert [l for l in filter(r.search, result.errlines)], "Warning not found"
 
+
 def test_pytest_runner_unittests(testdir):
-    testdir.test_type = 'pytest'
-    result = testdir.runpytest('-svv')
+    testdir.test_type = "pytest"
+    result = testdir.runpytest("-svv")
     result.assert_outcomes(passed=2, failed=3, xfailed=1)
 
     # unittest cases run by pytest should get recorded as pytest tests
     assert len(list(testdir.output().iterdir())) == 6
-    assert len(list(testdir.path.glob('tmp/appmap/unittest/*'))) == 0
+    assert len(list(testdir.path.glob("tmp/appmap/unittest/*"))) == 0
 
     verify_expected_appmap(testdir)
     verify_expected_metadata(testdir)
 
 
-@pytest.mark.example_dir('pytest')
+@pytest.mark.example_dir("pytest")
 def test_pytest_runner_pytest(testdir):
-    result = testdir.runpytest('-vv')
+    result = testdir.runpytest("-vv")
     result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
 
     assert len(list(testdir.output().iterdir())) == 5
@@ -58,10 +66,10 @@ def test_pytest_runner_pytest(testdir):
     verify_expected_metadata(testdir)
 
 
-@pytest.mark.example_dir('trial')
+@pytest.mark.example_dir("trial")
 def test_pytest_trial(testdir):
-    testdir.test_type = 'pytest'
-    result = testdir.runpytest('-svv')
+    testdir.test_type = "pytest"
+    result = testdir.runpytest("-svv")
 
     # The single test for trial has been written so that it will xfail
     # if all the testing machinery is working correctly. If we've
@@ -74,56 +82,57 @@ def test_pytest_trial(testdir):
 
 
 def test_overwrites_existing(tmp_path):
-    foo_file = (tmp_path / 'foo.appmap.json')
-    foo_file.write_text('existing')
-    testing_framework.write_appmap(tmp_path, 'foo', 'replacement')
-    assert foo_file.read_text() == 'replacement'
+    foo_file = tmp_path / "foo.appmap.json"
+    foo_file.write_text("existing")
+    testing_framework.write_appmap(tmp_path, "foo", "replacement")
+    assert foo_file.read_text() == "replacement"
 
 
 def test_write_appmap(tmp_path):
-    testing_framework.write_appmap(tmp_path, 'foo', 'bar')
-    assert (tmp_path / 'foo.appmap.json').read_text() == 'bar'
+    testing_framework.write_appmap(tmp_path, "foo", "bar")
+    assert (tmp_path / "foo.appmap.json").read_text() == "bar"
 
-    longname = '-'.join(['testing'] * 42)
-    testing_framework.write_appmap(tmp_path, longname, 'bar')
-    expected_shortname = longname[:235] + '-5d6e10d.appmap.json'
-    assert (tmp_path / expected_shortname).read_text() == 'bar'
+    longname = "-".join(["testing"] * 42)
+    testing_framework.write_appmap(tmp_path, longname, "bar")
+    expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
+    assert (tmp_path / expected_shortname).read_text() == "bar"
 
 
-@pytest.fixture(name='testdir')
+@pytest.fixture(name="testdir")
 def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
     # The init subdirectory contains a sitecustomize.py file that
     # imports the appmap module. This simulates the way a real
     # installation works, performing the same function as the the
     # appmap.pth file that gets put in site-packages.
-    monkeypatch.setenv('PYTHONPATH', 'init')
+    monkeypatch.setenv("PYTHONPATH", "init")
 
-    monkeypatch.setenv('APPMAP', 'true')
+    monkeypatch.setenv("APPMAP", "true")
 
-    marker = request.node.get_closest_marker('example_dir')
-    test_type = 'unittest' if marker is None else marker.args[0]
+    marker = request.node.get_closest_marker("example_dir")
+    test_type = "unittest" if marker is None else marker.args[0]
     pytester.copy_example(test_type)
 
-    pytester.expected = data_dir / test_type / 'expected'
+    pytester.expected = data_dir / test_type / "expected"
     pytester.test_type = test_type
 
     # this is so test_type can be overriden in test cases
     def output_dir():
-        return pytester.path / 'tmp' / 'appmap' / pytester.test_type
+        return pytester.path / "tmp" / "appmap" / pytester.test_type
+
     pytester.output = output_dir
 
     return pytester
 
 
 def verify_expected_appmap(testdir):
-    appmap_json = list(testdir.output().glob('*test_hello_world.appmap.json'))
-    assert len(appmap_json) == 1 # sanity check
+    appmap_json = list(testdir.output().glob("*test_hello_world.appmap.json"))
+    assert len(appmap_json) == 1  # sanity check
     generated_appmap = normalize_appmap(appmap_json[0].read_text())
 
-    appmap_json = testdir.expected / (f'{testdir.test_type}.appmap.json')
+    appmap_json = testdir.expected / (f"{testdir.test_type}.appmap.json")
     expected_appmap = json.loads(appmap_json.read_text())
 
-    assert generated_appmap == expected_appmap
+    assert generated_appmap == expected_appmap, f"expected appmap file {appmap_json}"
 
 
 def verify_expected_metadata(testdir):
@@ -132,9 +141,9 @@ def verify_expected_metadata(testdir):
     suffix to the tests:
         test_foo.appmap.json -> foo.metadata.json
     """
-    pattern = re.compile(r'test_(status_.+)\.appmap\.json')
-    for file in testdir.output().glob('*test_status_*.appmap.json'):
+    pattern = re.compile(r"test_(status_.+)\.appmap\.json")
+    for file in testdir.output().glob("*test_status_*.appmap.json"):
         name = pattern.search(file.name).group(1)
-        metadata = json.loads(file.read_text())['metadata']
-        expected = testdir.expected / f'{name}.metadata.json'
+        metadata = json.loads(file.read_text())["metadata"]
+        expected = testdir.expected / f"{name}.metadata.json"
         assert metadata == DictIncluding(json.loads(expected.read_text()))

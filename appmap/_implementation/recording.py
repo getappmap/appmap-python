@@ -1,18 +1,18 @@
-from abc import ABC, abstractmethod
-from collections import namedtuple
-from collections.abc import MutableSequence
-
 import functools
 import inspect
 import logging
 import sys
+import threading
 import traceback
 import types
+from abc import ABC, abstractmethod
+from collections import namedtuple
+from collections.abc import MutableSequence
 
 import appmap.wrapt as wrapt
 
 from .env import Env
-from .event import _EventIds
+from .event import Event, _EventIds
 from .metadata import Metadata
 from .utils import FnType
 
@@ -25,6 +25,7 @@ class Recording:
     will be called when the block exits, before any exceptions are
     raised.
     """
+
     def __init__(self, exit_hook=None):
         self.events = []
         self.exit_hook = exit_hook
@@ -61,7 +62,7 @@ class Recording:
         return False
 
 
-Filterable = namedtuple('Filterable', 'fqname obj')
+Filterable = namedtuple("Filterable", "fqname obj")
 
 
 class FilterableMod(Filterable):
@@ -79,7 +80,7 @@ class FilterableCls(Filterable):
     __slots__ = ()
 
     def __new__(c, cls):
-        fqname = '%s.%s' % (cls.__module__, cls.__qualname__)
+        fqname = "%s.%s" % (cls.__module__, cls.__qualname__)
         return super(FilterableCls, c).__new__(c, fqname, cls)
 
     def classify_fn(self, static_fn):
@@ -87,11 +88,19 @@ class FilterableCls(Filterable):
 
 
 class FilterableFn(
-        namedtuple('FilterableFn', Filterable._fields + ('scope', 'static_fn',))):
+    namedtuple(
+        "FilterableFn",
+        Filterable._fields
+        + (
+            "scope",
+            "static_fn",
+        ),
+    )
+):
     __slots__ = ()
 
     def __new__(c, scope, fn, static_fn):
-        fqname = '%s.%s' % (scope.fqname, fn.__name__)
+        fqname = "%s.%s" % (scope.fqname, fn.__name__)
         self = super(FilterableFn, c).__new__(c, fqname, fn, scope, static_fn)
         return self
 
@@ -156,15 +165,19 @@ def get_members(cls):
       * dict_value is cls.__dict__[key]
       * and attr_value is getattr(cls, key)
     """
+
     def is_member_func(m):
         t = type(m)
-        if (t == types.BuiltinFunctionType or  # noqa: E721
-            t == types.BuiltinMethodType):  # noqa: E129
+        if (
+            t == types.BuiltinFunctionType or t == types.BuiltinMethodType  # noqa: E721
+        ):  # noqa: E129
             return False
 
-        return (t == types.FunctionType  # noqa: E721
-                or t == types.MethodType
-                or FnType.classify(m) in FnType.STATIC | FnType.CLASS)
+        return (
+            t == types.FunctionType  # noqa: E721
+            or t == types.MethodType
+            or FnType.classify(m) in FnType.STATIC | FnType.CLASS
+        )
 
     # Note that we only want to instrument the functions that are
     # defined within the class itself, i.e. those which get added to
@@ -173,9 +186,9 @@ def get_members(cls):
     # superclasses, too. Those don't need to be instrumented here,
     # they'll get taken care of when the superclass is imported.
     ret = []
-    modname = cls.__module__ if hasattr(cls, '__module__') else cls.__name__
+    modname = cls.__module__ if hasattr(cls, "__module__") else cls.__name__
     for key in cls.__dict__:
-        if key.startswith('__'):
+        if key.startswith("__"):
             continue
         static_value = inspect.getattr_static(cls, key)
         if not is_member_func(static_value):
@@ -188,35 +201,44 @@ def get_members(cls):
 
 
 class Recorder:
-    """ Singleton Recorder class """
-    _instance = None
 
-    def __new__(cls):
-        if cls._instance is None:
-            logger.debug('Creating the Recorder object')
-            cls._instance = super(Recorder, cls).__new__(cls)
+    # _recorders is a dict of the in-progress recordings. It's keys are an thread-specific
+    # recorders, and None if a global recorder was created.
+    _recorders = None
+    _lock = threading.Lock()
 
-            # Put any __init__ here.
-            cls._instance._initialized = False
+    filter_stack = [NullFilter]
+    filter_chain = []
 
-        return cls._instance
+    def get_filter_stack(self):
+        return self.filter_stack
 
-    def __init__(self):
-        if self.__getattribute__('_initialized'):  # keep pylint happy
-            return
-        self._initialized = True
-        self.enabled = False
-        self.start_tb = None
-        self.filter_stack = [NullFilter]
-        self.filter_chain = []
-        self._events = []
+    def __new__(cls, tid=None):
+        with cls._lock:
+            if cls._recorders is None:
+                cls._recorders = {}
+            if tid not in cls._recorders:
+                recorder = super(Recorder, cls).__new__(cls)
+
+                # Do initialization of the new instance here, rather than in __init__. The latter
+                # will be called every time the contstruct Recorder() is used, but we only want to
+                # initialize the instance once.
+                recorder.enabled = False
+                recorder.start_tb = None
+                recorder._events = []
+                cls._recorders[tid] = recorder
+
+            return cls._recorders[tid]
 
     @classmethod
     def initialize(cls):
-        cls._instance = None
+        cls._recorders = None
+        cls.filter_stack = [NullFilter]
+        cls.filter_chain = []
 
-    def use_filter(self, filter_class):
-        self.filter_stack.append(filter_class)
+    @classmethod
+    def use_filter(cls, filter_class):
+        cls.filter_stack.append(filter_class)
 
     def clear(self):
         self._events = []
@@ -224,24 +246,31 @@ class Recorder:
         Metadata.reset()
 
     def start_recording(self):
-        logger.debug('AppMap recording started')
+        logger.debug("AppMap recording started")
         if self.enabled:
-            logger.error('Recording already in progress, previous start:')
-            logger.error(''.join(traceback.format_list(self.start_tb)))
-            raise RuntimeError('Recording already in progress')
+            logger.error("Recording already in progress, previous start:")
+            logger.error("".join(traceback.format_list(self.start_tb)))
+            raise RuntimeError("Recording already in progress")
         self.start_tb = traceback.extract_stack()
         self.enabled = True
 
     def stop_recording(self):
-        logger.debug('AppMap recording stopped')
+        logger.debug("AppMap recording stopped")
         self.enabled = False
         self.start_tb = None
         return self._events
 
-    def add_event(self, event):
+    @classmethod
+    def add_event(cls, event: Event):
         """
-        Add an event to the current recording
+        Add the given event to the global recorder, as well as the recorder for the thread
+        identified in the event.
         """
+        for tid in [None, event.thread_id]:
+            if tid in cls._recorders:
+                cls._recorders[tid]._add_event(event)
+
+    def _add_event(self, event: Event):
         self._events.append(event)
 
     @property
@@ -251,36 +280,36 @@ class Recorder:
         """
         return self._events
 
-    def do_import(self, *args, **kwargs):
+    @classmethod
+    def do_import(cls, *args, **kwargs):
         mod = args[0]
-        if mod.__name__.startswith('appmap'):
+        if mod.__name__.startswith("appmap"):
             return
 
-        logger.debug('do_import, mod %s args %s kwargs %s', mod, args, kwargs)
-        if not self.filter_chain:
-            logger.debug('  filter_stack %s', self.filter_stack)
-            self.filter_chain = self.filter_stack[0](None)
-            for filter_ in self.filter_stack[1:]:
-                self.filter_chain = filter_(self.filter_chain)
-                logger.debug('  self.filter chain: %s', self.filter_chain)
+        logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
+        if not cls.filter_chain:
+            logger.debug("  filter_stack %s", cls.filter_stack)
+            cls.filter_chain = cls.filter_stack[0](None)
+            for filter_ in cls.filter_stack[1:]:
+                cls.filter_chain = filter_(cls.filter_chain)
+                logger.debug("  self.filter chain: %s", cls.filter_chain)
 
         def instrument_functions(filterable):
-            if not self.filter_chain.filter(filterable):
+            if not cls.filter_chain.filter(filterable):
                 return
 
-            logger.info('  looking for members of %s', filterable.obj)
+            logger.info("  looking for members of %s", filterable.obj)
             functions = get_members(filterable.obj)
-            logger.debug('  functions %s', functions)
+            logger.debug("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                new_fn = self.filter_chain.wrap(
-                    FilterableFn(filterable, fn, static_fn))
+                new_fn = cls.filter_chain.wrap(FilterableFn(filterable, fn, static_fn))
                 if fn != new_fn:
                     wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
         instrument_functions(FilterableMod(mod))
         classes = get_classes(mod)
-        logger.debug('  classes %s', classes)
+        logger.debug("  classes %s", classes)
         for c in classes:
             instrument_functions(FilterableCls(c))
 
@@ -288,33 +317,32 @@ class Recorder:
 def wrap_finder_function(fn, decorator):
     ret = fn
     fn_name = fn.func.__name__ if isinstance(fn, functools.partial) else fn.__name__
-    marker = '_appmap_wrapped_%s' % fn_name
+    marker = "_appmap_wrapped_%s" % fn_name
 
     # Figure out which object should get the marker attribute. If fn
     # is a bound function, put it on the object it's bound to,
     # otherwise put it on the function itself.
-    obj = fn.__self__ if hasattr(fn, '__self__') else fn
+    obj = fn.__self__ if hasattr(fn, "__self__") else fn
 
     if getattr(obj, marker, None) is None:
-        logger.debug('wrapping %r', fn)
+        logger.debug("wrapping %r", fn)
         ret = decorator(fn)
         setattr(obj, marker, True)
     else:
-        logger.debug('already wrapped, %r', fn)
+        logger.debug("already wrapped, %r", fn)
 
     return ret
 
 
 @wrapt.decorator
 def wrapped_exec_module(exec_module, _, args, kwargs):
-    logger.debug('exec_module %r args %s kwargs %s',
-                 exec_module, args, kwargs)
+    logger.debug("exec_module %r args %s kwargs %s", exec_module, args, kwargs)
     exec_module(*args, **kwargs)
     # Only process imports if we're currently enabled. This
     # handles the case where we previously hooked the finders, but
     # were subsequently disabled (e.g. during testing).
     if Env.current.enabled:
-        Recorder().do_import(*args, **kwargs)
+        Recorder.do_import(*args, **kwargs)
 
 
 def wrap_exec_module(exec_module):
@@ -334,9 +362,9 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
 
 
 def wrap_finder_find_spec(finder):
-    find_spec = getattr(finder, 'find_spec', None)
+    find_spec = getattr(finder, "find_spec", None)
     if find_spec is None:
-        logger.debug('no find_spec for finder %r', finder)
+        logger.debug("no find_spec for finder %r", finder)
         return
 
     finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
@@ -365,11 +393,12 @@ class MetapathObserver(MutableSequence):
     def copy(self):
         return self._meta_path.copy()
 
+
 def initialize():
     Recorder.initialize()
     # If we're not enabled, there's no reason to hook the finders.
     if Env.current.enabled:
-        logger.debug('sys.metapath: %s', sys.meta_path)
+        logger.debug("sys.metapath: %s", sys.meta_path)
         for finder in sys.meta_path:
             wrap_finder_find_spec(finder)
 

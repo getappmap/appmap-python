@@ -3,15 +3,16 @@ For consistency, the labels are defined in YAML data files in this module,
 structured exactly like the labels section in appmap.yml.
 """
 
-from importlib_resources import files
 import yaml
+from importlib_resources import files
 
 from .._implementation.labels import LabelSet
 
+
 def presets() -> LabelSet:
-    """ Load the LabelSet of the presets included with appmap-python. """
+    """Load the LabelSet of the presets included with appmap-python."""
     labels = LabelSet()
     for resource in files(__name__).iterdir():
-        if resource.suffix == '.yml':
+        if resource.suffix == ".yml":
             labels.append(yaml.safe_load(resource.read_text()))
     return labels

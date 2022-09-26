@@ -1,12 +1,12 @@
 class Simple:
     def hello(self):
-        return 'Hello'
+        return "Hello"
 
     def world(self):
-        return 'world'
+        return "world"
 
     def hello_world(self, bang):
-        return '%s %s%s' % (self.hello(), self.world(), bang)
+        return "%s %s%s" % (self.hello(), self.world(), bang)
 
     def getReady(self):
         pass

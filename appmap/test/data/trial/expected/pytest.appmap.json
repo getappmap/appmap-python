@@ -12,7 +12,7 @@
     "recording": {
       "defined_class": "test.test_deferred.TestDeferred",
       "method_id": "test_hello_world",
-      "source_location": "test/test_deferred.py:8"
+      "source_location": "test/test_deferred.py:7"
     },
     "name": "Deferred hello world",
     "feature": "Hello world",
@@ -27,7 +27,7 @@
       "defined_class": "test.test_deferred.TestDeferred",
       "method_id": "test_hello_world",
       "path": "test/test_deferred.py",
-      "lineno": 9,
+      "lineno": 8,
       "static": false,
       "receiver": {
         "name": "self",
@@ -67,7 +67,7 @@
                 {
                   "name": "test_hello_world",
                   "type": "function",
-                  "location": "test/test_deferred.py:9",
+                  "location": "test/test_deferred.py:8",
                   "static": false
                 }
               ]

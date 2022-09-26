@@ -1,18 +1,18 @@
-from functools import partial, lru_cache
 import inspect
-from inspect import Parameter, Signature
-from itertools import chain
 import logging
 import threading
+from functools import lru_cache, partial
+from inspect import Parameter, Signature
+from itertools import chain
 
 from .env import Env
 from .utils import (
+    FnType,
     appmap_tls,
     compact_dict,
+    fqname,
     get_function_location,
     split_function_name,
-    fqname,
-    FnType
 )
 
 logger = logging.getLogger(__name__)
@@ -43,8 +43,7 @@ class _EventIds:
     @classmethod
     def get_thread_id(cls):
         tls = appmap_tls()
-        return (tls.get('thread_id')
-                or tls.setdefault('thread_id', cls.next_thread_id()))
+        return tls.get("thread_id") or tls.setdefault("thread_id", cls.next_thread_id())
 
     @classmethod
     def reset(cls):
@@ -67,7 +66,7 @@ def display_string(val):
     if value is None:
         class_name = fqname(type(val))
         object_id = id(val)
-        value = '<%s object at %#02x>' % (class_name, object_id)
+        value = "<%s object at %#02x>" % (class_name, object_id)
 
     return value
 
@@ -76,11 +75,12 @@ def describe_value(val):
     return {
         "class": fqname(type(val)),
         "object_id": id(val),
-        "value": display_string(val)
+        "value": display_string(val),
     }
 
+
 class Event:
-    __slots__ = ['id', 'event', 'thread_id']
+    __slots__ = ["id", "event", "thread_id"]
 
     def __init__(self, event):
         self.id = _EventIds.next_id()
@@ -90,10 +90,11 @@ class Event:
     def to_dict(self, attrs=None):
         ret = {}
         if attrs is None:
-            attrs = chain.from_iterable(getattr(cls, '__slots__', [])
-                                        for cls in type(self).__mro__)
+            attrs = chain.from_iterable(
+                getattr(cls, "__slots__", []) for cls in type(self).__mro__
+            )
         for k in attrs:
-            if k[0] == '_':     # skip internal attrs
+            if k[0] == "_":  # skip internal attrs
                 continue
 
             a = getattr(self, k, None)
@@ -106,38 +107,37 @@ class Event:
 
 
 class Param:
-    __slots__ = ['name', 'kind', 'default', 'default_class']
+    __slots__ = ["name", "kind", "default", "default_class"]
 
     def __init__(self, sigp):
         self.name = sigp.name
         has_default = sigp.default is not Signature.empty
-        if (sigp.kind == Parameter.POSITIONAL_ONLY
-            or sigp.kind == Parameter.POSITIONAL_OR_KEYWORD):  # noqa: E129
-            self.kind = 'opt' if has_default else 'req'
+        if (
+            sigp.kind == Parameter.POSITIONAL_ONLY
+            or sigp.kind == Parameter.POSITIONAL_OR_KEYWORD
+        ):  # noqa: E129
+            self.kind = "opt" if has_default else "req"
         elif sigp.kind == Parameter.VAR_POSITIONAL:
-            self.kind = 'rest'
+            self.kind = "rest"
         elif sigp.kind == Parameter.KEYWORD_ONLY:
-            self.kind = 'key' if has_default else 'keyreq'
+            self.kind = "key" if has_default else "keyreq"
         elif sigp.kind == Parameter.VAR_KEYWORD:
-            self.kind = 'keyrest'
+            self.kind = "keyrest"
         if has_default:
             self.default = sigp.default
             self.default_class = fqname(type(self.default))
 
     def __repr__(self):
-        return '<Param name: %s kind: %s>' % (self.name, self.kind)
+        return "<Param name: %s kind: %s>" % (self.name, self.kind)
 
     def to_dict(self, value):
-        ret = {
-            "name": self.name,
-            "kind": self.kind
-        }
+        ret = {"name": self.name, "kind": self.kind}
         ret.update(describe_value(value))
         return ret
 
 
 class CallEvent(Event):
-    __slots__ = ['_fn', 'static', 'receiver', 'parameters', 'labels']
+    __slots__ = ["_fn", "static", "receiver", "parameters", "labels"]
 
     @staticmethod
     def make(fn, fntype):
@@ -147,7 +147,7 @@ class CallEvent(Event):
         """
 
         # Delete the labels so the app doesn't see them.
-        labels = getattr(fn, '_appmap_labels', None)
+        labels = getattr(fn, "_appmap_labels", None)
         if labels:
             del fn._appmap_labels
 
@@ -160,7 +160,9 @@ class CallEvent(Event):
             if filterable.fntype != FnType.CLASS:
                 sig = inspect.signature(fn, follow_wrapped=True)
             else:
-                sig = inspect.signature(filterable.static_fn.__func__, follow_wrapped=True)
+                sig = inspect.signature(
+                    filterable.static_fn.__func__, follow_wrapped=True
+                )
         except ValueError:
             # Can't get signatures built-ins
             return []
@@ -173,7 +175,8 @@ class CallEvent(Event):
             if sig != wrapped_sig:
                 logger.debug(
                     "signature of wrapper %s.%s doesn't match wrapped",
-                    *split_function_name(fn))
+                    *split_function_name(fn)
+                )
 
         return [Param(p) for p in sig.parameters.values()]
 
@@ -191,7 +194,7 @@ class CallEvent(Event):
         # bound to None. Thus we rely on 'self' being the conventional
         # name for the self argument. This is usually correct but
         # theoretically could be wrong with code that's off-style.
-        takes_self = params and params[0].name == 'self'
+        takes_self = params and params[0].name == "self"
 
         if instance is not None or takes_self:
             args = [instance, *args]
@@ -200,7 +203,7 @@ class CallEvent(Event):
             args = list(args)
 
         for p in params:
-            if p.kind == 'req':
+            if p.kind == "req":
                 # A 'req' argument can be either keyword or
                 # positional.
                 if p.name in kwargs:
@@ -210,21 +213,21 @@ class CallEvent(Event):
                         value = args.pop(0)
                     else:
                         continue  # required argument missing
-            elif p.kind == 'keyreq':
+            elif p.kind == "keyreq":
                 if p.name in kwargs:
                     value = kwargs[p.name]
                 else:
                     continue  # required argument missing
-            elif p.kind == 'opt' or p.kind == 'key':
+            elif p.kind == "opt" or p.kind == "key":
                 value = kwargs.get(p.name, p.default)
-            elif p.kind == 'rest':
+            elif p.kind == "rest":
                 value = tuple(args)
-            elif p.kind == 'keyrest':
+            elif p.kind == "keyrest":
                 value = kwargs
             else:
                 # If all the parameter types are handled, this
                 # shouldn't ever happen...
-                raise RuntimeError('Unknown parameter with desc %s' % (repr(p)))
+                raise RuntimeError("Unknown parameter with desc %s" % (repr(p)))
             ret.append(p.to_dict(value))
         return ret
 
@@ -267,7 +270,7 @@ class CallEvent(Event):
         return comment
 
     def __init__(self, fn, fntype, parameters, labels):
-        super().__init__('call')
+        super().__init__("call")
         self._fn = fn
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
@@ -278,39 +281,42 @@ class CallEvent(Event):
         self.labels = labels
 
     def to_dict(self, attrs=None):
-        ret = super().to_dict() # get the attrs defined in __slots__
-        if 'labels' in ret:
-            del ret['labels']  # labels should only appear in the classmap
+        ret = super().to_dict()  # get the attrs defined in __slots__
+        if "labels" in ret:
+            del ret["labels"]  # labels should only appear in the classmap
 
         # update with the computed properties
-        ret.update(super().to_dict(attrs=['defined_class', 'method_id',
-                                          'path', 'lineno']))
+        ret.update(
+            super().to_dict(attrs=["defined_class", "method_id", "path", "lineno"])
+        )
 
         return ret
 
 
 class SqlEvent(Event):
-    __slots__ = ['sql_query']
+    __slots__ = ["sql_query"]
 
     def __init__(self, sql, vendor=None, version=None):
-        super().__init__('call')
-        self.sql_query = compact_dict({
-            'sql': sql,
-            'database_type': vendor,
-            'server_version': '.'.join([str(v) for v in version]) if version else None
-        })
+        super().__init__("call")
+        self.sql_query = compact_dict(
+            {
+                "sql": sql,
+                "database_type": vendor,
+                "server_version": ".".join([str(v) for v in version])
+                if version
+                else None,
+            }
+        )
 
 
 class MessageEvent(Event):
-    __slots__ = ['message']
+    __slots__ = ["message"]
 
     def __init__(self, message_parameters):
-        super().__init__('call')
+        super().__init__("call")
         self.message = []
         for name, value in message_parameters.items():
-            message_object = {
-                "name": name
-            }
+            message_object = {"name": name}
             message_object.update(describe_value(value))
             self.message.append(message_object)
 
@@ -323,20 +329,23 @@ def none_if_empty(collection):
 # pylint: disable=too-few-public-methods
 class HttpClientRequestEvent(MessageEvent):
     """A call AppMap event representing an HTTP client request."""
-    __slots__ = ['http_client_request']
+
+    __slots__ = ["http_client_request"]
 
     def __init__(self, request_method, url, message_parameters, headers=None):
         super().__init__(message_parameters)
 
         request = {
-            'request_method': request_method,
-            'url': url,
+            "request_method": request_method,
+            "url": url,
         }
 
         if headers is not None:
-            request.update({
-                'headers': none_if_empty(dict(headers)),
-            })
+            request.update(
+                {
+                    "headers": none_if_empty(dict(headers)),
+                }
+            )
 
         self.http_client_request = compact_dict(request)
 
@@ -344,40 +353,50 @@ class HttpClientRequestEvent(MessageEvent):
 # pylint: disable=too-few-public-methods
 class HttpServerRequestEvent(MessageEvent):
     """A call AppMap event representing an HTTP server request."""
-    __slots__ = ['http_server_request']
 
-    def __init__(self, request_method, path_info, message_parameters,
-                 normalized_path_info=None, protocol=None, headers=None):
+    __slots__ = ["http_server_request"]
+
+    def __init__(
+        self,
+        request_method,
+        path_info,
+        message_parameters,
+        normalized_path_info=None,
+        protocol=None,
+        headers=None,
+    ):
         super().__init__(message_parameters)
 
         request = {
-            'request_method': request_method,
-            'protocol': protocol,
-            'path_info': path_info,
-            'normalized_path_info': normalized_path_info,
+            "request_method": request_method,
+            "protocol": protocol,
+            "path_info": path_info,
+            "normalized_path_info": normalized_path_info,
         }
 
         if headers is not None:
-            request.update({
-                'mime_type': headers.get('Content-Type'),
-                'authorization': headers.get('Authorization'),
-                'headers': none_if_empty(dict(headers)),
-            })
+            request.update(
+                {
+                    "mime_type": headers.get("Content-Type"),
+                    "authorization": headers.get("Authorization"),
+                    "headers": none_if_empty(dict(headers)),
+                }
+            )
 
         self.http_server_request = compact_dict(request)
 
 
 class ReturnEvent(Event):
-    __slots__ = ['parent_id', 'elapsed']
+    __slots__ = ["parent_id", "elapsed"]
 
     def __init__(self, parent_id, elapsed):
-        super().__init__('return')
+        super().__init__("return")
         self.parent_id = parent_id
         self.elapsed = elapsed
 
 
 class FuncReturnEvent(ReturnEvent):
-    __slots__ = ['return_value']
+    __slots__ = ["return_value"]
 
     def __init__(self, parent_id, elapsed, return_value):
         super().__init__(parent_id, elapsed)
@@ -386,18 +405,19 @@ class FuncReturnEvent(ReturnEvent):
 
 class HttpResponseEvent(ReturnEvent):
     """A generic HTTP response event."""
+
     def __init__(self, status_code, headers=None, **kwargs):
         super().__init__(**kwargs)
 
-        response = {
-            'status_code': status_code
-        }
+        response = {"status_code": status_code}
 
         if headers is not None:
-            response.update({
-                'mime_type': headers.get('Content-Type'),
-                'headers': none_if_empty(dict(headers))
-            })
+            response.update(
+                {
+                    "mime_type": headers.get("Content-Type"),
+                    "headers": none_if_empty(dict(headers)),
+                }
+            )
 
         self.response = compact_dict(response)
 
@@ -405,7 +425,8 @@ class HttpResponseEvent(ReturnEvent):
 # pylint: disable=too-few-public-methods
 class HttpServerResponseEvent(HttpResponseEvent):
     """An HTTP server response event."""
-    __slots__ = ['http_server_response']
+
+    __slots__ = ["http_server_response"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -415,7 +436,8 @@ class HttpServerResponseEvent(HttpResponseEvent):
 # pylint: disable=too-few-public-methods
 class HttpClientResponseEvent(HttpResponseEvent):
     """An HTTP client response event."""
-    __slots__ = ['http_client_response']
+
+    __slots__ = ["http_client_response"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -423,18 +445,16 @@ class HttpClientResponseEvent(HttpResponseEvent):
 
 
 class ExceptionEvent(ReturnEvent):
-    __slots__ = ['exceptions']
+    __slots__ = ["exceptions"]
 
     def __init__(self, parent_id, elapsed, exc_info):
         super().__init__(parent_id, elapsed)
         class_, exc, __ = exc_info
-        self.exceptions = [{
-            'class': fqname(class_),
-            'message': str(exc),
-            'object_id': id(exc)
-        }]
+        self.exceptions = [
+            {"class": fqname(class_), "message": str(exc), "object_id": id(exc)}
+        ]
 
 
 def initialize():
-    appmap_tls().pop('thread_id', None)
+    appmap_tls().pop("thread_id", None)
     _EventIds.reset()
