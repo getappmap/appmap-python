@@ -123,7 +123,10 @@ def write_appmap(basedir, basename, contents):
         tmp.write(contents)
     os.replace(tmp.name, basedir / filename)
 
-def create_appmap_file(request_method, request_path_info, request_full_path, response, headers, rec):
+
+def create_appmap_file(
+    request_method, request_path_info, request_full_path, response, headers, rec
+):
     start_time = datetime.datetime.now()
     appmap_name = (
         request_method
@@ -144,13 +147,10 @@ def create_appmap_file(request_method, request_path_info, request_full_path, res
         "timestamp": start_time.timestamp(),
         "recorder": {"name": "record_requests"},
     }
-    write_appmap(
-        output_dir, appmap_basename, generation.dump(rec, metadata)
-    )
+    write_appmap(output_dir, appmap_basename, generation.dump(rec, metadata))
     headers["AppMap-Name"] = os.path.abspath(appmap_name)
-    headers["AppMap-File-Name"] = (
-        os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
-    )
+    headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
+
 
 class session:
     def __init__(self, name, recorder_type, version=None):

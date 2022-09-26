@@ -210,14 +210,8 @@ class TestRecordRequestsDjango(TestRecordRequests):
 export PYTHONPATH=`pwd`
 
 cd appmap/test/data/django/
-<<<<<<< HEAD
 APPMAP=true APPMAP_RECORD_REQUESTS=true python manage.py runserver 127.0.0.1:"""
             + str(TestRecordRequests.server_port)
-=======
-python manage.py runserver 127.0.0.1:"""
-                + str(TestRecordRequests.server_port)
-            )
->>>>>>> 6049aba... test: record_request with multiple threads
         )
 
     @staticmethod

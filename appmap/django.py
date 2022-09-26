@@ -241,7 +241,14 @@ class Middleware:
                 # have added the event in the global Recorder() twice.
                 try:
                     response = self.record_request(recorders, request)
-                    testing_framework.create_appmap_file(request.method, request.path_info, request.get_full_path(), response, response, rec)
+                    testing_framework.create_appmap_file(
+                        request.method,
+                        request.path_info,
+                        request.get_full_path(),
+                        response,
+                        response,
+                        rec,
+                    )
                     return response
                 finally:
                     rec.stop_recording()
@@ -277,7 +284,9 @@ class Middleware:
                 try:
                     resolved = resolve(request.path_info)
                     params.update(resolved.kwargs)
-                    normalized_path_info = normalize_path_info(request.path_info, resolved)
+                    normalized_path_info = normalize_path_info(
+                        request.path_info, resolved
+                    )
                 except Resolver404:
                     # If the request was for a bad path (e.g. when an app
                     # is testing 404 handling), resolving will fail.
@@ -285,7 +294,7 @@ class Middleware:
 
                 call_event = HttpServerRequestEvent(
                     request_method=request.method,
-                path_info=request.path_info,
+                    path_info=request.path_info,
                     message_parameters=params,
                     normalized_path_info=normalized_path_info,
                     protocol=request.META["SERVER_PROTOCOL"],
@@ -300,7 +309,9 @@ class Middleware:
                 if rec and rec.enabled:
                     duration = time.monotonic() - start
                     exception_event = ExceptionEvent(
-                        parent_id=call_event.id, elapsed=duration, exc_info=sys.exc_info()
+                        parent_id=call_event.id,
+                        elapsed=duration,
+                        exc_info=sys.exc_info(),
                     )
                     rec.add_event(exception_event)
                 raise
@@ -317,6 +328,7 @@ class Middleware:
                 rec.add_event(return_event)
 
         return response
+
 
 def inject_middleware():
     """Make sure AppMap middleware is added to the stack"""

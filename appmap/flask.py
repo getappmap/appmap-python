@@ -13,7 +13,11 @@ from werkzeug.routing import parse_rule
 
 from appmap._implementation import generation, testing_framework
 from appmap._implementation.env import Env
-from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent, _EventIds
+from appmap._implementation.event import (
+    HttpServerRequestEvent,
+    HttpServerResponseEvent,
+    _EventIds,
+)
 from appmap._implementation.recording import Recorder, Recording
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
@@ -204,6 +208,7 @@ class AppmapFlask:
                     headers=response.headers,
                 )
                 rec.add_event(return_event)
+
 
 @patch_class(jinja2.Template)
 class TemplateHandler(BaseTemplateHandler):
