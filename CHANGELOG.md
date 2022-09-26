@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/getappmap/appmap-python/compare/v1.5.3...v1.6.0) (2022-09-26)
+
+
+### Features
+
+* Allow per-thread recording ([e1bfd94](https://github.com/getappmap/appmap-python/commit/e1bfd94b93c94909819e5a963c2ddfe17c063c53))
+
 ## [1.5.3](https://github.com/getappmap/appmap-python/compare/v1.5.2...v1.5.3) (2022-09-22)
 
 
