@@ -72,11 +72,14 @@ def display_string(val):
 
 
 def describe_value(val):
-    return {
+    ret = {
         "class": fqname(type(val)),
         "object_id": id(val),
         "value": display_string(val),
     }
+    if isinstance(val, list) or isinstance(val, dict):
+        ret["size"] = len(val)
+    return ret
 
 
 class Event:
