@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/getappmap/appmap-python/compare/v1.7.0...v1.8.0) (2022-09-27)
+
+
+### Features
+
+* automatically create appmap.yml ([1b935f5](https://github.com/getappmap/appmap-python/commit/1b935f5770a7f7c88c047eee1038f5d57c8b4f21))
+
 # [1.7.0](https://github.com/getappmap/appmap-python/compare/v1.6.0...v1.7.0) (2022-09-27)
 
 
