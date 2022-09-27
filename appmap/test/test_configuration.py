@@ -184,3 +184,31 @@ class TestDefaultConfig:
         # pylint: disable=protected-access
         appmap._implementation.initialize(cwd=tmpdir, env={"APPMAP": "true"})
         self.check_default_config(Path(tmpdir).name)
+
+    def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch):
+        repo_root = git.cwd
+        copy_tree(data_dir / "config", str(repo_root))
+        monkeypatch.chdir(repo_root)
+
+        path = Path(repo_root / "appmap.yml")
+        assert not path.is_file()
+
+        # pylint: disable=protected-access
+        appmap._implementation.initialize(cwd=repo_root, env={"APPMAP": "true"})
+
+        c = Config()
+        assert path.is_file()
+
+    def test_not_created_if_missing_and_not_enabled(self, git, data_dir, monkeypatch):
+        repo_root = git.cwd
+        copy_tree(data_dir / "config", str(repo_root))
+        monkeypatch.chdir(repo_root)
+
+        path = Path(repo_root / "appmap.yml")
+        assert not path.is_file()
+
+        # pylint: disable=protected-access
+        appmap._implementation.initialize(cwd=repo_root, env={"APPMAP": "false"})
+
+        c = Config()
+        assert not path.is_file()

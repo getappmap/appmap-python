@@ -184,12 +184,13 @@ class Config:
 
         # Only use a default config if the user hasn't specified a
         # config.
-        env_config = Env.current.get("APPMAP_CONFIG")
-        use_default_config = not env_config
-        if use_default_config:
-            env_config = "appmap.yml"
+        env_config_filename = Env.current.get("APPMAP_CONFIG")
 
-        path = Path(env_config).resolve()
+        use_default_config = not env_config_filename
+        if use_default_config:
+            env_config_filename = "appmap.yml"
+
+        path = Path(env_config_filename).resolve()
         if path.is_file():
             self.file_present = True
 
@@ -213,17 +214,25 @@ class Config:
             logger.warning(
                 dedent(
                     f"""
-This default configuration will be used:
+It will be created with this configuration: 
 
 {yaml.dump(self.default)}
             """
                 )
             )
             self._config = self.default
+            self.write_config_file(path, self.default)
         else:
             # disable appmap and return a dummy config
             # so the errors don't accumulate
             Env.current.enabled = False
+
+    def write_config_file(self, filepath, config):
+        basedir = filepath.parent
+        if not basedir.exists():
+            basedir.mkdir(parents=True, exist_ok=True)
+        with open(filepath, "w") as f:
+            f.write(yaml.dump(config, sort_keys=True))
 
 
 def startswith(prefix, sequence):
