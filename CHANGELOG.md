@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/getappmap/appmap-python/compare/v1.6.0...v1.7.0) (2022-09-27)
+
+
+### Features
+
+* update to v1.9.0 of appmap spec ([b95c260](https://github.com/getappmap/appmap-python/commit/b95c260ddcb9efdbe2e9266db814043917b714c4))
+
 # [1.6.0](https://github.com/getappmap/appmap-python/compare/v1.5.3...v1.6.0) (2022-09-26)
 
 
