@@ -17,6 +17,7 @@ empty_kwargs = {
     "name": "kwargs",
     "class": "builtins.dict",
     "kind": "keyrest",
+    "size": 0,
     "value": "{}",
 }
 
@@ -254,6 +255,7 @@ class TestInstanceMethods(TestMethodBase):
                 "name": "kwargs",
                 "class": "builtins.dict",
                 "kind": "keyrest",
+                "size": 2,
             },
         )
 

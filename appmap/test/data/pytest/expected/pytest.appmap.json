@@ -1,5 +1,5 @@
 {
-  "version": "1.4",
+  "version": "1.9",
   "metadata": {
     "language": {
       "name": "python"
@@ -10,7 +10,8 @@
     },
     "app": "Simple",
     "recorder": {
-      "name": "pytest"
+      "name": "pytest",
+      "type": "tests"
     },
     "recording": {
       "source_location": "test_simple.py:5"

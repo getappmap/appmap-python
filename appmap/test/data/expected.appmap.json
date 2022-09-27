@@ -1,5 +1,5 @@
 {
-  "version": "1.4",
+  "version": "1.9",
   "metadata": {
     "language": {
       "name": "python"
@@ -165,6 +165,7 @@
           "name": "kwds",
           "kind": "keyrest",
           "class": "builtins.dict",
+          "size": 0,
           "value": "{}"
         }
       ],
@@ -210,6 +211,7 @@
           "name": "kwds",
           "kind": "keyrest",
           "class": "builtins.dict",
+          "size": 0,
           "value": "{}"
         }
       ],

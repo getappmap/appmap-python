@@ -24,7 +24,7 @@ if appmap.enabled():
     @pytest.hookimpl
     def pytest_sessionstart(session):
         session.appmap = testing_framework.session(
-            name="pytest", version=pytest.__version__
+            name="pytest", recorder_type="tests", version=pytest.__version__
         )
 
     @pytest.hookimpl

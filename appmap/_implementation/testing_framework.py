@@ -122,8 +122,9 @@ def write_appmap(basedir, basename, contents):
 
 
 class session:
-    def __init__(self, name, version=None):
+    def __init__(self, name, recorder_type, version=None):
         self.name = name
+        self.recorder_type = recorder_type
         self.version = version
         self.metadata = None
 
@@ -139,7 +140,13 @@ class session:
 
         metadata = item.metadata
         metadata.update(
-            {"app": configuration.Config().name, "recorder": {"name": self.name}}
+            {
+                "app": configuration.Config().name,
+                "recorder": {
+                    "name": self.name,
+                    "type": self.recorder_type,
+                },
+            }
         )
 
         rec = recording.Recording()

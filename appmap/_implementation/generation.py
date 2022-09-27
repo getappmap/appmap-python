@@ -95,7 +95,7 @@ def appmap(recording, metadata):
         appmap_metadata.update(metadata)
 
     return {
-        "version": "1.4",
+        "version": "1.9",
         "metadata": appmap_metadata,
         "events": recording.events,
         "classMap": list(classmap(recording).values()),

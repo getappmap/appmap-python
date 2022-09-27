@@ -16,7 +16,7 @@ def setup_unittest():
         logger.warning("AppMap disabled. Did you forget to set APPMAP=true?")
         return
 
-    session = testing_framework.session("unittest")
+    session = testing_framework.session("unittest", "tests")
 
     def get_test_location(cls, method_name):
         from appmap._implementation.utils import get_function_location
