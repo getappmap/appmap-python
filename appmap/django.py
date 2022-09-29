@@ -22,7 +22,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation, recording, testing_framework
+from appmap._implementation import generation, recording, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     ExceptionEvent,
@@ -241,7 +241,7 @@ class Middleware:
                 # have added the event in the global Recorder() twice.
                 try:
                     response = self.record_request(recorders, request)
-                    testing_framework.create_appmap_file(
+                    web_framework.create_appmap_file(
                         request.method,
                         request.path_info,
                         request.get_full_path(),

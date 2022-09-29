@@ -9,7 +9,7 @@ import pytest
 
 from appmap.test.helpers import DictIncluding
 
-from .._implementation import testing_framework
+from .._implementation import web_framework
 from .normalize import normalize_appmap
 
 
@@ -84,16 +84,16 @@ def test_pytest_trial(testdir):
 def test_overwrites_existing(tmp_path):
     foo_file = tmp_path / "foo.appmap.json"
     foo_file.write_text("existing")
-    testing_framework.write_appmap(tmp_path, "foo", "replacement")
+    web_framework.write_appmap(tmp_path, "foo", "replacement")
     assert foo_file.read_text() == "replacement"
 
 
 def test_write_appmap(tmp_path):
-    testing_framework.write_appmap(tmp_path, "foo", "bar")
+    web_framework.write_appmap(tmp_path, "foo", "bar")
     assert (tmp_path / "foo.appmap.json").read_text() == "bar"
 
     longname = "-".join(["testing"] * 42)
-    testing_framework.write_appmap(tmp_path, longname, "bar")
+    web_framework.write_appmap(tmp_path, longname, "bar")
     expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
     assert (tmp_path / expected_shortname).read_text() == "bar"
 

@@ -11,7 +11,7 @@ from flask import _app_ctx_stack, request
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import parse_rule
 
-from appmap._implementation import generation, testing_framework
+from appmap._implementation import generation, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     HttpServerRequestEvent,
