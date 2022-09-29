@@ -22,7 +22,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation, recorder, web_framework
+from appmap._implementation import generation, recording, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     ExceptionEvent,
@@ -225,19 +225,19 @@ class Middleware(AppmapMiddleware):
     """
 
     def __init__(self, get_response):
+        super().__init__()
         self.get_response = get_response
         self.recorder = Recorder.get_current()
-        self.record_url = "/_appmap/record"
 
     def __call__(self, request):
-        if not Env.current.enabled:
+        if not self.should_record():
             return self.get_response(request)
 
         if request.path_info == self.record_url:
             return self.recording(request)
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path_info, self.record_url, self.recorder.get_enabled()
+            request, request.path_info, self.recorder.get_enabled()
         )
 
         try:
@@ -256,7 +256,6 @@ class Middleware(AppmapMiddleware):
         self.after_request_hook(
             request,
             request.path_info,
-            self.record_url,
             self.recorder.get_enabled(),
             request.method,
             request.build_absolute_uri(),

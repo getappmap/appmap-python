@@ -29,7 +29,8 @@ def test_appmap_unittest_runner(testdir):
 
 
 def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
-    monkeypatch.delenv("APPMAP", raising=False)
+    # since not setting APPMAP records by default, must disable it explicitly
+    monkeypatch.setenv("APPMAP", "false")
 
     result = testdir.run(
         sys.executable,

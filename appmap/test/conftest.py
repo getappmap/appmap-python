@@ -91,3 +91,12 @@ def git_directory_fixture(tmp_path_factory):
 def tmp_git(git_directory, tmp_path):
     copy_tree(git_directory, str(tmp_path))
     return utils.git(cwd=tmp_path)
+
+
+# fix the following error:
+# AttributeError: module 'django.core.mail' has no attribute 'outbox'
+# https://github.com/pytest-dev/pytest-django/issues/993#issue-1147362573
+@pytest.fixture(scope="function", autouse=True)
+def _dj_autoclear_mailbox() -> None:
+    # Override the `_dj_autoclear_mailbox` test fixture in `pytest_django`.
+    pass

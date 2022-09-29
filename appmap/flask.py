@@ -12,6 +12,7 @@ from werkzeug.exceptions import BadRequest
 from werkzeug.routing import parse_rule
 
 from appmap._implementation import generation, web_framework
+from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recorder import Recorder
@@ -47,20 +48,13 @@ def request_params(req):
 
 class AppmapFlask(AppmapMiddleware):
     def __init__(self, app=None):
+        super().__init__()
         self.app = app
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
-        if not Env.current.enabled:
-            return
-
-        if not app:
-            return
-
         self.recording = Recording()
-
-        self.record_url = "/_appmap/record"
 
         # print('in init_app')
         app.add_url_rule(
@@ -86,6 +80,9 @@ class AppmapFlask(AppmapMiddleware):
         app.after_request(self.after_request)
 
     def record_get(self):
+        if not self.should_record():
+            return "Appmap is disabled.", 404
+
         return {"enabled": self.recording.is_running()}
 
     def record_post(self):
@@ -104,11 +101,11 @@ class AppmapFlask(AppmapMiddleware):
         return json.loads(generation.dump(self.recording))
 
     def before_request(self):
-        if not Env.current.enabled:
+        if not self.should_record():
             return
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path, self.record_url, self.recording.is_running()
+            request, request.path, self.recording.is_running()
         )
 
     def before_request_main(self, rec, request):
@@ -141,13 +138,12 @@ class AppmapFlask(AppmapMiddleware):
         return None, None
 
     def after_request(self, response):
-        if not Env.current.enabled:
-            return
+        if not self.should_record():
+            return response
 
         return self.after_request_hook(
             request,
             request.path,
-            self.record_url,
             self.recording.is_running(),
             request.method,
             request.base_url,

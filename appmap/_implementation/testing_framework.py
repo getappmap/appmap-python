@@ -1,5 +1,6 @@
 """Shared infrastructure for testing framework integration."""
 
+import os
 import re
 from contextlib import contextmanager
 
@@ -99,10 +100,6 @@ class session:
 
     @contextmanager
     def record(self, klass, method, **kwds):
-        if not env.Env.current.enabled:
-            yield
-            return
-
         Metadata.add_framework(self.name, self.version)
 
         item = FuncItem(klass, method, **kwds)
@@ -142,3 +139,9 @@ def collect_result_metadata(metadata):
         metadata["test_status"] = "failed"
         metadata["exception"] = {"class": exn.__class__.__name__, "message": str(exn)}
         raise
+
+def file_delete(filename):
+    try:
+        os.remove(filename)
+    except FileNotFoundError:
+        pass
