@@ -241,10 +241,12 @@ class Middleware:
                 # have added the event in the global Recorder() twice.
                 try:
                     response = self.record_request(recorders, request)
+                    output_dir = Env.current.output_dir / "requests"
                     web_framework.create_appmap_file(
+                        output_dir,
                         request.method,
                         request.path_info,
-                        request.get_full_path(),
+                        request.build_absolute_uri(),
                         response,
                         response,
                         rec,

@@ -96,7 +96,7 @@ def write_appmap(basedir, basename, contents):
 
 
 def create_appmap_file(
-    request_method, request_path_info, request_full_path, response, headers, rec
+    output_dir, request_method, request_path_info, request_full_path, response, headers, rec
 ):
     start_time = datetime.datetime.now()
     appmap_name = (
@@ -108,7 +108,6 @@ def create_appmap_file(
         + ") - "
         + start_time.strftime("%T.%f")[:-3]
     )
-    output_dir = Env.current.output_dir
     appmap_basename = scenario_filename(
         "_".join([str(start_time.timestamp()), request_full_path])
     )

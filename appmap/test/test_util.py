@@ -12,4 +12,4 @@ def test_scenario_filename__short():
 
 def test_scenario_filename__special_character():
     """has a customizable suffix"""
-    assert scenario_filename("foobar?=65") == "foobar-65"
+    assert scenario_filename("foobar?=65") == "foobar_65"

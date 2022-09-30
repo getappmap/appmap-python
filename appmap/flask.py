@@ -181,10 +181,12 @@ class AppmapFlask:
                 # have added the event in the global Recorder() twice.
                 try:
                     self.after_request_main(recorders, response)
+                    output_dir = Env.current.output_dir / "requests"
                     web_framework.create_appmap_file(
+                        output_dir,
                         request.method,
                         request.path,
-                        request.path,
+                        request.base_url,
                         response,
                         response.headers,
                         rec,

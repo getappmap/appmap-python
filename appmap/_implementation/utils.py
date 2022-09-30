@@ -196,7 +196,7 @@ def patch_class(cls):
 
 
 # this is different than appmap-ruby: part of its logic is in write_appmap
-def scenario_filename(name, separator="-"):
+def scenario_filename(name, separator="_"):
     pattern = r"[^a-z0-9\-_]+"
     replacement = separator
     return re.sub(pattern, replacement, name, flags=re.IGNORECASE)
