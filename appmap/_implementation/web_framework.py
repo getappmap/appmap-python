@@ -5,12 +5,13 @@ import os
 import os.path
 import re
 import time
+from abc import abstractmethod
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
-from appmap._implementation.event import Event, ReturnEvent, describe_value
+from appmap._implementation.event import Event, ReturnEvent, _EventIds, describe_value
 from appmap._implementation.recording import Recorder
 from appmap._implementation.utils import root_relative_path, scenario_filename
 
@@ -96,7 +97,13 @@ def write_appmap(basedir, basename, contents):
 
 
 def create_appmap_file(
-    output_dir, request_method, request_path_info, request_full_path, response, headers, rec
+    output_dir,
+    request_method,
+    request_path_info,
+    request_full_path,
+    response,
+    headers,
+    rec,
 ):
     start_time = datetime.datetime.now()
     appmap_name = (
@@ -120,3 +127,99 @@ def create_appmap_file(
     write_appmap(output_dir, appmap_basename, generation.dump(rec, metadata))
     headers["AppMap-Name"] = os.path.abspath(appmap_name)
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
+
+
+class AppmapMiddleware:
+    def before_request_hook(
+        self, request, request_path, record_url, recording_is_running
+    ):
+        if request_path == record_url:
+            return None, None, None
+
+        start = None
+        call_event_id = None
+        if Env.current.enabled or recording_is_running:
+            # It should be recording or it's currently recording.  The
+            # recording is either
+            # a) remote, enabled by POST to /_appmap/record, which set
+            #    recording_is_running, or
+            # b) requests, set by Env.current.record_all_requests, or
+            # c) both remote and requests; there are multiple active recorders.
+            if not Env.current.record_all_requests and recording_is_running:
+                # a)
+                rec = Recorder()
+            else:
+                # b) or c)
+                rec = Recorder(_EventIds.get_thread_id())
+                rec.start_recording()
+                # Each time an event is added for a thread_id it's also
+                # added to the global Recorder().  So don't add the event
+                # to the global Recorder() explicitly because that would
+                # add the event in it twice.
+
+            if rec.enabled:
+                start, call_event_id = self.before_request_main(rec, request)
+
+        return rec, start, call_event_id
+
+    @abstractmethod
+    def before_request_main(self, rec):
+        raise NotImplementedError("Must override before_request_main")
+
+    def after_request_hook(
+        self,
+        request,
+        request_path,
+        record_url,
+        recording_is_running,
+        request_method,
+        request_base_url,
+        response,
+        response_headers,
+        start,
+        call_event_id,
+    ):
+        if request_path == record_url:
+            return response
+
+        if Env.current.enabled or recording_is_running:
+            # It should be recording or it's currently recording.  The
+            # recording is either
+            # a) remote, enabled by POST to /_appmap/record, which set
+            #    self.recording.is_running, or
+            # b) requests, set by Env.current.record_all_requests, or
+            # c) both remote and requests; there are multiple active recorders.
+            if not Env.current.record_all_requests and recording_is_running:
+                # a)
+                rec = Recorder()
+                if rec.enabled:
+                    self.after_request_main(rec, response, start, call_event_id)
+            else:
+                # b) or c)
+                rec = Recorder(_EventIds.get_thread_id())
+                # Each time an event is added for a thread_id it's also
+                # added to the global Recorder().  So don't add the event
+                # to the global Recorder() explicitly because that would
+                # add the event in it twice.
+                try:
+                    if rec.enabled:
+                        self.after_request_main(rec, response, start, call_event_id)
+
+                    output_dir = Env.current.output_dir / "requests"
+                    create_appmap_file(
+                        output_dir,
+                        request_method,
+                        request_path,
+                        request_base_url,
+                        response,
+                        response_headers,
+                        rec,
+                    )
+                finally:
+                    rec.stop_recording()
+
+        return response
+
+    @abstractmethod
+    def after_request_main(self, rec, response, start, call_event_id):
+        raise NotImplementedError("Must override after_request_main")

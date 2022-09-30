@@ -34,6 +34,7 @@ from appmap._implementation.event import (
 )
 from appmap._implementation.instrument import is_instrumentation_disabled
 from appmap._implementation.recording import Recorder
+from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
 from ._implementation.metadata import Metadata
@@ -208,52 +209,85 @@ def normalize_path_info(path_info, resolved):
     return np
 
 
-class Middleware:
+class Middleware(AppmapMiddleware):
     def __init__(self, get_response):
         self.get_response = get_response
         self.recorder = Recorder()
+        self.record_url = "/_appmap/record"
 
     def __call__(self, request):
         if not Env.current.enabled:
             return self.get_response(request)
 
-        if request.path_info == "/_appmap/record":
+        if request.path_info == self.record_url:
             return self.recording(request)
 
-        if Env.current.enabled or self.recorder.enabled:
-            # It should be recording or it's currently recording.  The
-            # recording is either
-            # a) remote, enabled by POST to /_appmap/record, which set
-            #    self.recorder.enabled, or
-            # b) requests, set by Env.current.record_all_requests, or
-            # c) both remote and requests; there are multiple active recorders.
-            if not Env.current.record_all_requests and self.recorder.enabled:
-                # a)
-                return self.record_request([self.recorder], request)
-            elif Env.current.record_all_requests:
-                # b) or c)
-                rec = Recorder(_EventIds.get_thread_id())
-                rec.start_recording()
-                recorders = [rec]
-                # Each time an event is added for a thread_id it's
-                # also added to the global Recorder().  So don't add
-                # the global Recorder() into recorders: that would
-                # have added the event in the global Recorder() twice.
-                try:
-                    response = self.record_request(recorders, request)
-                    output_dir = Env.current.output_dir / "requests"
-                    web_framework.create_appmap_file(
-                        output_dir,
-                        request.method,
-                        request.path_info,
-                        request.build_absolute_uri(),
-                        response,
-                        response,
-                        rec,
-                    )
-                    return response
-                finally:
-                    rec.stop_recording()
+        rec, start, call_event_id = self.before_request_hook(
+            request, request.path_info, self.record_url, self.recorder.enabled
+        )
+
+        try:
+            response = self.get_response(request)
+        except:
+            if rec.enabled:
+                duration = time.monotonic() - start
+                exception_event = ExceptionEvent(
+                    parent_id=call_event_id,
+                    elapsed=duration,
+                    exc_info=sys.exc_info(),
+                )
+                rec.add_event(exception_event)
+            raise
+
+        self.after_request_hook(
+            request,
+            request.path_info,
+            self.record_url,
+            self.recorder.enabled,
+            request.method,
+            request.build_absolute_uri(),
+            response,
+            response,
+            start,
+            call_event_id,
+        )
+
+        return response
+
+    def before_request_main(self, rec, request):
+        add_metadata()
+        start = time.monotonic()
+        params = request_params(request)
+        try:
+            resolved = resolve(request.path_info)
+            params.update(resolved.kwargs)
+            normalized_path_info = normalize_path_info(request.path_info, resolved)
+        except Resolver404:
+            # If the request was for a bad path (e.g. when an app
+            # is testing 404 handling), resolving will fail.
+            normalized_path_info = None
+
+        call_event = HttpServerRequestEvent(
+            request_method=request.method,
+            path_info=request.path_info,
+            message_parameters=params,
+            normalized_path_info=normalized_path_info,
+            protocol=request.META["SERVER_PROTOCOL"],
+            headers=request.headers,
+        )
+        rec.add_event(call_event)
+
+        return start, call_event.id
+
+    def after_request_main(self, rec, response, start, call_event_id):
+        duration = time.monotonic() - start
+        return_event = HttpServerResponseEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            status_code=response.status_code,
+            headers=dict(response.items()),
+        )
+        rec.add_event(return_event)
 
     def recording(self, request):
         """Handle recording requests."""
@@ -276,60 +310,6 @@ class Middleware:
             )
 
         return HttpResponseBadRequest()
-
-    def record_request(self, recorders, request):
-        for rec in recorders:
-            if rec.enabled:
-                add_metadata()
-                start = time.monotonic()
-                params = request_params(request)
-                try:
-                    resolved = resolve(request.path_info)
-                    params.update(resolved.kwargs)
-                    normalized_path_info = normalize_path_info(
-                        request.path_info, resolved
-                    )
-                except Resolver404:
-                    # If the request was for a bad path (e.g. when an app
-                    # is testing 404 handling), resolving will fail.
-                    normalized_path_info = None
-
-                call_event = HttpServerRequestEvent(
-                    request_method=request.method,
-                    path_info=request.path_info,
-                    message_parameters=params,
-                    normalized_path_info=normalized_path_info,
-                    protocol=request.META["SERVER_PROTOCOL"],
-                    headers=request.headers,
-                )
-                rec.add_event(call_event)
-
-        try:
-            response = self.get_response(request)
-        except:
-            for rec in recorders:
-                if rec and rec.enabled:
-                    duration = time.monotonic() - start
-                    exception_event = ExceptionEvent(
-                        parent_id=call_event.id,
-                        elapsed=duration,
-                        exc_info=sys.exc_info(),
-                    )
-                    rec.add_event(exception_event)
-                raise
-
-        for rec in recorders:
-            if rec and rec.enabled:
-                duration = time.monotonic() - start
-                return_event = HttpServerResponseEvent(
-                    parent_id=call_event.id,
-                    elapsed=duration,
-                    status_code=response.status_code,
-                    headers=dict(response.items()),
-                )
-                rec.add_event(return_event)
-
-        return response
 
 
 def inject_middleware():

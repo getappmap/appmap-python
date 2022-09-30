@@ -3,13 +3,13 @@
 
 import concurrent.futures
 import json
+import multiprocessing
 import os
 import socket
 import subprocess
 import time
 from abc import abstractmethod
 from os.path import exists
-import multiprocessing
 
 import pytest
 import requests
@@ -349,17 +349,23 @@ class TestRecordRequests:
     @staticmethod
     @pytest.mark.appmap_enabled
     @pytest.mark.appmap_record_requests
-    def record_request(client, events, record_remote):  # pylint: disable=unused-argument
+    def record_request(
+        client, events, record_remote
+    ):  # pylint: disable=unused-argument
 
 
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
             # events when per-request recording is enabled
-            response = requests.post(TestRecordRequests.server_url() + "/_appmap/record")
+            response = requests.post(
+                TestRecordRequests.server_url() + "/_appmap/record"
+            )
             assert response.status_code == 200
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=multiprocessing.cpu_count()
+        ) as executor:
             # start all threads
             max_number_of_threads = 400
             future_to_request_number = {}
