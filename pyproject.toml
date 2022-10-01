@@ -88,8 +88,17 @@ appmap-agent-status = "appmap.command.appmap_agent_status:run"
 appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
 
 [tool.black]
-extend-exclude = "vendor"
+extend-exclude = '''
+/(
+  | vendor
+  | appmap/wrapt
+)/
+'''
 
 [tool.isort]
 profile = "black"
-extend_skip = "vendor"
+extend_skip = [
+  "vendor",
+  "appmap/wrapt"
+  ]
+
