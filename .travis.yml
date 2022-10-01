@@ -1,5 +1,8 @@
-language: python
-python: 3.9
+dist: jammy
+addons:
+  apt:
+    update: true
+    packages: [build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev]
 
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
 if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
@@ -11,17 +14,20 @@ env:
 - PYENV_ROOT="$HOME/.pyenv"
 
 install: |
+  set -e
   if [[ ! -d "$PYENV_ROOT/versions" ]]; then
     rmdir "$PYENV_ROOT"
     curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+    git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
   fi
   export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init -)"
+  eval "$(pyenv init --path)"
+  eval "$(pyenv virtualenv-init -)"
   pyenv update
-  git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
-  for v in {7..9}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
-  pyenv latest local 3.{7..9}
-  pip install --upgrade pip
-  pip install poetry tox
+  for v in {7..10}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
+  pyenv latest local 3.{7..10}
+  pip install --upgrade pip poetry tox
 
 
 cache:

@@ -286,6 +286,7 @@ class Recorder:
         if mod.__name__.startswith("appmap"):
             return
 
+        print("mod %s", mod)
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
             logger.debug("  filter_stack %s", cls.filter_stack)
@@ -355,7 +356,18 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
     if spec is not None:
         if getattr(spec.loader, "exec_module", None) is not None:
             loader = spec.loader
-            loader.exec_module = wrap_exec_module(loader.exec_module)
+            # This is kind of gross. As the comment linked to below describes, wrapt has trouble
+            # identifying methods decorated with @staticmethod. It offers two suggested fixes:
+            # update the class definition, or patch the function found in __dict__. We can't do the
+            # former, so do the latter instead.
+            #   https://github.com/GrahamDumpleton/wrapt/blob/68316bea668fd905a4acb21f37f12596d8c30d80/src/wrapt/wrappers.py#L691
+            #
+            # TODO: determine if we can use wrapt.wrap_function_wrapper to simplify this code
+            exec_module = inspect.getattr_static(loader, "exec_module")
+            if isinstance(exec_module, staticmethod):
+                loader.exec_module = wrap_exec_module(exec_module)
+            else:
+                loader.exec_module = wrap_exec_module(loader.exec_module)
         else:
             logger.debug("no exec_module for loader %r", spec.loader)
     return spec
