@@ -64,6 +64,6 @@ before_deploy:
 # provided through the build settings instead.
 deploy:
 - provider: script
-  script: semantic-release
+  script: bash ci/deploy.sh
   on:
     branch: master

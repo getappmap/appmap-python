@@ -286,7 +286,6 @@ class Recorder:
         if mod.__name__.startswith("appmap"):
             return
 
-        print("mod %s", mod)
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
             logger.debug("  filter_stack %s", cls.filter_stack)
