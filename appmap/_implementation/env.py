@@ -76,6 +76,10 @@ class Env(metaclass=_EnvMeta):
     def display_params(self):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
 
+    @property
+    def record_all_requests(self):
+        return self.get("APPMAP_RECORD_REQUESTS", "false").lower() == "true"
+
     def _configure_logging(self):
         log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
 

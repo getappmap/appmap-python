@@ -32,7 +32,7 @@ Clone the repo to begin development. Note that vendored dependencies are include
 submodules.
 
 ```shell
-% g clone --recurse-submodules https://github.com/applandinc/appmap-python.git
+% git clone --recurse-submodules https://github.com/applandinc/appmap-python.git
 Cloning into 'appmap-python'...
 remote: Enumerating objects: 167, done.
 remote: Counting objects: 100% (167/167), done.

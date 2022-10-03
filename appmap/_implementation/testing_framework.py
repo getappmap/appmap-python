@@ -1,14 +1,18 @@
 """Shared infrastructure for testing framework integration."""
 
-import os
 import re
 from contextlib import contextmanager
-from hashlib import sha256
-from tempfile import NamedTemporaryFile
 
 import inflection
 
-from appmap._implementation import configuration, env, generation, recording
+from appmap._implementation import (
+    configuration,
+    env,
+    generation,
+    recording,
+    web_framework,
+)
+from appmap._implementation.env import Env
 from appmap._implementation.utils import fqname
 
 from .metadata import Metadata
@@ -91,36 +95,6 @@ class FuncItem:
         return ret
 
 
-NAME_MAX = 255  # true for most filesystems
-HASH_LEN = 7  # arbitrary, but git proves it's a reasonable value
-APPMAP_SUFFIX = ".appmap.json"
-
-
-def name_hash(namepart):
-    """Returns the hex digits of the sha256 of the os.fsencode()d namepart."""
-    return sha256(os.fsencode(namepart)).hexdigest()
-
-
-def write_appmap(basedir, basename, contents):
-    """Write an appmap file into basedir.
-
-    Adds APPMAP_SUFFIX to basename; shortens the name if necessary.
-    Atomically replaces existing files. Creates the basedir if required.
-    """
-
-    if len(basename) > NAME_MAX - len(APPMAP_SUFFIX):
-        part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
-        basename = basename[:part] + "-" + name_hash(basename[part:])[:HASH_LEN]
-    filename = basename + APPMAP_SUFFIX
-
-    if not basedir.exists():
-        basedir.mkdir(parents=True, exist_ok=True)
-
-    with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
-        tmp.write(contents)
-    os.replace(tmp.name, basedir / filename)
-
-
 class session:
     def __init__(self, name, recorder_type, version=None):
         self.name = name
@@ -155,7 +129,9 @@ class session:
                 yield metadata
         finally:
             basedir = env.Env.current.output_dir / self.name
-            write_appmap(basedir, item.filename, generation.dump(rec, metadata))
+            web_framework.write_appmap(
+                basedir, item.filename, generation.dump(rec, metadata)
+            )
 
 
 @contextmanager

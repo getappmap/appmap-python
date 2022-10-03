@@ -22,7 +22,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation
+from appmap._implementation import generation, recording, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     ExceptionEvent,
@@ -30,9 +30,11 @@ from appmap._implementation.event import (
     HttpServerResponseEvent,
     ReturnEvent,
     SqlEvent,
+    _EventIds,
 )
 from appmap._implementation.instrument import is_instrumentation_disabled
 from appmap._implementation.recording import Recorder
+from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
 from ._implementation.metadata import Metadata
@@ -207,62 +209,85 @@ def normalize_path_info(path_info, resolved):
     return np
 
 
-class Middleware:
+class Middleware(AppmapMiddleware):
     def __init__(self, get_response):
         self.get_response = get_response
         self.recorder = Recorder()
+        self.record_url = "/_appmap/record"
 
     def __call__(self, request):
         if not Env.current.enabled:
             return self.get_response(request)
 
-        if request.path_info == "/_appmap/record":
+        if request.path_info == self.record_url:
             return self.recording(request)
-        if self.recorder.enabled:
-            add_metadata()
-            start = time.monotonic()
-            params = request_params(request)
-            try:
-                resolved = resolve(request.path_info)
-                params.update(resolved.kwargs)
-                normalized_path_info = normalize_path_info(request.path_info, resolved)
-            except Resolver404:
-                # If the request was for a bad path (e.g. when an app
-                # is testing 404 handling), resolving will fail.
-                normalized_path_info = None
 
-            call_event = HttpServerRequestEvent(
-                request_method=request.method,
-                path_info=request.path_info,
-                message_parameters=params,
-                normalized_path_info=normalized_path_info,
-                protocol=request.META["SERVER_PROTOCOL"],
-                headers=request.headers,
-            )
-            Recorder.add_event(call_event)
+        rec, start, call_event_id = self.before_request_hook(
+            request, request.path_info, self.record_url, self.recorder.enabled
+        )
 
         try:
             response = self.get_response(request)
         except:
-            if self.recorder.enabled:
+            if rec.enabled:
                 duration = time.monotonic() - start
                 exception_event = ExceptionEvent(
-                    parent_id=call_event.id, elapsed=duration, exc_info=sys.exc_info()
+                    parent_id=call_event_id,
+                    elapsed=duration,
+                    exc_info=sys.exc_info(),
                 )
-                Recorder.add_event(exception_event)
+                rec.add_event(exception_event)
             raise
 
-        if self.recorder.enabled:
-            duration = time.monotonic() - start
-            return_event = HttpServerResponseEvent(
-                parent_id=call_event.id,
-                elapsed=duration,
-                status_code=response.status_code,
-                headers=dict(response.items()),
-            )
-            Recorder.add_event(return_event)
+        self.after_request_hook(
+            request,
+            request.path_info,
+            self.record_url,
+            self.recorder.enabled,
+            request.method,
+            request.build_absolute_uri(),
+            response,
+            response,
+            start,
+            call_event_id,
+        )
 
         return response
+
+    def before_request_main(self, rec, request):
+        add_metadata()
+        start = time.monotonic()
+        params = request_params(request)
+        try:
+            resolved = resolve(request.path_info)
+            params.update(resolved.kwargs)
+            normalized_path_info = normalize_path_info(request.path_info, resolved)
+        except Resolver404:
+            # If the request was for a bad path (e.g. when an app
+            # is testing 404 handling), resolving will fail.
+            normalized_path_info = None
+
+        call_event = HttpServerRequestEvent(
+            request_method=request.method,
+            path_info=request.path_info,
+            message_parameters=params,
+            normalized_path_info=normalized_path_info,
+            protocol=request.META["SERVER_PROTOCOL"],
+            headers=request.headers,
+        )
+        rec.add_event(call_event)
+
+        return start, call_event.id
+
+    def after_request_main(self, rec, response, start, call_event_id):
+        duration = time.monotonic() - start
+        return_event = HttpServerResponseEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            status_code=response.status_code,
+            headers=dict(response.items()),
+        )
+        rec.add_event(return_event)
 
     def recording(self, request):
         """Handle recording requests."""

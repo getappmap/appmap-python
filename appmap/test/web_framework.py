@@ -1,9 +1,18 @@
 """Common tests for web frameworks such as django and flask."""
 # pylint: disable=missing-function-docstring
 
+import concurrent.futures
 import json
+import multiprocessing
+import os
+import socket
+import subprocess
+import time
+from abc import abstractmethod
+from os.path import exists
 
 import pytest
+import requests
 
 import appmap
 from appmap.test.helpers import DictIncluding
@@ -273,3 +282,146 @@ class TestRecording:
 
         res = client.delete("/_appmap/record")
         assert res.status_code == 404
+
+
+def exec_cmd(command):
+    p = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    output, errors = p.communicate()
+    return output.decode()
+
+
+def port_state(address, port):
+    ret = None
+    s = socket.socket()
+    try:
+        s.connect((address, port))
+        ret = "open"
+    except:
+        ret = "closed"
+        s.close()
+    return ret
+
+
+def wait_until_port_is(address, port, desired_state):
+    max_wait_seconds = 10
+    sleep_time = 0.1
+    max_count = 1 / sleep_time * max_wait_seconds
+    count = 0
+    # don't "while True" to not lock-up the testsuite if something goes wrong
+    while count < max_count:
+        current_state = port_state(address, port)
+        if current_state == desired_state:
+            break
+        else:
+            time.sleep(sleep_time)
+
+
+class TestRecordRequests:
+    """Common tests for per-requests recording (record requests.)"""
+
+    server_port = 8000
+
+    @abstractmethod
+    def server_start():
+        """
+        Start the webserver in the background. Don't block execution.
+        """
+
+    @abstractmethod
+    def server_stop():
+        """
+        Stop the webserver.
+        """
+
+    def server_url():
+        return "http://127.0.0.1:" + str(TestRecordRequests.server_port)
+
+    @staticmethod
+    def record_request_thread():
+        return requests.get(TestRecordRequests.server_url() + "/test")
+
+    @staticmethod
+    @pytest.mark.appmap_enabled
+    @pytest.mark.appmap_record_requests
+    def record_request(
+        client, events, record_remote
+    ):  # pylint: disable=unused-argument
+
+
+        if record_remote:
+            # when remote recording is enabled, this test also
+            # verifies the global recorder doesn't save duplicate
+            # events when per-request recording is enabled
+            response = requests.post(
+                TestRecordRequests.server_url() + "/_appmap/record"
+            )
+            assert response.status_code == 200
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=multiprocessing.cpu_count()
+        ) as executor:
+            # start all threads
+            max_number_of_threads = 400
+            future_to_request_number = {}
+            for n in range(max_number_of_threads):
+                future = executor.submit(TestRecordRequests.record_request_thread)
+                future_to_request_number[future] = n
+
+            # wait for all threads to complete
+            for future in concurrent.futures.as_completed(future_to_request_number):
+                try:
+                    response = future.result()
+                except Exception as e:
+                    print("%r generated an exception: %s" % (e))
+
+                assert response.status_code == 200
+
+                if hasattr(response, "content"):
+                    # django uses response.content
+                    assert response.content == b"testing"
+                else:
+                    # flask  uses response.get_data
+                    assert response.get_data() == b"testing"
+
+                if hasattr(response, "headers"):
+                    assert response.headers["AppMap-File-Name"]
+                    appmap_file_name = response.headers["AppMap-File-Name"]
+                else:
+                    # response.headers doesn't exist in Django 2.2
+                    assert response["AppMap-File-Name"]
+                    appmap_file_name = response["AppMap-File-Name"]
+                assert exists(appmap_file_name)
+                appmap_file_name_basename = appmap_file_name.split('/')[-1]
+                appmap_file_name_basename_part = '_'.join(appmap_file_name_basename.split('_')[2:])
+                assert appmap_file_name_basename_part == 'http_127_0_0_1_8000_test.appmap.json'
+
+                with open(appmap_file_name) as f:
+                    appmap = json.loads(f.read())
+
+                    # Every event should come from the same thread
+                    thread_ids = {
+                        event["thread_id"]: True for event in appmap["events"]
+                    }
+                    assert len(thread_ids) == 1
+
+                    # AppMap should contain only one request and response
+                    http_server_requests = [
+                        event["http_server_request"]
+                        for event in appmap["events"]
+                        if "http_server_request" in event
+                    ]
+                    http_server_responses = [
+                        event["http_server_response"]
+                        for event in appmap["events"]
+                        if "http_server_response" in event
+                    ]
+                    assert len(http_server_requests) == 1
+                    assert len(http_server_responses) == 1
+
+                os.remove(appmap_file_name)

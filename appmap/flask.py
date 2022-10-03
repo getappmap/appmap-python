@@ -1,4 +1,6 @@
+import datetime
 import json
+import os.path
 import time
 from functools import wraps
 
@@ -9,10 +11,11 @@ from flask import _app_ctx_stack, request
 from werkzeug.exceptions import BadRequest
 from werkzeug.routing import parse_rule
 
-from appmap._implementation import generation
+from appmap._implementation import generation, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recording import Recorder, Recording
+from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
 from ._implementation.metadata import Metadata
@@ -41,7 +44,7 @@ def request_params(req):
     return values_dict(params.lists())
 
 
-class AppmapFlask:
+class AppmapFlask(AppmapMiddleware):
     def __init__(self, app=None):
         self.app = app
         if app is not None:
@@ -100,48 +103,71 @@ class AppmapFlask:
         return json.loads(generation.dump(self.recording))
 
     def before_request(self):
-        if self.recording.is_running() and request.path != self.record_url:
-            Metadata.add_framework("flask", flask.__version__)
-            np = None
-            # See
-            # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213
-            # for a description of parse_rule.
-            if request.url_rule:
-                np = "".join(
-                    [
-                        f"{{{p}}}" if c else p
-                        for c, _, p in parse_rule(request.url_rule.rule)
-                    ]
-                )
-            call_event = HttpServerRequestEvent(
-                request_method=request.method,
-                path_info=request.path,
-                message_parameters=request_params(request),
-                normalized_path_info=np,
-                protocol=request.environ.get("SERVER_PROTOCOL"),
-                headers=request.headers,
-            )
-            Recorder.add_event(call_event)
+        if not Env.current.enabled:
+            return
 
-            appctx = _app_ctx_stack.top
-            appctx.appmap_request_event = call_event
-            appctx.appmap_request_start = time.monotonic()
+        rec, start, call_event_id = self.before_request_hook(
+            request, request.path, self.record_url, self.recording.is_running()
+        )
+
+    def before_request_main(self, rec, request):
+        Metadata.add_framework("flask", flask.__version__)
+        np = None
+        # See
+        # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213
+        # for a description of parse_rule.
+        if request.url_rule:
+            np = "".join(
+                [
+                    f"{{{p}}}" if c else p
+                    for c, _, p in parse_rule(request.url_rule.rule)
+                ]
+            )
+        call_event = HttpServerRequestEvent(
+            request_method=request.method,
+            path_info=request.path,
+            message_parameters=request_params(request),
+            normalized_path_info=np,
+            protocol=request.environ.get("SERVER_PROTOCOL"),
+            headers=request.headers,
+        )
+        rec.add_event(call_event)
+
+        appctx = _app_ctx_stack.top
+        appctx.appmap_request_event = call_event
+        appctx.appmap_request_start = time.monotonic()
+
+        return None, None
 
     def after_request(self, response):
-        if self.recording.is_running() and request.path != self.record_url:
-            appctx = _app_ctx_stack.top
-            parent_id = appctx.appmap_request_event.id
-            duration = time.monotonic() - appctx.appmap_request_start
+        if not Env.current.enabled:
+            return
 
-            return_event = HttpServerResponseEvent(
-                parent_id=parent_id,
-                elapsed=duration,
-                status_code=response.status_code,
-                headers=response.headers,
-            )
-            Recorder.add_event(return_event)
+        return self.after_request_hook(
+            request,
+            request.path,
+            self.record_url,
+            self.recording.is_running(),
+            request.method,
+            request.base_url,
+            response,
+            response.headers,
+            None,
+            None,
+        )
 
-        return response
+    def after_request_main(self, rec, response, start, call_event_id):
+        appctx = _app_ctx_stack.top
+        parent_id = appctx.appmap_request_event.id
+        duration = time.monotonic() - appctx.appmap_request_start
+
+        return_event = HttpServerResponseEvent(
+            parent_id=parent_id,
+            elapsed=duration,
+            status_code=response.status_code,
+            headers=response.headers,
+        )
+        rec.add_event(return_event)
 
 
 @patch_class(jinja2.Template)
