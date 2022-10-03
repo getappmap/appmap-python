@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/getappmap/appmap-python/compare/v1.8.0...v1.8.1) (2022-10-03)
+
+
+### Bug Fixes
+
+* 3.10 support, wrap exec_module properly ([f50007b](https://github.com/getappmap/appmap-python/commit/f50007b0b6beeaddc52ae43e4ed1146f5609d19d))
+
 # [1.8.0](https://github.com/getappmap/appmap-python/compare/v1.7.0...v1.8.0) (2022-09-27)
 
 
