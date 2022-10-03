@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/getappmap/appmap-python/compare/v1.8.1...v1.8.2) (2022-10-03)
+
+
+### Bug Fixes
+
+* remove some debugging ([6e03c7e](https://github.com/getappmap/appmap-python/commit/6e03c7ef056b187dd0304c832a37d3602e359029))
+
 ## [1.8.1](https://github.com/getappmap/appmap-python/compare/v1.8.0...v1.8.1) (2022-10-03)
 
 
