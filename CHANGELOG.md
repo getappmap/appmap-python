@@ -1,3 +1,16 @@
+# [1.9.0](https://github.com/getappmap/appmap-python/compare/v1.8.4...v1.9.0) (2022-10-03)
+
+
+### Bug Fixes
+
+* Create requests appmap filename in the same format as appmap-ruby. ([22df520](https://github.com/getappmap/appmap-python/commit/22df5201c21a74e983e239ca863fa167c9b823e3))
+* skip the test_record_request testcases until _EventIds stops producing duplicate ids. ([5a8b461](https://github.com/getappmap/appmap-python/commit/5a8b46168ea7a27f287323c4923ca8e5b78e4baa))
+
+
+### Features
+
+* when APPMAP_RECORD_REQUESTS is set record each request in a separate file ([cd2ef5c](https://github.com/getappmap/appmap-python/commit/cd2ef5ccd9a7704fed4f167333dda546ab56c2f6))
+
 ## [1.8.4](https://github.com/getappmap/appmap-python/compare/v1.8.3...v1.8.4) (2022-10-03)
 
 
