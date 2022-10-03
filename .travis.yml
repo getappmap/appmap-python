@@ -26,7 +26,7 @@ install: |
   eval "$(pyenv virtualenv-init -)"
   pyenv update
   for v in {7..10}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
-  pyenv latest local 3.{7..10}
+  pyenv latest local 3.9 3.{7,8,10}
   pip install --upgrade pip poetry tox
 
 
