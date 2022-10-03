@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/getappmap/appmap-python/compare/v1.8.3...v1.8.4) (2022-10-03)
+
+
+### Bug Fixes
+
+* set global python version for builds ([be59666](https://github.com/getappmap/appmap-python/commit/be59666114133186f281dc5619ea2478a8c34eea))
+
 ## [1.8.3](https://github.com/getappmap/appmap-python/compare/v1.8.2...v1.8.3) (2022-10-03)
 
 
