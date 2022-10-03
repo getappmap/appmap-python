@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/getappmap/appmap-python/compare/v1.8.2...v1.8.3) (2022-10-03)
+
+
+### Bug Fixes
+
+* update Travis config to use 3.9 ([505f9fa](https://github.com/getappmap/appmap-python/commit/505f9fa949be6e6810137acc69fb7737655be79c))
+
 ## [1.8.2](https://github.com/getappmap/appmap-python/compare/v1.8.1...v1.8.2) (2022-10-03)
 
 
