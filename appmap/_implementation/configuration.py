@@ -18,10 +18,8 @@ from yaml.parser import ParserError
 from ..labeling import presets as label_presets
 from . import utils
 from .env import Env
+from .importer import Filter, Importer
 from .instrument import instrument
-from .labels import LabelSet
-from .metadata import Metadata
-from .recording import Filter, FilterableCls, Recorder
 
 logger = logging.getLogger(__name__)
 
@@ -366,8 +364,8 @@ class BuiltinFilter(MatcherFilter):
 
 def initialize():
     Config().initialize()
-    Recorder.use_filter(BuiltinFilter)
-    Recorder.use_filter(ConfigFilter)
+    Importer.use_filter(BuiltinFilter)
+    Importer.use_filter(ConfigFilter)
 
 
 initialize()

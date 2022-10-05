@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 
 from appmap._implementation.event import ReturnEvent, SqlEvent
 from appmap._implementation.instrument import is_instrumentation_disabled
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 
 from ._implementation.metadata import Metadata
 

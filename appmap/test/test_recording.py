@@ -3,13 +3,12 @@
 
 import json
 import os
-import sys
 
 import pytest
 
 import appmap
 from appmap._implementation.event import Event
-from appmap._implementation.recording import Recorder, wrap_exec_module
+from appmap._implementation.recorder import Recorder
 
 from .normalize import normalize_appmap, remove_line_numbers
 
@@ -117,35 +116,10 @@ class TestRecordingWhenEnabled:
         assert evt.method_id == "modfunc"
 
 
-def test_exec_module_protection(monkeypatch):
-    """
-    Test that recording.wrap_exec_module properly protects against
-    rewrapping a wrapped exec_module function.  Repeatedly wrap
-    the function, up to the recursion limit, then call the wrapped
-    function.  If wrapping protection is working properly, there
-    won't be a problem.  If wrapping protection is broken, this
-    test will fail with a RecursionError.
-    """
-
-    def exec_module():
-        pass
-
-    def do_import(*args, **kwargs):  # pylint: disable=unused-argument
-        pass
-
-    monkeypatch.setattr(Recorder, "do_import", do_import)
-    f = exec_module
-    for _ in range(sys.getrecursionlimit()):
-        f = wrap_exec_module(f)
-
-    f()
-    assert True
-
-
 @pytest.mark.appmap_enabled
 @pytest.mark.usefixtures("with_data_dir")
 def test_static_cached(events):
-    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel
+    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel,import-error
         ExampleClass,
     )
 

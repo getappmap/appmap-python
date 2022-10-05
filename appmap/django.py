@@ -22,7 +22,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation, recording, web_framework
+from appmap._implementation import generation, recorder, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     ExceptionEvent,
@@ -33,7 +33,7 @@ from appmap._implementation.event import (
     _EventIds,
 )
 from appmap._implementation.instrument import is_instrumentation_disabled
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
@@ -114,7 +114,9 @@ def wrapped_execute(self, sql, params=None):
     """Directly execute the query if instrumentation is temporarily
     disabled, to avoid capturing queries not issued by the application."""
     if is_instrumentation_disabled():
-        return super().execute(sql, params)
+        # fmt: off
+        return super().execute(sql, params) # pyright: ignore (seems like [superCallZeroArgForm] should suppress this, it doesn't)
+        # fmt on
     return original_execute(self, sql, params)
 
 
@@ -210,6 +212,18 @@ def normalize_path_info(path_info, resolved):
 
 
 class Middleware(AppmapMiddleware):
+    """
+    Django middleware to record HTTP requests. Add it to `MIDDLEWARE` in your application's
+    `settings.py`.
+
+    **NB**: This middleware isn't async capable, so the default value of `async_capable` (False) is
+    correct. If you add it to the middleware stack for an async app, Django will detect this and
+    ensure that requests get handled in separate threads.
+
+    More discussion about sync vs async middleware can be found in the Django
+    doc: https://docs.djangoproject.com/en/4.1/topics/http/middleware/#async-middleware.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
         self.recorder = Recorder()

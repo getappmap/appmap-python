@@ -6,7 +6,7 @@ from operator import itemgetter
 import pytest
 
 import appmap._implementation
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 
 
 def normalize_path(path):

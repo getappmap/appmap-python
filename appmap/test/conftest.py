@@ -7,7 +7,7 @@ import yaml
 import appmap._implementation
 from appmap._implementation import utils
 from appmap._implementation.env import Env
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 
 
 def _data_dir(pytestconfig):

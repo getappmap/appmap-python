@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from . import event
 from .event import CallEvent
-from .recording import Recorder
+from .recorder import Recorder
 from .utils import appmap_tls
 
 logger = logging.getLogger(__name__)

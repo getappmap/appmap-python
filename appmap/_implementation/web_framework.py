@@ -5,14 +5,14 @@ import os
 import os.path
 import re
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
 from appmap._implementation.event import Event, ReturnEvent, _EventIds, describe_value
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 from appmap._implementation.utils import root_relative_path, scenario_filename
 
 
@@ -129,7 +129,7 @@ def create_appmap_file(
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
 
 
-class AppmapMiddleware:
+class AppmapMiddleware(ABC):
     def before_request_hook(
         self, request, request_path, record_url, recording_is_running
     ):
@@ -164,7 +164,7 @@ class AppmapMiddleware:
 
     @abstractmethod
     def before_request_main(self, rec):
-        raise NotImplementedError("Must override before_request_main")
+        pass
 
     def after_request_hook(
         self,
@@ -222,4 +222,4 @@ class AppmapMiddleware:
 
     @abstractmethod
     def after_request_main(self, rec, response, start, call_event_id):
-        raise NotImplementedError("Must override after_request_main")
+        pass
