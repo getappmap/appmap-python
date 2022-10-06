@@ -75,7 +75,7 @@ _InstrumentedFn = namedtuple(
 
 def call_instrumented(f, instance, args, kwargs):
     if (
-        (not Recorder().enabled)
+        (not Recorder.get_enabled())
         or is_instrumentation_disabled()
         or track_shallow(f.instrumented_fn)
     ):
@@ -85,8 +85,8 @@ def call_instrumented(f, instance, args, kwargs):
         logger.debug("%s args %s kwargs %s", f.fn, args, kwargs)
         params = CallEvent.set_params(f.params, instance, args, kwargs)
         call_event = f.make_call_event(parameters=params)
-    call_event_id = call_event.id
     Recorder.add_event(call_event)
+    call_event_id = call_event.id
     start_time = time.time()
     try:
         ret = f.fn(*args, **kwargs)

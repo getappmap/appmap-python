@@ -64,14 +64,14 @@ class HTTPConnectionPatch:
         if "headers" in request:
             request["headers"] = values_dict(request["headers"].items())
 
-        recorder = Recorder()
-        if recorder.enabled:
+        enabled = Recorder.get_enabled()
+        if enabled:
             Recorder.add_event(event)
 
         start = time.monotonic()
         response = orig(self)
 
-        if recorder.enabled:
+        if enabled:
             Recorder.add_event(
                 HttpClientResponseEvent(
                     response.status,

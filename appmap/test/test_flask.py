@@ -95,10 +95,8 @@ APPMAP=true APPMAP_RECORD_REQUESTS=true FLASK_DEBUG=1 FLASK_APP=app.py flask run
         )
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
 
-    @pytest.mark.skipif(True, reason="don't pass until _EventIds stops producing duplicate ids")
     def test_record_request_no_remote(client, events):
         TestRecordRequests.record_request(client, events, False)
 
-    @pytest.mark.skipif(True, reason="don't pass until _EventIds stops producing duplicate ids")
     def test_record_request_and_remote(client, events):
         TestRecordRequests.record_request(client, events, True)

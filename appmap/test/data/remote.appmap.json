@@ -9,7 +9,7 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
-            "id": 2,
+            "id": 1,
             "thread_id": 1
         },
         {
@@ -19,8 +19,8 @@
                 "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
-            "id": 3,
-            "parent_id": 2,
+            "id": 2,
+            "parent_id": 1,
             "thread_id": 1
         },
         {
@@ -31,7 +31,7 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
-            "id": 4,
+            "id": 3,
             "thread_id": 1
         },
         {
@@ -41,8 +41,8 @@
                 "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
-            "id": 5,
-            "parent_id": 4,
+            "id": 4,
+            "parent_id": 3,
             "thread_id": 1
         }
     ],

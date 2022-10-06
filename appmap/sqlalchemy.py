@@ -17,12 +17,11 @@ from ._implementation.metadata import Metadata
 # pylint: disable=too-many-arguments,unused-argument
 def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
     """Capture SQL query callinto appmap."""
-    recorder = Recorder()
     if is_instrumentation_disabled():
         # We must be in the middle of fetching object representation.
         # Don't record this query in the appmap.
         pass
-    elif recorder.enabled:
+    elif Recorder.get_enabled():
         Metadata.add_framework("SQLAlchemy", sqlalchemy.__version__)
         if executemany:
             # Sometimes the same query is executed with different parameter sets.
@@ -50,12 +49,11 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
 # pylint: disable=too-many-arguments,unused-argument
 def capture_sql(conn, cursor, statement, parameters, context, executemany):
     """Capture SQL query return into appmap."""
-    recorder = Recorder()
     if is_instrumentation_disabled():
         # We must be in the middle of fetching object representation.
         # Don't record this query in the appmap.
         pass
-    elif recorder.enabled:
+    elif Recorder.get_enabled():
         stop = time.monotonic()
         duration = stop - context.appmap["start_time"]
         return_event = ReturnEvent(

@@ -18,11 +18,10 @@ class Recording:
         self.exit_hook = exit_hook
 
     def start(self):
-
         if not Env.current.enabled:
             return
 
-        r = Recorder()
+        r = Recorder.get_current()
         r.clear()
         r.start_recording()
 
@@ -30,13 +29,13 @@ class Recording:
         if not Env.current.enabled:
             return False
 
-        self.events += Recorder().stop_recording()
+        self.events += Recorder.stop_recording()
 
     def is_running(self):
         if not Env.current.enabled:
             return False
 
-        return Recorder().enabled
+        return Recorder.get_enabled()
 
     def __enter__(self):
         self.start()

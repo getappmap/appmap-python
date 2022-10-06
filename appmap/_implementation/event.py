@@ -6,6 +6,7 @@ from inspect import Parameter, Signature
 from itertools import chain
 
 from .env import Env
+from .recorder import Recorder
 from .utils import (
     FnType,
     appmap_tls,
@@ -19,15 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class _EventIds:
-    id = 1
-    lock = threading.Lock()
-
-    @classmethod
-    def next_id(cls):
-        with cls.lock:
-            cls.id += 1
-            return cls.id
-
     # The identifiers returned by threading.get_ident() aren't
     # guaranteed to be unique: they may be recycled after the thread
     # exits. We need a unique id, so we'll manage it ourselves.
@@ -86,7 +78,7 @@ class Event:
     __slots__ = ["id", "event", "thread_id"]
 
     def __init__(self, event):
-        self.id = _EventIds.next_id()
+        self.id = Recorder.get_current().next_event_id()
         self.event = event
         self.thread_id = _EventIds.get_thread_id()
 

@@ -67,7 +67,7 @@ def add_metadata():
 
 class ExecuteWrapper:
     def __init__(self):
-        self.recorder = Recorder()
+        self.recorder = Recorder.get_current()
 
     def __call__(self, execute, sql, params, many, context):
         start = time.monotonic()
@@ -78,7 +78,7 @@ class ExecuteWrapper:
                 # We must be in the middle of fetching object representation.
                 # Don't record this query in the appmap.
                 pass
-            elif self.recorder.enabled:
+            elif self.recorder.get_enabled():
                 add_metadata()
                 stop = time.monotonic()
                 duration = stop - start
@@ -226,7 +226,7 @@ class Middleware(AppmapMiddleware):
 
     def __init__(self, get_response):
         self.get_response = get_response
-        self.recorder = Recorder()
+        self.recorder = Recorder.get_current()
         self.record_url = "/_appmap/record"
 
     def __call__(self, request):
@@ -237,13 +237,13 @@ class Middleware(AppmapMiddleware):
             return self.recording(request)
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path_info, self.record_url, self.recorder.enabled
+            request, request.path_info, self.record_url, self.recorder.get_enabled()
         )
 
         try:
             response = self.get_response(request)
         except:
-            if rec.enabled:
+            if rec.get_enabled():
                 duration = time.monotonic() - start
                 exception_event = ExceptionEvent(
                     parent_id=call_event_id,
@@ -257,7 +257,7 @@ class Middleware(AppmapMiddleware):
             request,
             request.path_info,
             self.record_url,
-            self.recorder.enabled,
+            self.recorder.get_enabled(),
             request.method,
             request.build_absolute_uri(),
             response,
@@ -306,16 +306,15 @@ class Middleware(AppmapMiddleware):
     def recording(self, request):
         """Handle recording requests."""
         if request.method == "GET":
-            return JsonResponse({"enabled": self.recorder.enabled})
+            return JsonResponse({"enabled": self.recorder.get_enabled()})
         if request.method == "POST":
-            if self.recorder.enabled:
+            if self.recorder.get_enabled():
                 return HttpResponse("Recording is already in progress", status=409)
-            self.recorder.clear()
             self.recorder.start_recording()
             return HttpResponse()
 
         if request.method == "DELETE":
-            if not self.recorder.enabled:
+            if not self.recorder.get_enabled():
                 return HttpResponse("No recording is in progress", status=404)
 
             self.recorder.stop_recording()
