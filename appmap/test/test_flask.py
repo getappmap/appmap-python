@@ -77,7 +77,7 @@ class TestRecordRequestsFlask(TestRecordRequests):
 export PYTHONPATH=`pwd`
 
 cd appmap/test/data/flask/
-APPMAP=true APPMAP_RECORD_REQUESTS=true FLASK_DEBUG=1 FLASK_APP=app.py flask run -p """
+APPMAP=true APPMAP_RECORD_REQUESTS=true APPMAP_OUTPUT_DIR=/tmp FLASK_DEBUG=1 FLASK_APP=app.py flask run -p """
             + str(TestRecordRequests.server_port)
         )
 
