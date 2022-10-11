@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/getappmap/appmap-python/compare/v1.9.0...v1.9.1) (2022-10-11)
+
+
+### Bug Fixes
+
+* make sure event ids aren't duplicated ([4404fb0](https://github.com/getappmap/appmap-python/commit/4404fb004639b33c5be579387137d566c99af631))
+
 # [1.9.0](https://github.com/getappmap/appmap-python/compare/v1.8.4...v1.9.0) (2022-10-03)
 
 
