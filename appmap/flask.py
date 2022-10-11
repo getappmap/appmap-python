@@ -54,30 +54,34 @@ class AppmapFlask(AppmapMiddleware):
             self.init_app(app)
 
     def init_app(self, app):
-        self.recording = Recording()
+        if self.should_record():
+            # it may record requests but not remote (APPMAP=false)
+            self.recording = Recording()
 
-        # print('in init_app')
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_get",
-            view_func=self.record_get,
-            methods=["GET"],
-        )
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_post",
-            view_func=self.record_post,
-            methods=["POST"],
-        )
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_delete",
-            view_func=self.record_delete,
-            methods=["DELETE"],
-        )
+        if Env.current.enabled:
+            # the remote recording routes are enabled only if APPMAP=true
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_get",
+                view_func=self.record_get,
+                methods=["GET"],
+            )
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_post",
+                view_func=self.record_post,
+                methods=["POST"],
+            )
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_delete",
+                view_func=self.record_delete,
+                methods=["DELETE"],
+            )
 
-        app.before_request(self.before_request)
-        app.after_request(self.after_request)
+        if DetectEnabled.should_enable("requests"):
+            app.before_request(self.before_request)
+            app.after_request(self.after_request)
 
     def record_get(self):
         if not self.should_record():
