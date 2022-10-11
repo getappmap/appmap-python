@@ -114,10 +114,6 @@ cd appmap/test/data/flask/
         TestRecordRequests.record_request(client, events, False)
         TestRecordRequestsFlask.server_stop()
 
-    def test_record_request_appmap_not_enabled_requests_enabled_and_remote(
-        client, events
-    ):
-        TestRecordRequestsFlask.server_stop()  # ensure it's not running
-        TestRecordRequestsFlask.server_start("APPMAP_RECORD_REQUESTS=true")
-        TestRecordRequests.record_request(client, events, True)
-        TestRecordRequestsFlask.server_stop()
+    # it's not possible to test for
+    # appmap_not_enabled_requests_enabled_and_remote because when
+    # APPMAP=false the routes for remote recording are disabled.

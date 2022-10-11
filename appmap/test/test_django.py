@@ -255,10 +255,6 @@ cd appmap/test/data/django/
         TestRecordRequests.record_request(client, events, False)
         TestRecordRequestsDjango.server_stop()
 
-    def test_record_request_appmap_not_enabled_requests_enabled_and_remote(
-        client, events
-    ):
-        TestRecordRequestsDjango.server_stop()  # ensure it's not running
-        TestRecordRequestsDjango.server_start("APPMAP_RECORD_REQUESTS=true")
-        TestRecordRequests.record_request(client, events, True)
-        TestRecordRequestsDjango.server_stop()
+    # it's not possible to test for
+    # appmap_not_enabled_requests_enabled_and_remote because when
+    # APPMAP=false the routes for remote recording are disabled.
