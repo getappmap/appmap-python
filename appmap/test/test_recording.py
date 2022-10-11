@@ -3,13 +3,13 @@
 
 import json
 import os
-import sys
+from threading import Thread
 
 import pytest
 
 import appmap
 from appmap._implementation.event import Event
-from appmap._implementation.recording import Recorder, wrap_exec_module
+from appmap._implementation.recorder import Recorder, ThreadRecorder
 
 from .normalize import normalize_appmap, remove_line_numbers
 
@@ -18,7 +18,8 @@ from .normalize import normalize_appmap, remove_line_numbers
 @pytest.mark.usefixtures("with_data_dir")
 class TestRecordingWhenEnabled:
     def test_recording_works(self, with_data_dir):
-        with open(os.path.join(with_data_dir, "expected.appmap.json")) as f:
+        expected_path = os.path.join(with_data_dir, "expected.appmap.json")
+        with open(expected_path) as f:
             expected_appmap = json.load(f)
 
         r = appmap.Recording()
@@ -38,7 +39,9 @@ class TestRecordingWhenEnabled:
             ExampleClass.call_yaml()
 
         generated_appmap = normalize_appmap(appmap.generation.dump(r))
-        assert remove_line_numbers(generated_appmap) == expected_appmap
+        assert (
+            remove_line_numbers(generated_appmap) == expected_appmap
+        ), f"expected path {expected_path}"
 
     def test_recording_clears(self):
         from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
@@ -117,35 +120,10 @@ class TestRecordingWhenEnabled:
         assert evt.method_id == "modfunc"
 
 
-def test_exec_module_protection(monkeypatch):
-    """
-    Test that recording.wrap_exec_module properly protects against
-    rewrapping a wrapped exec_module function.  Repeatedly wrap
-    the function, up to the recursion limit, then call the wrapped
-    function.  If wrapping protection is working properly, there
-    won't be a problem.  If wrapping protection is broken, this
-    test will fail with a RecursionError.
-    """
-
-    def exec_module():
-        pass
-
-    def do_import(*args, **kwargs):  # pylint: disable=unused-argument
-        pass
-
-    monkeypatch.setattr(Recorder, "do_import", do_import)
-    f = exec_module
-    for _ in range(sys.getrecursionlimit()):
-        f = wrap_exec_module(f)
-
-    f()
-    assert True
-
-
 @pytest.mark.appmap_enabled
 @pytest.mark.usefixtures("with_data_dir")
 def test_static_cached(events):
-    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel
+    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel,import-error
         ExampleClass,
     )
 
@@ -158,32 +136,43 @@ def test_static_cached(events):
 
 class TestRecordingPerThread:
     def test_default_thread(self):
-        rec = Recorder()
-        evt = Event({id: 1})
+        rec = Recorder.get_current()
+        evt = Event({})
         rec.add_event(evt)
         actual = rec.events
         assert len(actual) == 1
+        assert actual[0].id == 1
 
     def test_explicit_thread(self):
-        rec_default = Recorder()
-        rec2 = Recorder(2)
-        rec3 = Recorder(3)
-        evt2 = Event({})
-        evt2.thread_id = 2
-        evt3 = Event({})
-        evt3.thread_id = 3
+        thread_count = 100
+        rec_default = Recorder.get_current()
 
-        # Add them to the default recorder, since that's what the instrumented code does.
-        rec_default.add_event(evt2)
-        rec_default.add_event(evt3)
+        recorders = {}
 
+        def add_event(name):
+            r = ThreadRecorder()
+            Recorder.set_current(r)
+            r.add_event(Event({"name": name}))
+            recorders[name] = r
+
+        threads = [
+            Thread(target=add_event, args=(f"thread{i}",)) for i in range(thread_count)
+        ]
+        for _, t in enumerate(threads):
+            t.start()
+        for _, t in enumerate(threads):
+            t.join()
+
+        # Each thread should have gotten a recorder
+        assert len(recorders) == thread_count
+
+        # All events should show up in the global recorder
         default_events = rec_default.events
-        assert len(default_events) == 2
+        assert len(default_events) == thread_count
 
-        rec2_events = rec2.events
-        assert len(rec2_events) == 1
-        assert rec2_events[0].thread_id == 2
-
-        rec3_events = rec3.events
-        assert len(rec3_events) == 1
-        assert rec3_events[0].thread_id == 3
+        # Each event should be added as the first event to the correct recorder
+        for n in range(thread_count):
+            events = recorders[f"thread{n}"].events
+            assert len(events) == 1
+            assert events[0].id == 1
+            assert events[0].event["name"] == f"thread{n}"

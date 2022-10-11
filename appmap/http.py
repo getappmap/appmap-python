@@ -9,7 +9,7 @@ from http.client import HTTPConnection
 from urllib.parse import parse_qs, urlsplit
 
 from ._implementation.event import HttpClientRequestEvent, HttpClientResponseEvent
-from ._implementation.recording import Recorder
+from ._implementation.recorder import Recorder
 from ._implementation.utils import patch_class, values_dict
 
 
@@ -64,14 +64,14 @@ class HTTPConnectionPatch:
         if "headers" in request:
             request["headers"] = values_dict(request["headers"].items())
 
-        recorder = Recorder()
-        if recorder.enabled:
+        enabled = Recorder.get_enabled()
+        if enabled:
             Recorder.add_event(event)
 
         start = time.monotonic()
         response = orig(self)
 
-        if recorder.enabled:
+        if enabled:
             Recorder.add_event(
                 HttpClientResponseEvent(
                     response.status,

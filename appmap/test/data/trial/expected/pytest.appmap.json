@@ -37,7 +37,7 @@
         "value": "<test.test_deferred.TestDeferred testMethod=test_hello_world>"
       },
       "parameters": [],
-      "id": 2,
+      "id": 1,
       "event": "call",
       "thread_id": 1
     },
@@ -46,8 +46,8 @@
         "class": "twisted.internet.defer.Deferred",
         "value": "<Deferred at 0xabcdef>"
       },
-      "parent_id": 2,
-      "id": 3,
+      "parent_id": 1,
+      "id": 2,
       "event": "return",
       "thread_id": 1
     }

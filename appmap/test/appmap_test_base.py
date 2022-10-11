@@ -6,7 +6,7 @@ from operator import itemgetter
 import pytest
 
 import appmap._implementation
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 
 
 def normalize_path(path):
@@ -24,13 +24,10 @@ class AppMapTestBase:
     @staticmethod
     @pytest.fixture
     def events():
-        """Enables appmap recording and allows examining events."""
-        rec = Recorder()
-        rec.events.clear()
-        rec.enabled = True
-        yield rec.events
-        rec.enabled = False
-        rec.events.clear()
+        rec = Recorder.get_current()
+        rec.clear()
+        rec._enabled = True
+        return rec.events
 
     @staticmethod
     def normalize_git(git):

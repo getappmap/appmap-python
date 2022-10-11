@@ -12,7 +12,7 @@ import appmap._implementation
 import appmap._implementation.env as impl_env
 from appmap._implementation.configuration import Config, ConfigFilter
 from appmap._implementation.env import Env
-from appmap._implementation.recording import Filterable, NullFilter
+from appmap._implementation.importer import Filterable, NullFilter
 
 
 def test_can_be_enabled():

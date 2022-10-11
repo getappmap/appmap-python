@@ -14,7 +14,8 @@ from werkzeug.routing import parse_rule
 from appmap._implementation import generation, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
-from appmap._implementation.recording import Recorder, Recording
+from appmap._implementation.recorder import Recorder
+from appmap._implementation.recording import Recording
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 

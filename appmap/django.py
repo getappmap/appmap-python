@@ -22,7 +22,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation, recording, web_framework
+from appmap._implementation import generation, recorder, web_framework
 from appmap._implementation.env import Env
 from appmap._implementation.event import (
     ExceptionEvent,
@@ -33,7 +33,7 @@ from appmap._implementation.event import (
     _EventIds,
 )
 from appmap._implementation.instrument import is_instrumentation_disabled
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
@@ -67,7 +67,7 @@ def add_metadata():
 
 class ExecuteWrapper:
     def __init__(self):
-        self.recorder = Recorder()
+        self.recorder = Recorder.get_current()
 
     def __call__(self, execute, sql, params, many, context):
         start = time.monotonic()
@@ -78,7 +78,7 @@ class ExecuteWrapper:
                 # We must be in the middle of fetching object representation.
                 # Don't record this query in the appmap.
                 pass
-            elif self.recorder.enabled:
+            elif self.recorder.get_enabled():
                 add_metadata()
                 stop = time.monotonic()
                 duration = stop - start
@@ -114,7 +114,9 @@ def wrapped_execute(self, sql, params=None):
     """Directly execute the query if instrumentation is temporarily
     disabled, to avoid capturing queries not issued by the application."""
     if is_instrumentation_disabled():
-        return super().execute(sql, params)
+        # fmt: off
+        return super().execute(sql, params) # pyright: ignore (seems like [superCallZeroArgForm] should suppress this, it doesn't)
+        # fmt on
     return original_execute(self, sql, params)
 
 
@@ -210,9 +212,21 @@ def normalize_path_info(path_info, resolved):
 
 
 class Middleware(AppmapMiddleware):
+    """
+    Django middleware to record HTTP requests. Add it to `MIDDLEWARE` in your application's
+    `settings.py`.
+
+    **NB**: This middleware isn't async capable, so the default value of `async_capable` (False) is
+    correct. If you add it to the middleware stack for an async app, Django will detect this and
+    ensure that requests get handled in separate threads.
+
+    More discussion about sync vs async middleware can be found in the Django
+    doc: https://docs.djangoproject.com/en/4.1/topics/http/middleware/#async-middleware.
+    """
+
     def __init__(self, get_response):
         self.get_response = get_response
-        self.recorder = Recorder()
+        self.recorder = Recorder.get_current()
         self.record_url = "/_appmap/record"
 
     def __call__(self, request):
@@ -223,13 +237,13 @@ class Middleware(AppmapMiddleware):
             return self.recording(request)
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path_info, self.record_url, self.recorder.enabled
+            request, request.path_info, self.record_url, self.recorder.get_enabled()
         )
 
         try:
             response = self.get_response(request)
         except:
-            if rec.enabled:
+            if rec.get_enabled():
                 duration = time.monotonic() - start
                 exception_event = ExceptionEvent(
                     parent_id=call_event_id,
@@ -243,7 +257,7 @@ class Middleware(AppmapMiddleware):
             request,
             request.path_info,
             self.record_url,
-            self.recorder.enabled,
+            self.recorder.get_enabled(),
             request.method,
             request.build_absolute_uri(),
             response,
@@ -292,16 +306,15 @@ class Middleware(AppmapMiddleware):
     def recording(self, request):
         """Handle recording requests."""
         if request.method == "GET":
-            return JsonResponse({"enabled": self.recorder.enabled})
+            return JsonResponse({"enabled": self.recorder.get_enabled()})
         if request.method == "POST":
-            if self.recorder.enabled:
+            if self.recorder.get_enabled():
                 return HttpResponse("Recording is already in progress", status=409)
-            self.recorder.clear()
             self.recorder.start_recording()
             return HttpResponse()
 
         if request.method == "DELETE":
-            if not self.recorder.enabled:
+            if not self.recorder.get_enabled():
                 return HttpResponse("No recording is in progress", status=404)
 
             self.recorder.stop_recording()

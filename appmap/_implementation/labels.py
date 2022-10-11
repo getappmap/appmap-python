@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Union
 
-from .recording import Filterable
+from .importer import Filterable
 
 
 class labels:

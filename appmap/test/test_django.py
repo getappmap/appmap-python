@@ -210,7 +210,7 @@ class TestRecordRequestsDjango(TestRecordRequests):
 export PYTHONPATH=`pwd`
 
 cd appmap/test/data/django/
-APPMAP=true APPMAP_RECORD_REQUESTS=true python manage.py runserver 127.0.0.1:"""
+APPMAP=true APPMAP_RECORD_REQUESTS=true APPMAP_OUTPUT_DIR=/tmp python manage.py runserver 127.0.0.1:"""
             + str(TestRecordRequests.server_port)
         )
 
@@ -228,10 +228,8 @@ APPMAP=true APPMAP_RECORD_REQUESTS=true python manage.py runserver 127.0.0.1:"""
         )
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
 
-    @pytest.mark.skipif(True, reason="don't pass until _EventIds stops producing duplicate ids")
     def test_record_request_no_remote(client, events):
         TestRecordRequests.record_request(client, events, False)
 
-    @pytest.mark.skipif(True, reason="don't pass until _EventIds stops producing duplicate ids")
     def test_record_request_and_remote(client, events):
         TestRecordRequests.record_request(client, events, True)

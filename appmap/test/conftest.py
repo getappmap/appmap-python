@@ -7,7 +7,7 @@ import yaml
 import appmap._implementation
 from appmap._implementation import utils
 from appmap._implementation.env import Env
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder
 
 
 def _data_dir(pytestconfig):
@@ -27,11 +27,11 @@ def fixture_with_data_dir(data_dir, monkeypatch):
 
 @pytest.fixture
 def events():
-    rec = Recorder()
+    rec = Recorder.get_current()
     rec.clear()
-    rec.enabled = True
+    rec._enabled = True
     yield rec.events
-    rec.enabled = False
+    rec._enabled = False
     rec.clear()
 
 

@@ -5,14 +5,9 @@ from contextlib import contextmanager
 
 import inflection
 
-from appmap._implementation import (
-    configuration,
-    env,
-    generation,
-    recording,
-    web_framework,
-)
+from appmap._implementation import configuration, env, generation, web_framework
 from appmap._implementation.env import Env
+from appmap._implementation.recording import Recording
 from appmap._implementation.utils import fqname
 
 from .metadata import Metadata
@@ -123,7 +118,7 @@ class session:
             }
         )
 
-        rec = recording.Recording()
+        rec = Recording()
         try:
             with rec:
                 yield metadata

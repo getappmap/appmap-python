@@ -275,10 +275,13 @@ class TestRecording:
         data = res.data if hasattr(res, "data") else res.content
         generated_appmap = normalize_appmap(data)
 
-        with open(data_dir / "remote.appmap.json") as expected:
+        expected_path = data_dir / "remote.appmap.json"
+        with open(expected_path) as expected:
             expected_appmap = json.load(expected)
 
-        assert generated_appmap == expected_appmap
+        assert (
+            generated_appmap == expected_appmap
+        ), f"expected appmap path {expected_path}"
 
         res = client.delete("/_appmap/record")
         assert res.status_code == 404
@@ -353,7 +356,6 @@ class TestRecordRequests:
         client, events, record_remote
     ):  # pylint: disable=unused-argument
 
-
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
@@ -397,9 +399,14 @@ class TestRecordRequests:
                     assert response["AppMap-File-Name"]
                     appmap_file_name = response["AppMap-File-Name"]
                 assert exists(appmap_file_name)
-                appmap_file_name_basename = appmap_file_name.split('/')[-1]
-                appmap_file_name_basename_part = '_'.join(appmap_file_name_basename.split('_')[2:])
-                assert appmap_file_name_basename_part == 'http_127_0_0_1_8000_test.appmap.json'
+                appmap_file_name_basename = appmap_file_name.split("/")[-1]
+                appmap_file_name_basename_part = "_".join(
+                    appmap_file_name_basename.split("_")[2:]
+                )
+                assert (
+                    appmap_file_name_basename_part
+                    == "http_127_0_0_1_8000_test.appmap.json"
+                )
 
                 with open(appmap_file_name) as f:
                     appmap = json.loads(f.read())

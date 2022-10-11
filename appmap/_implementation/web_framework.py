@@ -5,14 +5,14 @@ import os
 import os.path
 import re
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
 from appmap._implementation import generation
 from appmap._implementation.env import Env
 from appmap._implementation.event import Event, ReturnEvent, _EventIds, describe_value
-from appmap._implementation.recording import Recorder
+from appmap._implementation.recorder import Recorder, ThreadRecorder
 from appmap._implementation.utils import root_relative_path, scenario_filename
 
 
@@ -54,15 +54,15 @@ class TemplateHandler:  # pylint: disable=too-few-public-methods
         If recording is enabled, adds appropriate TemplateEvent
         and ReturnEvent.
         """
-        rec = Recorder()
-        if rec.enabled:
+        rec = Recorder.get_current()
+        if rec.get_enabled():
             start = time.monotonic()
             call_event = TemplateEvent(self.filename, self)  # pylint: disable=no-member
             Recorder.add_event(call_event)
         try:
             return orig(self, *args, **kwargs)
         finally:
-            if rec.enabled:
+            if rec.get_enabled():
                 Recorder.add_event(ReturnEvent(call_event.id, time.monotonic() - start))
 
 
@@ -129,7 +129,7 @@ def create_appmap_file(
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
 
 
-class AppmapMiddleware:
+class AppmapMiddleware(ABC):
     def before_request_hook(
         self, request, request_path, record_url, recording_is_running
     ):
@@ -147,24 +147,21 @@ class AppmapMiddleware:
             # c) both remote and requests; there are multiple active recorders.
             if not Env.current.record_all_requests and recording_is_running:
                 # a)
-                rec = Recorder()
+                rec = Recorder.get_current()
             else:
                 # b) or c)
-                rec = Recorder(_EventIds.get_thread_id())
+                rec = ThreadRecorder()
+                Recorder.set_current(rec)
                 rec.start_recording()
-                # Each time an event is added for a thread_id it's also
-                # added to the global Recorder().  So don't add the event
-                # to the global Recorder() explicitly because that would
-                # add the event in it twice.
 
-            if rec.enabled:
+            if rec.get_enabled():
                 start, call_event_id = self.before_request_main(rec, request)
 
         return rec, start, call_event_id
 
     @abstractmethod
     def before_request_main(self, rec):
-        raise NotImplementedError("Must override before_request_main")
+        pass
 
     def after_request_hook(
         self,
@@ -191,18 +188,18 @@ class AppmapMiddleware:
             # c) both remote and requests; there are multiple active recorders.
             if not Env.current.record_all_requests and recording_is_running:
                 # a)
-                rec = Recorder()
-                if rec.enabled:
+                rec = Recorder.get_current()
+                if rec.get_enabled():
                     self.after_request_main(rec, response, start, call_event_id)
             else:
                 # b) or c)
-                rec = Recorder(_EventIds.get_thread_id())
+                rec = Recorder.get_current()
                 # Each time an event is added for a thread_id it's also
                 # added to the global Recorder().  So don't add the event
                 # to the global Recorder() explicitly because that would
                 # add the event in it twice.
                 try:
-                    if rec.enabled:
+                    if rec.get_enabled():
                         self.after_request_main(rec, response, start, call_event_id)
 
                     output_dir = Env.current.output_dir / "requests"
@@ -222,4 +219,4 @@ class AppmapMiddleware:
 
     @abstractmethod
     def after_request_main(self, rec, response, start, call_event_id):
-        raise NotImplementedError("Must override after_request_main")
+        pass

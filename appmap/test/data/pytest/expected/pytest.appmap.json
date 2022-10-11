@@ -34,7 +34,7 @@
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
-      "id": 2,
+      "id": 1,
       "event": "call",
       "thread_id": 1
     },
@@ -51,18 +51,18 @@
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
-      "id": 3,
+      "id": 2,
       "event": "call",
       "thread_id": 1
     },
     {
-      "parent_id": 3,
-      "id": 4,
-      "event": "return",
       "return_value": {
         "class": "builtins.str",
         "value": "'Hello'"
       },
+      "parent_id": 2,
+      "id": 3,
+      "event": "return",
       "thread_id": 1
     },
     {
@@ -78,28 +78,28 @@
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
-      "id": 5,
+      "id": 4,
       "event": "call",
       "thread_id": 1
     },
     {
-      "parent_id": 5,
-      "id": 6,
-      "event": "return",
       "return_value": {
         "class": "builtins.str",
         "value": "'world!'"
       },
+      "parent_id": 4,
+      "id": 5,
+      "event": "return",
       "thread_id": 1
     },
     {
-      "parent_id": 2,
-      "id": 7,
-      "event": "return",
       "return_value": {
         "class": "builtins.str",
         "value": "'Hello world!'"
       },
+      "parent_id": 1,
+      "id": 6,
+      "event": "return",
       "thread_id": 1
     }
   ],

@@ -9,7 +9,7 @@ import pytest
 
 import vendor.wrapt.src.appmap.wrapt as wrapt
 from appmap._implementation.event import CallEvent
-from appmap._implementation.recording import FilterableCls, FilterableFn
+from appmap._implementation.importer import FilterableCls, FilterableFn
 
 empty_args = {"name": "args", "class": "builtins.tuple", "kind": "rest", "value": "()"}
 
@@ -58,7 +58,9 @@ class TestMethodBase:
         of this fixture, unload it after.  This ensures that each test
         sees a pristine version of the classes it contains.
         """
-        from params import C  # pylint: disable=import-error
+        from params import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+            C,
+        )
 
         p = _params(C)
         p.wrap_test_func(request.param)

@@ -37,7 +37,7 @@
         "value": "<simple.test_simple.UnitTestTest testMethod=test_hello_world>"
       },
       "parameters": [],
-      "id": 2,
+      "id": 1,
       "event": "call",
       "thread_id": 1
     },
@@ -59,7 +59,7 @@
         "name": "bang",
         "value": "'!'"
       }],
-      "id": 3,
+      "id": 2,
       "event": "call",
       "thread_id": 1
     },
@@ -76,7 +76,7 @@
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
-      "id": 4,
+      "id": 3,
       "event": "call",
       "thread_id": 1
     },
@@ -85,8 +85,8 @@
         "class": "builtins.str",
         "value": "'Hello'"
       },
-      "parent_id": 4,
-      "id": 5,
+      "parent_id": 3,
+      "id": 4,
       "event": "return",
       "thread_id": 1
     },
@@ -103,7 +103,7 @@
         "value": "<simple.Simple object at 0xabcdef>"
       },
       "parameters": [],
-      "id": 6,
+      "id": 5,
       "event": "call",
       "thread_id": 1
     },
@@ -112,8 +112,8 @@
         "class": "builtins.str",
         "value": "'world'"
       },
-      "parent_id": 6,
-      "id": 7,
+      "parent_id": 5,
+      "id": 6,
       "event": "return",
       "thread_id": 1
     },
@@ -122,8 +122,8 @@
         "class": "builtins.str",
         "value": "'Hello world!'"
       },
-      "parent_id": 3,
-      "id": 8,
+      "parent_id": 2,
+      "id": 7,
       "event": "return",
       "thread_id": 1
     },
@@ -132,8 +132,8 @@
         "class": "builtins.NoneType",
         "value": "None"
       },
-      "parent_id": 2,
-      "id": 9,
+      "parent_id": 1,
+      "id": 8,
       "event": "return",
       "thread_id": 1
     }
