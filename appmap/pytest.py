@@ -3,6 +3,7 @@ import pytest
 import appmap
 import appmap.wrapt as wrapt
 from appmap._implementation import testing_framework
+from appmap._implementation.detect_enabled import DetectEnabled
 
 
 class recorded_testcase:
@@ -19,7 +20,7 @@ class recorded_testcase:
                 return wrapped(*args, **kwargs)
 
 
-if appmap.enabled():
+if not DetectEnabled.is_appmap_repo() and DetectEnabled.should_enable("pytest"):
 
     @pytest.hookimpl
     def pytest_sessionstart(session):

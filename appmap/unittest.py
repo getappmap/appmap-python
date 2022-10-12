@@ -5,14 +5,13 @@ from contextlib import contextmanager
 import appmap
 import appmap.wrapt as wrapt
 from appmap._implementation import testing_framework
+from appmap._implementation.detect_enabled import DetectEnabled
 
 logger = logging.getLogger(__name__)
 
 
 def setup_unittest():
-    if not appmap.enabled():
-        # Using this runner without enabling AppMap might not be what
-        # the user intended, so issue a warning.
+    if DetectEnabled.is_appmap_repo() or not DetectEnabled.should_enable("unittest"):
         logger.warning("AppMap disabled. Did you forget to set APPMAP=true?")
         return
 
@@ -46,9 +45,13 @@ def setup_unittest():
         with session.record(
             test_case.__class__, method_name, location=location
         ) as metadata:
-            with wrapped(*args, **kwargs), testing_framework.collect_result_metadata(
-                metadata
-            ):
+            if metadata:
+                with wrapped(
+                    *args, **kwargs
+                ), testing_framework.collect_result_metadata(metadata):
+                    yield
+            else:
+                # session.record may return None
                 yield
 
 

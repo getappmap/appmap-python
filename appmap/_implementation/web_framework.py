@@ -10,6 +10,7 @@ from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
 from appmap._implementation import generation
+from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import Event, ReturnEvent, _EventIds, describe_value
 from appmap._implementation.recorder import Recorder, ThreadRecorder
@@ -130,32 +131,36 @@ def create_appmap_file(
 
 
 class AppmapMiddleware(ABC):
-    def before_request_hook(
-        self, request, request_path, record_url, recording_is_running
-    ):
-        if request_path == record_url:
+    def __init__(self):
+        self.record_url = "/_appmap/record"
+
+    def should_record(self):
+        return DetectEnabled.should_enable("remote") or DetectEnabled.should_enable("requests")
+
+    def before_request_hook(self, request, request_path, recording_is_running):
+        if request_path == self.record_url:
             return None, None, None
 
+        rec = None
         start = None
         call_event_id = None
-        if Env.current.enabled or recording_is_running:
-            # It should be recording or it's currently recording.  The
-            # recording is either
-            # a) remote, enabled by POST to /_appmap/record, which set
-            #    recording_is_running, or
-            # b) requests, set by Env.current.record_all_requests, or
-            # c) both remote and requests; there are multiple active recorders.
-            if not Env.current.record_all_requests and recording_is_running:
-                # a)
-                rec = Recorder.get_current()
-            else:
-                # b) or c)
-                rec = ThreadRecorder()
-                Recorder.set_current(rec)
-                rec.start_recording()
+        if DetectEnabled.should_enable("requests"):
+            # a) requests
+            rec = ThreadRecorder()
+            Recorder.set_current(rec)
+            rec.start_recording()
+            # Each time an event is added for a thread_id it's also
+            # added to the global Recorder().  So don't add the event
+            # to the global Recorder() explicitly because that would
+            # add the event in it twice.
+        elif DetectEnabled.should_enable("remote") or recording_is_running:
+            # b) APPMAP=true, or
+            # c) remote, enabled by POST to /_appmap/record, which set
+            #    recording_is_running
+            rec = Recorder.get_current()
 
-            if rec.get_enabled():
-                start, call_event_id = self.before_request_main(rec, request)
+        if rec and rec.get_enabled():
+            start, call_event_id = self.before_request_main(rec, request)
 
         return rec, start, call_event_id
 
@@ -167,7 +172,6 @@ class AppmapMiddleware(ABC):
         self,
         request,
         request_path,
-        record_url,
         recording_is_running,
         request_method,
         request_base_url,
@@ -176,44 +180,39 @@ class AppmapMiddleware(ABC):
         start,
         call_event_id,
     ):
-        if request_path == record_url:
+        if request_path == self.record_url:
             return response
 
-        if Env.current.enabled or recording_is_running:
-            # It should be recording or it's currently recording.  The
-            # recording is either
-            # a) remote, enabled by POST to /_appmap/record, which set
-            #    self.recording.is_running, or
-            # b) requests, set by Env.current.record_all_requests, or
-            # c) both remote and requests; there are multiple active recorders.
-            if not Env.current.record_all_requests and recording_is_running:
-                # a)
-                rec = Recorder.get_current()
+        if DetectEnabled.should_enable("requests"):
+            # a) requests
+            rec = Recorder.get_current()
+            # Each time an event is added for a thread_id it's also
+            # added to the global Recorder().  So don't add the event
+            # to the global Recorder() explicitly because that would
+            # add the event in it twice.
+            try:
                 if rec.get_enabled():
                     self.after_request_main(rec, response, start, call_event_id)
-            else:
-                # b) or c)
-                rec = Recorder.get_current()
-                # Each time an event is added for a thread_id it's also
-                # added to the global Recorder().  So don't add the event
-                # to the global Recorder() explicitly because that would
-                # add the event in it twice.
-                try:
-                    if rec.get_enabled():
-                        self.after_request_main(rec, response, start, call_event_id)
 
-                    output_dir = Env.current.output_dir / "requests"
-                    create_appmap_file(
-                        output_dir,
-                        request_method,
-                        request_path,
-                        request_base_url,
-                        response,
-                        response_headers,
-                        rec,
-                    )
-                finally:
-                    rec.stop_recording()
+                output_dir = Env.current.output_dir / "requests"
+                create_appmap_file(
+                    output_dir,
+                    request_method,
+                    request_path,
+                    request_base_url,
+                    response,
+                    response_headers,
+                    rec,
+                )
+            finally:
+                rec.stop_recording()
+        elif DetectEnabled.should_enable("remote") or recording_is_running:
+            # b) APPMAP=true, or
+            # c) remote, enabled by POST to /_appmap/record, which set
+            #    recording_is_running
+            rec = Recorder.get_current()
+            if rec.get_enabled():
+                self.after_request_main(rec, response, start, call_event_id)
 
         return response
 

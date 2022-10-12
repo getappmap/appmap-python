@@ -12,10 +12,10 @@ from werkzeug.exceptions import BadRequest
 from werkzeug.routing import parse_rule
 
 from appmap._implementation import generation, web_framework
+from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recorder import Recorder
-from appmap._implementation.recording import Recording
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
@@ -47,68 +47,67 @@ def request_params(req):
 
 class AppmapFlask(AppmapMiddleware):
     def __init__(self, app=None):
+        super().__init__()
         self.app = app
         if app is not None:
             self.init_app(app)
 
     def init_app(self, app):
-        if not Env.current.enabled:
-            return
+        if self.should_record():
+            # it may record requests but not remote (APPMAP=false)
+            self.recorder = Recorder.get_current()
 
-        if not app:
-            return
-
-        self.recording = Recording()
-
-        self.record_url = "/_appmap/record"
-
-        # print('in init_app')
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_get",
-            view_func=self.record_get,
-            methods=["GET"],
-        )
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_post",
-            view_func=self.record_post,
-            methods=["POST"],
-        )
-        app.add_url_rule(
-            self.record_url,
-            "appmap_record_delete",
-            view_func=self.record_delete,
-            methods=["DELETE"],
-        )
+        if Env.current.enabled:
+            # the remote recording routes are enabled only if APPMAP=true
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_get",
+                view_func=self.record_get,
+                methods=["GET"],
+            )
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_post",
+                view_func=self.record_post,
+                methods=["POST"],
+            )
+            app.add_url_rule(
+                self.record_url,
+                "appmap_record_delete",
+                view_func=self.record_delete,
+                methods=["DELETE"],
+            )
 
         app.before_request(self.before_request)
         app.after_request(self.after_request)
 
     def record_get(self):
-        return {"enabled": self.recording.is_running()}
+        if not self.should_record():
+            return "Appmap is disabled.", 404
+
+        return {"enabled": self.recorder.get_enabled()}
 
     def record_post(self):
-        if self.recording.is_running():
+        if self.recorder.get_enabled():
             return "Recording is already in progress", 409
 
-        self.recording.start()
+        self.recorder.start_recording()
         return "", 200
 
     def record_delete(self):
-        if not self.recording.is_running():
+        if not self.recorder.get_enabled():
             return "No recording is in progress", 404
 
-        self.recording.stop()
+        self.recorder.stop_recording()
 
-        return json.loads(generation.dump(self.recording))
+        return json.loads(generation.dump(self.recorder))
 
     def before_request(self):
-        if not Env.current.enabled:
+        if not self.should_record():
             return
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path, self.record_url, self.recording.is_running()
+            request, request.path, self.recorder.get_enabled()
         )
 
     def before_request_main(self, rec, request):
@@ -141,14 +140,13 @@ class AppmapFlask(AppmapMiddleware):
         return None, None
 
     def after_request(self, response):
-        if not Env.current.enabled:
-            return
+        if not self.should_record():
+            return response
 
         return self.after_request_hook(
             request,
             request.path,
-            self.record_url,
-            self.recording.is_running(),
+            self.recorder.get_enabled(),
             request.method,
             request.base_url,
             response,

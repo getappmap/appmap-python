@@ -39,7 +39,10 @@ def flask_app(data_dir, monkeypatch):
 
 
 @pytest.mark.appmap_enabled
-def test_framework_metadata(client, events):  # pylint: disable=unused-argument
+def test_framework_metadata(
+    client, events, monkeypatch
+):  # pylint: disable=unused-argument
+    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
     client.get("/")
     assert Metadata()["frameworks"] == [{"name": "flask", "version": flask.__version__}]
 
@@ -61,30 +64,25 @@ def test_template(app, events):
 
 class TestRecordRequestsFlask(TestRecordRequests):
     @staticmethod
-    def setup_class():
-        TestRecordRequestsFlask.server_stop()  # ensure it's not running
-        TestRecordRequestsFlask.server_start()
-
-    @staticmethod
-    def teardown_class():
-        TestRecordRequestsFlask.server_stop()
-
-    @staticmethod
-    def server_start_thread():
+    def server_start_thread(env_vars_str):
         exec_cmd(
             """
 # use appmap from our working copy, not the module installed by virtualenv
 export PYTHONPATH=`pwd`
 
 cd appmap/test/data/flask/
-APPMAP=true APPMAP_RECORD_REQUESTS=true APPMAP_OUTPUT_DIR=/tmp FLASK_DEBUG=1 FLASK_APP=app.py flask run -p """
+"""
+            + env_vars_str
+            + """ APPMAP_OUTPUT_DIR=/tmp FLASK_DEBUG=1 FLASK_APP=app.py flask run -p """
             + str(TestRecordRequests.server_port)
         )
 
     @staticmethod
-    def server_start():
+    def server_start(env_vars_str):
         # start as background thread so running the tests can continue
-        thread = Thread(target=TestRecordRequestsFlask.server_start_thread)
+        thread = Thread(
+            target=TestRecordRequestsFlask.server_start_thread, args=(env_vars_str,)
+        )
         thread.start()
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "open")
 
@@ -95,8 +93,27 @@ APPMAP=true APPMAP_RECORD_REQUESTS=true APPMAP_OUTPUT_DIR=/tmp FLASK_DEBUG=1 FLA
         )
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
 
-    def test_record_request_no_remote(client, events):
+    def test_record_request_appmap_enabled_requests_enabled_no_remote(client, events):
+        TestRecordRequestsFlask.server_stop()  # ensure it's not running
+        TestRecordRequestsFlask.server_start("APPMAP=true APPMAP_RECORD_REQUESTS=true")
         TestRecordRequests.record_request(client, events, False)
+        TestRecordRequestsFlask.server_stop()
 
-    def test_record_request_and_remote(client, events):
+    def test_record_request_appmap_enabled_requests_enabled_and_remote(client, events):
+        TestRecordRequestsFlask.server_stop()  # ensure it's not running
+        TestRecordRequestsFlask.server_start("APPMAP=true APPMAP_RECORD_REQUESTS=true")
         TestRecordRequests.record_request(client, events, True)
+        TestRecordRequestsFlask.server_stop()
+
+    # not enabled means APPMAP isn't set.  This isn't the same as APPMAP=false.
+    def test_record_request_appmap_not_enabled_requests_enabled_no_remote(
+        client, events
+    ):
+        TestRecordRequestsFlask.server_stop()  # ensure it's not running
+        TestRecordRequestsFlask.server_start("APPMAP_RECORD_REQUESTS=true")
+        TestRecordRequests.record_request(client, events, False)
+        TestRecordRequestsFlask.server_stop()
+
+    # it's not possible to test for
+    # appmap_not_enabled_requests_enabled_and_remote because when
+    # APPMAP=false the routes for remote recording are disabled.
