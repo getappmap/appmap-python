@@ -16,7 +16,6 @@ from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
 from appmap._implementation.recorder import Recorder
-from appmap._implementation.recording import Recording
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
@@ -56,7 +55,7 @@ class AppmapFlask(AppmapMiddleware):
     def init_app(self, app):
         if self.should_record():
             # it may record requests but not remote (APPMAP=false)
-            self.recording = Recording()
+            self.recorder = Recorder.get_current()
 
         if Env.current.enabled:
             # the remote recording routes are enabled only if APPMAP=true
@@ -87,29 +86,29 @@ class AppmapFlask(AppmapMiddleware):
         if not self.should_record():
             return "Appmap is disabled.", 404
 
-        return {"enabled": self.recording.is_running()}
+        return {"enabled": self.recorder.get_enabled()}
 
     def record_post(self):
-        if self.recording.is_running():
+        if self.recorder.get_enabled():
             return "Recording is already in progress", 409
 
-        self.recording.start()
+        self.recorder.start_recording()
         return "", 200
 
     def record_delete(self):
-        if not self.recording.is_running():
+        if not self.recorder.get_enabled():
             return "No recording is in progress", 404
 
-        self.recording.stop()
+        self.recorder.stop_recording()
 
-        return json.loads(generation.dump(self.recording))
+        return json.loads(generation.dump(self.recorder))
 
     def before_request(self):
         if not self.should_record():
             return
 
         rec, start, call_event_id = self.before_request_hook(
-            request, request.path, self.recording.is_running()
+            request, request.path, self.recorder.get_enabled()
         )
 
     def before_request_main(self, rec, request):
@@ -148,7 +147,7 @@ class AppmapFlask(AppmapMiddleware):
         return self.after_request_hook(
             request,
             request.path,
-            self.recording.is_running(),
+            self.recorder.get_enabled(),
             request.method,
             request.base_url,
             response,
