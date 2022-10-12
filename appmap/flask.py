@@ -78,9 +78,8 @@ class AppmapFlask(AppmapMiddleware):
                 methods=["DELETE"],
             )
 
-        if DetectEnabled.should_enable("requests"):
-            app.before_request(self.before_request)
-            app.after_request(self.after_request)
+        app.before_request(self.before_request)
+        app.after_request(self.after_request)
 
     def record_get(self):
         if not self.should_record():
