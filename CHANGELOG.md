@@ -1,3 +1,17 @@
+# [1.10.0](https://github.com/getappmap/appmap-python/compare/v1.9.1...v1.10.0) (2022-10-12)
+
+
+### Bug Fixes
+
+* For Flask always set a before_request and an after_request handler ([fb73d80](https://github.com/getappmap/appmap-python/commit/fb73d804ce127ac7223a45c3fb55834eee437a50))
+* Remove a testcase for Flask and a testcase for Django because it's not possible to test for appmap_not_enabled_requests_enabled_and_remote: when APPMAP=false the routes for remote recording are disabled ([5817b6e](https://github.com/getappmap/appmap-python/commit/5817b6e656371bdcec973cd239c98985784d11a6))
+* The remote recording routes for Flask are enabled only if APPMAP=true ([45a297b](https://github.com/getappmap/appmap-python/commit/45a297bf375a20987ab083295b1678b5ef853fcc))
+
+
+### Features
+
+* record by default ([209f118](https://github.com/getappmap/appmap-python/commit/209f118109ba89eac96133526ac5c258d03a03a7))
+
 ## [1.9.1](https://github.com/getappmap/appmap-python/compare/v1.9.0...v1.9.1) (2022-10-11)
 
 
