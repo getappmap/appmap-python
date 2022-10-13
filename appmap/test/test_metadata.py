@@ -23,7 +23,7 @@ def test_git_metadata(git):
     assert git_md == DictIncluding(
         {
             "repository": "https://www.example.test/repo.git",
-            "branch": "master",
+            "branch": "main",
             "status": ["?? new_file"],
         }
     )
@@ -55,7 +55,7 @@ def test_tags(git):
     assert git_md == DictIncluding(
         {
             "repository": "https://www.example.test/repo.git",
-            "branch": "master",
+            "branch": "main",
             "tag": tag,
             "annotated_tag": atag,
             "commits_since_tag": 1,

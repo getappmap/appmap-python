@@ -77,7 +77,7 @@ def git_directory_fixture(tmp_path_factory):
     (git_dir / "new_file").write_text("new_file")
 
     git = utils.git(cwd=git_dir)
-    git("init")
+    git("init --initial-branch main")
     git("config --local user.email test@test")
     git("config --local user.name Test")
     git("add README.metadata")
