@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/getappmap/appmap-python/compare/v1.10.0...v1.10.1) (2022-10-13)
+
+
+### Bug Fixes
+
+* Require PyYAML >=5.3.0 rather than ^5.3.0 because some packages that use appmap-python ask for PyYAML==6.0 ([abfa874](https://github.com/getappmap/appmap-python/commit/abfa87480eaac53832cee68ec38cade1235d2efc))
+
 # [1.10.0](https://github.com/getappmap/appmap-python/compare/v1.9.1...v1.10.0) (2022-10-12)
 
 
