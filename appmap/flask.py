@@ -1,6 +1,7 @@
 import datetime
 import json
 import os.path
+import re
 import time
 from functools import wraps
 
@@ -9,7 +10,6 @@ import flask.cli
 import jinja2
 from flask import _app_ctx_stack, request
 from werkzeug.exceptions import BadRequest
-from werkzeug.routing import parse_rule
 
 from appmap._implementation import generation, web_framework
 from appmap._implementation.detect_enabled import DetectEnabled
@@ -43,6 +43,10 @@ def request_params(req):
         pass  # probably a JSON parse error
 
     return values_dict(params.lists())
+
+
+NP_REGEXP = re.compile(r"<Rule '(.*?)'")
+NP_XLATE = re.compile(r"(?P<l><)|(?P<r>>)")
 
 
 class AppmapFlask(AppmapMiddleware):
@@ -113,16 +117,15 @@ class AppmapFlask(AppmapMiddleware):
     def before_request_main(self, rec, request):
         Metadata.add_framework("flask", flask.__version__)
         np = None
-        # See
-        # https://github.com/pallets/werkzeug/blob/2.0.0/src/werkzeug/routing.py#L213
-        # for a description of parse_rule.
         if request.url_rule:
-            np = "".join(
-                [
-                    f"{{{p}}}" if c else p
-                    for c, _, p in parse_rule(request.url_rule.rule)
-                ]
+            # Transform requestl.url to the expected normalized-path form. For example,
+            # "/post/<username>/<post_id>/summary" becomes "/post/{{username}}/{{post_id}}/summary".
+            r = repr(request.url_rule)
+            np = NP_XLATE.sub(
+                lambda m: "{" if m["l"] else "}" if m["r"] else "",
+                NP_REGEXP.findall(r)[0],
             )
+
         call_event = HttpServerRequestEvent(
             request_method=request.method,
             path_info=request.path,
