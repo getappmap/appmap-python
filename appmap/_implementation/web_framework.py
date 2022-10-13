@@ -134,7 +134,8 @@ class AppmapMiddleware(ABC):
     def __init__(self):
         self.record_url = "/_appmap/record"
 
-    def should_record(self):
+    @staticmethod
+    def should_record():
         return DetectEnabled.should_enable("remote") or DetectEnabled.should_enable(
             "requests"
         )

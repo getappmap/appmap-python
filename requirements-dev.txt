@@ -1,0 +1,7 @@
+#requirements-dev.txt
+pip
+poetry
+tox
+django
+flask
+pytest-django

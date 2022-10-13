@@ -1,20 +1,19 @@
-import datetime
-import json
-import os.path
 import re
 import time
-from functools import wraps
 
 import flask
 import flask.cli
 import jinja2
 from flask import _app_ctx_stack, request
+from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-from appmap._implementation import generation, web_framework
+import appmap.wrapt as wrapt
 from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
+from appmap._implementation.flask import remote_recording
 from appmap._implementation.recorder import Recorder
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
@@ -50,60 +49,34 @@ NP_XLATE = re.compile(r"(?P<l><)|(?P<r>>)")
 
 
 class AppmapFlask(AppmapMiddleware):
-    def __init__(self, app=None):
+    """
+    A Flask extension to add remote recording to an application.
+    Should be loaded by default, but can also be added manually.
+
+    For example:
+
+    ```
+    from appmap.flask import AppmapFlask
+
+    app = new Flask(__Name__)
+    AppmapFlask().init_app(app)
+    ```
+    """
+
+    def __init__(self):
         super().__init__()
-        self.app = app
-        if app is not None:
-            self.init_app(app)
 
     def init_app(self, app):
         if self.should_record():
-            # it may record requests but not remote (APPMAP=false)
             self.recorder = Recorder.get_current()
 
         if DetectEnabled.should_enable("remote"):
-            app.add_url_rule(
-                self.record_url,
-                "appmap_record_get",
-                view_func=self.record_get,
-                methods=["GET"],
-            )
-            app.add_url_rule(
-                self.record_url,
-                "appmap_record_post",
-                view_func=self.record_post,
-                methods=["POST"],
-            )
-            app.add_url_rule(
-                self.record_url,
-                "appmap_record_delete",
-                view_func=self.record_delete,
-                methods=["DELETE"],
+            app.wsgi_app = DispatcherMiddleware(
+                app.wsgi_app, {"/_appmap": remote_recording}
             )
 
         app.before_request(self.before_request)
         app.after_request(self.after_request)
-
-    def record_get(self):
-        if not self.should_record():
-            return "Appmap is disabled.", 404
-
-        return {"enabled": self.recorder.get_enabled()}
-
-    def record_post(self):
-        if self.recorder.get_enabled():
-            return "Recording is already in progress", 409
-
-        self.recorder.start_recording()
-        return "", 200
-
-    def record_delete(self):
-        if not self.recorder.get_enabled():
-            return "No recording is in progress", 404
-
-        self.recorder.stop_recording()
-
-        return json.loads(generation.dump(self.recorder))
 
     def before_request(self):
         if not self.should_record():
@@ -182,18 +155,18 @@ class TemplateHandler(BaseTemplateHandler):
     pass
 
 
-def wrap_cli_fn(fn):
-    @wraps(fn)
-    def install_middleware(*args, **kwargs):
-        app = fn(*args, **kwargs)
-        if app:
-            appmap_flask = AppmapFlask()
-            appmap_flask.init_app(app)
-        return app
+def install_extension(wrapped, _, args, kwargs):
+    app = wrapped(*args, **kwargs)
+    if app:
+        AppmapFlask().init_app(app)
 
-    return install_middleware
+    return app
 
 
 if Env.current.enabled:
-    flask.cli.call_factory = wrap_cli_fn(flask.cli.call_factory)
-    flask.cli.locate_app = wrap_cli_fn(flask.cli.locate_app)
+    # ScriptInfo.load_app is the function that's used by the Flask cli to load an app, no matter how
+    # the app's module is specified (e.g. with the FLASK_APP env var, the `--app` flag, etc). Hook
+    # it so it installs our extension on the app.
+    ScriptInfo.load_app = wrapt.wrap_function_wrapper(
+        "flask.cli", "ScriptInfo.load_app", install_extension
+    )

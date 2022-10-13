@@ -8,6 +8,7 @@ import flask
 import pytest
 
 from appmap._implementation.env import Env
+from appmap.flask import AppmapFlask
 from appmap.test.helpers import DictIncluding
 
 from .._implementation.metadata import Metadata
@@ -40,6 +41,11 @@ def flask_app(data_dir, monkeypatch):
     import app  # pylint: disable=import-error
 
     importlib.reload(app)
+
+    # Add the AppmapFlask extension to the app. This now happens automatically when a Flask app is
+    # started from the command line, but must be done manually otherwise.
+    AppmapFlask().init_app(app.app)
+
     return app.app
 
 
@@ -70,12 +76,15 @@ def test_template(app, events):
 class TestRecordRequestsFlask(TestRecordRequests):
     @staticmethod
     def server_start_thread(env_vars_str):
+        # Use appmap from our working copy, not the module installed by virtualenv. Add the init
+        # directory so the sitecustomize.py file it contains will be loaded on startup. This
+        # simulates a real installation.
         exec_cmd(
             """
-# use appmap from our working copy, not the module installed by virtualenv
-export PYTHONPATH=`pwd`
+export PYTHONPATH="$PWD"
 
 cd appmap/test/data/flask/
+PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
             + env_vars_str
             + """ APPMAP_OUTPUT_DIR=/tmp FLASK_DEBUG=1 FLASK_APP=app.py flask run -p """
