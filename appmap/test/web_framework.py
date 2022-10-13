@@ -339,6 +339,7 @@ def wait_until_port_is(address, port, desired_state):
             break
         else:
             time.sleep(sleep_time)
+        count += 1
 
 
 class TestRecordRequests:
