@@ -191,5 +191,5 @@ def wrap_cli_fn(fn):
 
 
 if Env.current.enabled:
-    flask.cli.call_factory = wrap_cli_fn(flask.cli.call_factory)
+    # flask.cli.call_factory = wrap_cli_fn(flask.cli.call_factory)
     flask.cli.locate_app = wrap_cli_fn(flask.cli.locate_app)
