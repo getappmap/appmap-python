@@ -15,6 +15,8 @@ import importlib_metadata
 import yaml
 from yaml.parser import ParserError
 
+from appmap._implementation.detect_enabled import DetectEnabled
+
 from ..labeling import presets as label_presets
 from . import utils
 from .env import Env
@@ -226,6 +228,9 @@ It will be created with this configuration:
             Env.current.enabled = False
 
     def write_config_file(self, filepath, config):
+        # HACK: don't scribble on the repo when testing
+        if DetectEnabled.is_appmap_repo():
+            return
         basedir = filepath.parent
         if not basedir.exists():
             basedir.mkdir(parents=True, exist_ok=True)

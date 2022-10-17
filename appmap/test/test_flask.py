@@ -11,6 +11,11 @@ from appmap._implementation.env import Env
 from appmap.test.helpers import DictIncluding
 
 from .._implementation.metadata import Metadata
+
+# Make sure assertions in web_framework get rewritten (e.g. to show
+# diffs in generated appmaps)
+pytest.register_assert_rewrite("appmap.test.web_framework")
+
 from .web_framework import (  # pylint: disable=unused-import
     TestRecording,
     TestRecordRequests,

@@ -5,6 +5,8 @@ import logging.config
 from os import environ
 from pathlib import Path
 
+from .detect_enabled import DetectEnabled
+
 _cwd = Path.cwd()
 _bootenv = environ.copy()
 
@@ -34,6 +36,7 @@ class Env(metaclass=_EnvMeta):
         self._env = _bootenv.copy()
         if env:
             self._env.update(env)
+        self._enabled = DetectEnabled.any_enabled()
 
         self._root_dir = str(self._cwd) + "/"
         self._root_dir_len = len(self._root_dir)
@@ -66,19 +69,15 @@ class Env(metaclass=_EnvMeta):
 
     @property
     def enabled(self):
-        return self.get("APPMAP", "false").lower() == "true"
+        return self._enabled
 
     @enabled.setter
     def enabled(self, value):
-        self.set("APPMAP", "true" if value else "false")
+        self._enabled = value
 
     @property
     def display_params(self):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
-
-    @property
-    def record_all_requests(self):
-        return self.get("APPMAP_RECORD_REQUESTS", "false").lower() == "true"
 
     def _configure_logging(self):
         log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()

@@ -8,12 +8,12 @@ from .py_version_check import check_py_version
 def initialize(**kwargs):
     check_py_version()
     appmapenv.initialize(**kwargs)
+    DetectEnabled.initialize()
     event.initialize()
     importer.initialize()
     recorder.initialize()
     configuration.initialize()  # needs to be initialized after recorder
     metadata.initialize()
-    DetectEnabled.initialize()
 
 
 initialize()

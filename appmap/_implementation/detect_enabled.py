@@ -58,14 +58,22 @@ class DetectEnabled:
         if recording_method in cls._detected_for_method:
             return cls._detected_for_method[recording_method]
         else:
-            message, enabled = cls.detect_should_enable(recording_method)
+            message, enabled = cls._detect_should_enable(recording_method)
             cls._detected_for_method[recording_method] = enabled
             if enabled:
                 logger.warning(dedent(f"AppMap recording is enabled because {message}"))
             return enabled
 
     @classmethod
-    def detect_should_enable(cls, recording_method):
+    def any_enabled(cls):
+        for m in RECORDING_METHODS:
+            _, enabled = cls._detect_should_enable(m)
+            if enabled:
+                return True
+        return False
+
+    @classmethod
+    def _detect_should_enable(cls, recording_method):
         if not recording_method:
             return ["no recording method is set", False]
 

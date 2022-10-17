@@ -6,6 +6,7 @@ import yaml
 
 import appmap._implementation
 from appmap._implementation import utils
+from appmap._implementation.detect_enabled import RECORDING_METHODS, DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.recorder import Recorder
 
@@ -55,6 +56,12 @@ def pytest_runtest_setup(item):
         appmap_enabled = mark_enabled.kwargs.get("appmap_enabled", "true")
         if isinstance(appmap_enabled, str):
             env["APPMAP"] = appmap_enabled
+        elif appmap_enabled is True:
+            env["APPMAP"] = "true"
+        elif appmap_enabled is False:
+            env["APPMAP"] = "false"
+        elif appmap_enabled is None:
+            env.pop("APPMAP", None)
 
     if mark_record_requests:
         appmap_record_requests = mark_record_requests.kwargs.get(

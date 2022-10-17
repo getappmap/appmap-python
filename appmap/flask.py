@@ -57,8 +57,7 @@ class AppmapFlask(AppmapMiddleware):
             # it may record requests but not remote (APPMAP=false)
             self.recorder = Recorder.get_current()
 
-        if Env.current.enabled:
-            # the remote recording routes are enabled only if APPMAP=true
+        if DetectEnabled.should_enable("remote"):
             app.add_url_rule(
                 self.record_url,
                 "appmap_record_get",
