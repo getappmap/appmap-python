@@ -200,7 +200,11 @@ class Importer:
         classes = get_classes(mod)
         logger.debug("  classes %s", classes)
         for c in classes:
-            instrument_functions(FilterableCls(c))
+            fc = FilterableCls(c)
+            if fc.fqname.startswith("appmap"):
+                logger.debug(f"  not instrumenting {fc.fqname}")
+                continue
+            instrument_functions(fc)
 
 
 def wrap_finder_function(fn, decorator):

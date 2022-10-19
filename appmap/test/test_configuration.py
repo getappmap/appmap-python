@@ -1,7 +1,6 @@
 """Test Configuration"""
 # pylint: disable=missing-function-docstring
 
-import sys
 from distutils.dir_util import copy_tree
 from pathlib import Path
 
@@ -9,7 +8,6 @@ import pytest
 
 import appmap
 import appmap._implementation
-import appmap._implementation.env as impl_env
 from appmap._implementation.configuration import Config, ConfigFilter
 from appmap._implementation.env import Env
 from appmap._implementation.importer import Filterable, NullFilter
@@ -47,6 +45,7 @@ def test_reports_invalid():
     assert not Config().file_valid
 
 
+@pytest.mark.appmap_enabled(config="appmap-broken.yml", appmap_enabled=None)
 def test_is_disabled_when_unset():
     """Test that recording is disabled when APPMAP is unset"""
     assert Env.current.get("APPMAP", None) is None
@@ -54,18 +53,10 @@ def test_is_disabled_when_unset():
     assert not appmap.enabled()
 
 
+@pytest.mark.appmap_enabled(config="appmap-broken.yml", appmap_enabled="false")
 def test_is_disabled_when_false():
     """Test that recording is disabled when APPMAP=false"""
     Env.current.set("APPMAP", "false")
-    assert not appmap.enabled()
-
-
-@pytest.mark.appmap_enabled(appmap_enabled=None)
-def test_is_disabled_with_valid_config():
-    c = Config()
-    assert c.file_present
-    assert c.file_valid
-
     assert not appmap.enabled()
 
 
@@ -86,15 +77,16 @@ def test_config_not_found(caplog):
     assert f'"{not_found}" is missing' in caplog.text
 
 
+@pytest.mark.appmap_enabled(appmap_enabled="false", config="notfound.yml")
 def test_config_no_message(caplog):
     """
     Messages about a missing config should only be logged when
     recording is enabled
     """
 
-    assert Config().name is None
     assert not appmap.enabled()
-    assert caplog.text is ""
+    assert Config().name is None
+    assert caplog.text == ""
 
 
 cf = lambda: ConfigFilter(NullFilter())
@@ -200,6 +192,7 @@ class TestDefaultConfig:
         assert path.is_file()
 
     def test_not_created_if_missing_and_not_enabled(self, git, data_dir, monkeypatch):
+        monkeypatch.setenv("APPMAP", "false")
         repo_root = git.cwd
         copy_tree(data_dir / "config", str(repo_root))
         monkeypatch.chdir(repo_root)
@@ -208,7 +201,7 @@ class TestDefaultConfig:
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=repo_root, env={"APPMAP": "false"})
+        appmap._implementation.initialize(cwd=repo_root)
 
         c = Config()
         assert not path.is_file()

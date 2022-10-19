@@ -8,8 +8,10 @@ import os
 import socket
 import subprocess
 import time
+import traceback
 from abc import abstractmethod
 from os.path import exists
+from random import SystemRandom
 
 import pytest
 import requests
@@ -19,6 +21,8 @@ from appmap._implementation.detect_enabled import DetectEnabled
 from appmap.test.helpers import DictIncluding
 
 from .normalize import normalize_appmap
+
+SR = SystemRandom()
 
 
 def content_type(res):
@@ -240,6 +244,7 @@ class TestRecording:
     def test_appmap_disabled(client, monkeypatch):
         # since APPMAP records by default, disable it explicitly
         monkeypatch.setenv("APPMAP", "false")
+        appmap._implementation.initialize()
         assert not appmap.enabled()
 
         res = client.get("/_appmap/record")
@@ -339,6 +344,7 @@ def wait_until_port_is(address, port, desired_state):
             break
         else:
             time.sleep(sleep_time)
+        count += 1
 
 
 class TestRecordRequests:
@@ -363,6 +369,10 @@ class TestRecordRequests:
 
     @staticmethod
     def record_request_thread():
+        # I've seen occasional test failures, seemingly because the test servers can't handle the
+        # barrage of requests. A tiny bit of delay still causes many, many concurrent requests, but
+        # eliminates the failures.
+        time.sleep(SR.uniform(0, 0.1))
         return requests.get(TestRecordRequests.server_url() + "/test")
 
     @staticmethod
@@ -396,8 +406,7 @@ class TestRecordRequests:
                 try:
                     response = future.result()
                 except Exception as e:
-                    print("%r generated an exception: %s" % (e))
-
+                    traceback.print_exc()
                 assert response.status_code == 200
 
                 if hasattr(response, "content"):
