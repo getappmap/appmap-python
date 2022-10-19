@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/getappmap/appmap-python/compare/v1.10.1...v1.10.2) (2022-10-19)
+
+
+### Bug Fixes
+
+* capture events for app code once again ([5fd3797](https://github.com/getappmap/appmap-python/commit/5fd37974868509dfa24dd8eccd4bf7d61a8693fc))
+
 ## [1.10.1](https://github.com/getappmap/appmap-python/compare/v1.10.0...v1.10.1) (2022-10-13)
 
 
