@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 def setup_unittest():
     if DetectEnabled.is_appmap_repo() or not DetectEnabled.should_enable("unittest"):
-        logger.warning("AppMap disabled. Did you forget to set APPMAP=true?")
         return
 
     session = testing_framework.session("unittest", "tests")

@@ -36,6 +36,8 @@ class Env(metaclass=_EnvMeta):
         self._env = _bootenv.copy()
         if env:
             self._env.update(env)
+
+        self._configure_logging()
         self._enabled = DetectEnabled.any_enabled()
 
         self._root_dir = str(self._cwd) + "/"
@@ -43,8 +45,6 @@ class Env(metaclass=_EnvMeta):
 
         output_dir = Path(self.get("APPMAP_OUTPUT_DIR", "tmp/appmap"))
         self._output_dir = output_dir.resolve()
-
-        self._configure_logging()
 
     def set(self, name, value):
         self._env[name] = value
@@ -120,5 +120,6 @@ class Env(metaclass=_EnvMeta):
 
 
 def initialize(**kwargs):
+    DetectEnabled.initialize()
     Env.reset(**kwargs)
     logging.info("appmap enabled: %s", Env.current.enabled)

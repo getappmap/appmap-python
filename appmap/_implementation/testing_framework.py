@@ -140,6 +140,7 @@ def collect_result_metadata(metadata):
         metadata["exception"] = {"class": exn.__class__.__name__, "message": str(exn)}
         raise
 
+
 def file_delete(filename):
     try:
         os.remove(filename)

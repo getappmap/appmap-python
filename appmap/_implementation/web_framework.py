@@ -135,7 +135,9 @@ class AppmapMiddleware(ABC):
         self.record_url = "/_appmap/record"
 
     def should_record(self):
-        return DetectEnabled.should_enable("remote") or DetectEnabled.should_enable("requests")
+        return DetectEnabled.should_enable("remote") or DetectEnabled.should_enable(
+            "requests"
+        )
 
     def before_request_hook(self, request, request_path, recording_is_running):
         if request_path == self.record_url:

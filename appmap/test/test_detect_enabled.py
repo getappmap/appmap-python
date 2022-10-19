@@ -20,9 +20,21 @@ class TestDetectEnabled:
     def test_none__appmap_disabled(self):
         assert DetectEnabled.should_enable(None) == False
 
+    @patch.dict(os.environ, {"APPMAP": "False"})
+    def test_none__appmap_disabled_mixed_case(self):
+        assert DetectEnabled.should_enable(None) == False
+
     @patch.dict(os.environ, {"APPMAP": "true"})
     def test_none__appmap_enabled(self):
         # if there's no recording method then it's disabled
+        assert DetectEnabled.should_enable(None) == False
+
+    @patch.dict(os.environ, {"APPMAP": "True"})
+    def test_none__appmap_enabled_mixed_case(self):
+        assert DetectEnabled.should_enable(None) == False
+
+    @patch.dict(os.environ, {"APPMAP": "invalid_value"})
+    def test_none__appmap_invalid_value(self):
         assert DetectEnabled.should_enable(None) == False
 
     def test_invalid__no_envvar(self):
@@ -52,6 +64,22 @@ class TestDetectEnabled:
         for recording_method in RECORDING_METHODS:
             assert DetectEnabled.should_enable(recording_method) == True
 
+    recording_methods_as_true_mixed_case = {
+        key: "True" for key in recording_methods_as_true.keys()
+    }
+
+    @patch.dict(os.environ, recording_methods_as_true_mixed_case)
+    def test_some__recording_method_enabled_mixed_case(self):
+        for recording_method in RECORDING_METHODS:
+            assert DetectEnabled.should_enable(recording_method) == True
+
+    recording_methods_as_true_invalid = {"APPMAP_RECORD_INVALID": "true"}
+
+    @patch.dict(os.environ, recording_methods_as_true_invalid)
+    def test_some__recording_method_enabled_invalid(self):
+        for recording_method in RECORDING_METHODS:
+            assert DetectEnabled.should_enable(recording_method) == False
+
     recording_methods_as_false = {
         "_".join(["APPMAP", "RECORD", recording_method.upper()]): "false"
         for recording_method in RECORDING_METHODS
@@ -59,6 +87,15 @@ class TestDetectEnabled:
 
     @patch.dict(os.environ, recording_methods_as_false)
     def test_some__recording_method_disabled(self):
+        for recording_method in RECORDING_METHODS:
+            assert DetectEnabled.should_enable(recording_method) == False
+
+    recording_methods_as_false_mixed_case = {
+        key: "False" for key in recording_methods_as_false.keys()
+    }
+
+    @patch.dict(os.environ, recording_methods_as_false_mixed_case)
+    def test_some__recording_method_disabled_mixed_case(self):
         for recording_method in RECORDING_METHODS:
             assert DetectEnabled.should_enable(recording_method) == False
 

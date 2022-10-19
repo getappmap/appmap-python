@@ -64,7 +64,9 @@ def test_framework_metadata(
 
 
 @pytest.mark.appmap_enabled
-def test_app_can_read_body(client, events, monkeypatch):  # pylint: disable=unused-argument
+def test_app_can_read_body(
+    client, events, monkeypatch
+):  # pylint: disable=unused-argument
     monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
     response = client.post("/echo", json={"test": "json"})
     assert response.content == b'{"test": "json"}'

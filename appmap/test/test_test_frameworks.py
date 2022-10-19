@@ -41,7 +41,8 @@ def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
     )
     assert result.ret == 0
     r = re.compile(r"AppMap disabled")
-    assert [l for l in filter(r.search, result.errlines)], "Warning not found"
+    # when APPMAP=false it no longer prints a warning
+    assert [l for l in filter(r.search, result.errlines)] == []
 
 
 def test_pytest_runner_unittests(testdir):
