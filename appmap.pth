@@ -1,1 +1,2 @@
-import appmap
+# The python runtime suppresses errors from import, but we should fail if something goes wrong. 
+try: import appmap; except Exception: raise
