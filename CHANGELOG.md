@@ -1,3 +1,10 @@
+## [1.10.3](https://github.com/getappmap/appmap-python/compare/v1.10.2...v1.10.3) (2022-10-20)
+
+
+### Bug Fixes
+
+* use default values when config is incomplete ([8a307a2](https://github.com/getappmap/appmap-python/commit/8a307a246c2e3ef7c3ed2dc5b490c06def674eb3))
+
 ## [1.10.2](https://github.com/getappmap/appmap-python/compare/v1.10.1...v1.10.2) (2022-10-19)
 
 
