@@ -173,11 +173,17 @@ class Config:
 
     @property
     def default(self):
+        return {"name": self.default_name, "packages": self.default_packages}
+
+    @property
+    def default_name(self):
         root_dir = Env.current.root_dir
-        return {
-            "name": default_app_name(root_dir),
-            "packages": [{"path": p} for p in find_top_packages(root_dir)],
-        }
+        return default_app_name(root_dir)
+
+    @property
+    def default_packages(self):
+        root_dir = Env.current.root_dir
+        return [{"path": p} for p in find_top_packages(root_dir)]
 
     def _load_config(self):
         self._config = {"name": None, "packages": []}
@@ -199,6 +205,15 @@ class Config:
             self.file_valid = False
             try:
                 self._config = yaml.safe_load(path.read_text())
+                if not self._config:
+                    # It parsed, but was (effectively) empty.
+                    self._config = self.default
+                else:
+                    # It parsed, make sure it has name and packages set.
+                    if not self._config.get("name", None):
+                        self._config["name"] = self.default_name
+                    if not self._config.get("packages", None):
+                        self._config["packages"] = self.default_packages
                 self.file_valid = True
                 Env.current.enabled = should_enable
             except ParserError:
