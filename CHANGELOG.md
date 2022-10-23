@@ -1,3 +1,10 @@
+## [1.10.4](https://github.com/getappmap/appmap-python/compare/v1.10.3...v1.10.4) (2022-10-23)
+
+
+### Bug Fixes
+
+* remove try ... except from appmap.pth ([4710280](https://github.com/getappmap/appmap-python/commit/4710280685adbe7d7c955ce960313a77bd1a26b8))
+
 ## [1.10.3](https://github.com/getappmap/appmap-python/compare/v1.10.2...v1.10.3) (2022-10-20)
 
 
