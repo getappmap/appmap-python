@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/getappmap/appmap-python/compare/v1.10.4...v1.11.0) (2022-10-25)
+
+
+### Features
+
+* Don't show noise in the console. ([f763eb6](https://github.com/getappmap/appmap-python/commit/f763eb63a4d76d6f54ec0985d758803475850553))
+
 ## [1.10.4](https://github.com/getappmap/appmap-python/compare/v1.10.3...v1.10.4) (2022-10-23)
 
 
