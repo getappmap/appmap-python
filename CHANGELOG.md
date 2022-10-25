@@ -1,3 +1,16 @@
+# [1.12.0](https://github.com/getappmap/appmap-python/compare/v1.11.0...v1.12.0) (2022-10-25)
+
+
+### Bug Fixes
+
+* improve Flask normalized-path parsing ([712dbd5](https://github.com/getappmap/appmap-python/commit/712dbd55dd7d00486ef6e7db7f74ce2e2aee73a8))
+* inject Django middleware automatically ([f15e591](https://github.com/getappmap/appmap-python/commit/f15e5917cbed5e10fb973edff67e5e731edc0de4))
+
+
+### Features
+
+* support Flask 2 ([26cde29](https://github.com/getappmap/appmap-python/commit/26cde29b5bf857482c717cf8fd8b3da1740e3e74))
+
 # [1.11.0](https://github.com/getappmap/appmap-python/compare/v1.10.4...v1.11.0) (2022-10-25)
 
 
