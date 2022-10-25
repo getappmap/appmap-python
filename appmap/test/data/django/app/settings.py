@@ -10,5 +10,3 @@ DEBUG = True
 # Must set ROOT_URLCONF else we get
 # AttributeError: 'Settings' object has no attribute 'ROOT_URLCONF'
 ROOT_URLCONF = "app.urls"
-
-MIDDLEWARE = ["appmap.django.Middleware"]
