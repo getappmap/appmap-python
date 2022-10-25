@@ -383,6 +383,7 @@ class BuiltinFilter(MatcherFilter):
 
 
 def initialize():
+    DetectEnabled.initialize()
     Config().initialize()
     Importer.use_filter(BuiltinFilter)
     Importer.use_filter(ConfigFilter)
