@@ -208,12 +208,15 @@ def test_middleware_reset(pytester, monkeypatch):
 class TestRecordRequestsDjango(TestRecordRequests):
     @staticmethod
     def server_start_thread(env_vars_str):
+        # Use appmap from our working copy, not the module installed by virtualenv. Add the init
+        # directory so the sitecustomize.py file it contains will be loaded on startup. This
+        # simulates a real installation.
         exec_cmd(
             """
-# use appmap from our working copy, not the module installed by virtualenv
-export PYTHONPATH=`pwd`
+export PYTHONPATH="$PWD"
 
 cd appmap/test/data/django/
+PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
             + env_vars_str
             + """ APPMAP_OUTPUT_DIR=/tmp  python manage.py runserver 127.0.0.1:"""

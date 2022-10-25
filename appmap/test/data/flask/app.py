@@ -1,14 +1,15 @@
-"""Rudimentary Flask application for testing."""
+"""
+Rudimentary Flask application for testing.
+
+NB: This should not explicitly reference the `appmap` module in any way. Doing so invalidates
+testing of record-by-default.
+"""
 # pylint: disable=missing-function-docstring
 
 from flask import Flask, make_response
 from markupsafe import escape
 
-from appmap.flask import AppmapFlask
-
 app = Flask(__name__)
-
-appmap_flask = AppmapFlask(app)
 
 
 @app.route("/")
