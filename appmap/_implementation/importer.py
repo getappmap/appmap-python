@@ -187,7 +187,7 @@ class Importer:
             if not cls.filter_chain.filter(filterable):
                 return
 
-            logger.info("  looking for members of %s", filterable.obj)
+            logger.debug("  looking for members of %s", filterable.obj)
             functions = get_members(filterable.obj)
             logger.debug("  functions %s", functions)
 
