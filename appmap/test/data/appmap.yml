@@ -4,6 +4,7 @@ packages:
 - path: example_class.Super
   shallow: true
 - path: example_class
+- path: appmap_testing
 - path: package1
 - dist: PyYAML
 labels:

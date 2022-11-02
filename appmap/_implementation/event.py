@@ -64,13 +64,25 @@ def display_string(val):
 
 
 def describe_value(val):
+    val_type = type(val)
     ret = {
-        "class": fqname(type(val)),
+        "class": fqname(val_type),
         "object_id": id(val),
         "value": display_string(val),
     }
-    if isinstance(val, list) or isinstance(val, dict):
+
+    # We cannot use isinstance here because it uses __class__
+    # and val could be overloading it and calling it could cause side effects.
+    #
+    # For example lazy objects such as django.utils.functional.LazyObject
+    # pretend to be the wrapped object, but they don't know its class
+    # a priori, so __class__ attribute lookup has to force evaluation.
+    # If the object hasn't been evaluated before it could change the
+    # observed behavior by doing that prematurely (perhaps even before
+    # the evaluation can even succeed).
+    if issubclass(val_type, (list, dict)):
         ret["size"] = len(val)
+
     return ret
 
 

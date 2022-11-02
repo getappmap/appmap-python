@@ -11,7 +11,7 @@ import pytest
 import appmap
 import appmap._implementation
 from appmap._implementation.env import Env
-from appmap._implementation.event import _EventIds
+from appmap._implementation.event import _EventIds, describe_value
 
 
 # pylint: disable=import-error
@@ -39,6 +39,17 @@ def test_thread_ids():
     all_tids = [tids.get() for _ in range(tids.qsize())]
     assert len(set(all_tids)) == len(all_tids)  # Should all be unique
 
+def test_describe_value_does_not_call_class():
+    """describe_value should not call __class__
+    __class__ could be overloaded in the value and
+    could cause side effects."""
+    class WithOverloadedClass:
+        # pylint: disable=missing-class-docstring,too-few-public-methods
+        @property
+        def __class__(self):
+            raise Exception("__class__ called")
+
+    describe_value(WithOverloadedClass())
 
 @pytest.mark.appmap_enabled
 @pytest.mark.usefixtures("with_data_dir")
