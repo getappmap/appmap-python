@@ -1,70 +1,53 @@
+os: linux
 dist: jammy
-addons:
-  apt:
-    update: true
-    packages: [build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev]
+language: python
+python:
+- "3.10"
+- "3.9"
+- "3.8"
+- "3.7"
 
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
 if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
-services:
-- docker
-
-env:
-- PYENV_ROOT="$HOME/.pyenv"
-
-install: |
-  set -e
-  if [[ ! -d "$PYENV_ROOT/versions" ]]; then
-    rmdir "$PYENV_ROOT"
-    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-    git clone https://github.com/momo-lab/xxenv-latest.git "$(pyenv root)/plugins/xxenv-latest"
-  fi
-  export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init -)"
-  eval "$(pyenv init --path)"
-  eval "$(pyenv virtualenv-init -)"
-  pyenv update
-  for v in {7..10}; do pyenv latest install -s 3.$v; pyenv latest uninstall -f 3.$v; done
-  pyenv latest local 3.9 3.{7,8,10}
-  pyenv latest global 3.9
-  pip install --upgrade pip poetry tox
-
+before_install: pip install --upgrade pip setuptools
+install: pip install tox-travis
+script: tox
 
 cache:
-- $PYENV_ROOT
-- $HOME/build/applandinc/appmap-python/.tox/
+  pip: true
+  directories:
+  - $TRAVIS_BUILD_DIR/.tox/
+  - $HOME/.cache/pypoetry
 
-script:
-- export PATH="$HOME/.pyenv/bin:$PATH"
-- eval "$(pyenv init -)"
-- eval "$(pyenv init --path)"
-- eval "$(pyenv virtualenv-init -)"
-- tox -e py39 -- pylint appmap || travis_terminate 1
-- tox
-- poetry build
-- echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-- ci/run_tests.sh
-
-before_deploy:
-- |
-  nvm install --lts \
-    && nvm use --lts \
-    && npm i -g \
-      semantic-release \
-      @semantic-release/exec \
-      @semantic-release/git \
-      @semantic-release/changelog \
+jobs:
+  include:
+  - stage: smoke test
+    services:
+    - docker
+    script:
+    - pip install poetry
+    - poetry build
+    - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+    - ci/run_tests.sh
+  - stage: deploy
+    if: branch = master
+    script: skip
+    before_deploy:
+    - pip install poetry
+    - npm i -g
+      semantic-release
+      @semantic-release/exec
+      @semantic-release/git
+      @semantic-release/changelog
       @google/semantic-release-replace-plugin
-
-
-# Note publishing this way requires the PyPI credentials to be
-# present in the environment. Travis doesn't currently support
-# providing environment variables to deploy providers through
-# the build config (i.e. in this file). So, they must be
-# provided through the build settings instead.
-deploy:
-- provider: script
-  script: bash ci/deploy.sh
-  on:
-    branch: master
+    # Note publishing this way requires the PyPI credentials to be
+    # present in the environment. Travis doesn't currently support
+    # providing environment variables to deploy providers through
+    # the build config (i.e. in this file). So, they must be
+    # provided through the build settings instead.
+    deploy:
+    - provider: script
+      script: semantic-release
+      on:
+        branch: master
