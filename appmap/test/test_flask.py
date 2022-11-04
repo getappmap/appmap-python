@@ -103,7 +103,11 @@ PYTHONPATH="$PYTHONPATH:$PWD/init"
     @staticmethod
     def server_stop():
         exec_cmd(
-            "ps -ef | grep -i 'flask run' | grep -v grep | awk '{ print $2 }' | xargs kill -9"
+            "ps -ef"
+            + "| grep -i 'flask run'"
+            + "| grep -v grep"
+            + "| awk '{ print $2 }'"
+            + "| xargs kill -9"
         )
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
 

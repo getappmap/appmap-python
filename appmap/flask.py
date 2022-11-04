@@ -1,10 +1,12 @@
+import pdb
 import re
+import sys
 import time
 
 import flask
 import flask.cli
 import jinja2
-from flask import _app_ctx_stack, request
+from flask import _app_ctx_stack, current_app, request
 from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -13,7 +15,7 @@ import appmap.wrapt as wrapt
 from appmap._implementation.detect_enabled import DetectEnabled
 from appmap._implementation.env import Env
 from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
-from appmap._implementation.flask import remote_recording
+from appmap._implementation.flask import app as remote_recording_app
 from appmap._implementation.recorder import Recorder
 from appmap._implementation.web_framework import AppmapMiddleware
 from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
@@ -67,12 +69,9 @@ class AppmapFlask(AppmapMiddleware):
         super().__init__()
 
     def init_app(self, app):
-        if self.should_record():
-            self.recorder = Recorder.get_current()
-
         if DetectEnabled.should_enable("remote"):
             app.wsgi_app = DispatcherMiddleware(
-                app.wsgi_app, {"/_appmap": remote_recording}
+                app.wsgi_app, {"/_appmap": remote_recording_app}
             )
 
         app.before_request(self.before_request)
@@ -82,9 +81,7 @@ class AppmapFlask(AppmapMiddleware):
         if not self.should_record():
             return
 
-        rec, start, call_event_id = self.before_request_hook(
-            request, request.path, self.recorder.get_enabled()
-        )
+        self.before_request_hook(request, request.path)
 
     def before_request_main(self, rec, request):
         Metadata.add_framework("flask", flask.__version__)
@@ -121,9 +118,7 @@ class AppmapFlask(AppmapMiddleware):
             return response
 
         return self.after_request_hook(
-            request,
             request.path,
-            self.recorder.get_enabled(),
             request.method,
             request.base_url,
             response,

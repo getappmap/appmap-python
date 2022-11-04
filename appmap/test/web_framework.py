@@ -246,6 +246,7 @@ class TestRecording:
         monkeypatch.setenv("APPMAP", "false")
         appmap._implementation.initialize()
         assert not appmap.enabled()
+        assert not DetectEnabled.should_enable("remote")
 
         res = client.get("/_appmap/record")
         assert res.status_code == 404
@@ -280,7 +281,7 @@ class TestRecording:
     @staticmethod
     @pytest.mark.appmap_enabled
     def test_can_record(data_dir, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+        # monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
         res = client.post("/_appmap/record")
         assert res.status_code == 200
 

@@ -2,6 +2,7 @@ import logging
 import threading
 import traceback
 from abc import ABC, abstractmethod
+from copy import copy
 
 from appmap._implementation.utils import appmap_tls
 
@@ -22,10 +23,14 @@ class Recorder(ABC):
     def events(self):
         return self._events
 
-    @abstractmethod
-    def next_event_id(self):
-        self._next_event_id += 1
-        return self._next_event_id
+    _next_event_id = 0
+    _next_event_id_lock = threading.Lock()
+
+    @classmethod
+    def next_event_id(cls):
+        with cls._next_event_id_lock:
+            cls._next_event_id += 1
+            return cls._next_event_id
 
     # It might be nice to put @property on the getters here. The python maintainers have gone back
     # and forth on whether you should be able to combine @classmethod and @property. In 3.11,
@@ -44,8 +49,24 @@ class Recorder(ABC):
         """
         Set the recorder for the current thread.
         """
-        appmap_tls()[cls._RECORDER_KEY] = r
+        tls = appmap_tls()
+        if r:
+            tls[cls._RECORDER_KEY] = r
+        else:
+            del tls[cls._RECORDER_KEY]
+
         return r
+
+    @classmethod
+    def get_global(cls):
+        _, shared = cls._get_current()
+        return shared
+
+    @classmethod
+    def new_global(cls):
+        global _default_recorder
+        _default_recorder = SharedRecorder()
+        return _default_recorder
 
     @classmethod
     def get_enabled(cls):
@@ -85,13 +106,11 @@ class Recorder(ABC):
 
     def clear(self):
         self._events = []
-        self._next_event_id = 0
 
     def __init__(self, enabled=False):
         self._events = []
         self._enabled = enabled
         self.start_tb = None
-        self._next_event_id = 0
 
     @abstractmethod
     def _start_recording(self):
@@ -122,8 +141,7 @@ class Recorder(ABC):
         threads initializing the default recorder. If you find yourself wanting to do that, you
         should probably be using per-thread recording.
         """
-        global _default_recorder
-        _default_recorder = SharedRecorder()
+        Recorder.new_global()
 
 
 class ThreadRecorder(Recorder):
@@ -134,9 +152,6 @@ class ThreadRecorder(Recorder):
     @property
     def events(self):
         return super().events
-
-    def next_event_id(self):
-        return super().next_event_id()
 
     def _start_recording(self):
         super()._start_recording()
@@ -155,6 +170,14 @@ class SharedRecorder(Recorder):
 
     _lock = threading.Lock()
 
+    def __init__(self):
+        super().__init__()
+        Recorder._next_event_id = 0
+
+    def clear(self):
+        super().clear()
+        Recorder._next_event_id = 0
+
     @property
     def events(self):
         with self._lock:
@@ -167,10 +190,6 @@ class SharedRecorder(Recorder):
     def _stop_recording(self):
         with self._lock:
             return super()._stop_recording()
-
-    def next_event_id(self):
-        with self._lock:
-            return super().next_event_id()
 
     def _add_event(self, event):
         with self._lock:

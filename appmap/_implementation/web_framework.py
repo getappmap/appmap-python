@@ -6,15 +6,16 @@ import os.path
 import re
 import time
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 from hashlib import sha256
 from tempfile import NamedTemporaryFile
 
-from appmap._implementation import generation
-from appmap._implementation.detect_enabled import DetectEnabled
-from appmap._implementation.env import Env
-from appmap._implementation.event import Event, ReturnEvent, _EventIds, describe_value
-from appmap._implementation.recorder import Recorder, ThreadRecorder
-from appmap._implementation.utils import root_relative_path, scenario_filename
+from . import generation, remote_recording
+from .detect_enabled import DetectEnabled
+from .env import Env
+from .event import Event, ReturnEvent, _EventIds, describe_value
+from .recorder import Recorder, ThreadRecorder
+from .utils import root_relative_path, scenario_filename
 
 
 class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
@@ -130,6 +131,9 @@ def create_appmap_file(
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
 
 
+request_recorder = ContextVar("appmap_request_recorder")
+
+
 class AppmapMiddleware(ABC):
     def __init__(self):
         self.record_url = "/_appmap/record"
@@ -140,7 +144,7 @@ class AppmapMiddleware(ABC):
             "requests"
         )
 
-    def before_request_hook(self, request, request_path, recording_is_running):
+    def before_request_hook(self, request, request_path):
         if request_path == self.record_url:
             return None, None, None
 
@@ -152,15 +156,9 @@ class AppmapMiddleware(ABC):
             rec = ThreadRecorder()
             Recorder.set_current(rec)
             rec.start_recording()
-            # Each time an event is added for a thread_id it's also
-            # added to the global Recorder().  So don't add the event
-            # to the global Recorder() explicitly because that would
-            # add the event in it twice.
-        elif DetectEnabled.should_enable("remote") or recording_is_running:
-            # b) APPMAP=true, or
-            # c) remote, enabled by POST to /_appmap/record, which set
-            #    recording_is_running
-            rec = Recorder.get_current()
+            request_recorder.set(rec)
+        elif DetectEnabled.should_enable("remote"):
+            rec = Recorder.get_global()
 
         if rec and rec.get_enabled():
             start, call_event_id = self.before_request_main(rec, request)
@@ -173,9 +171,7 @@ class AppmapMiddleware(ABC):
 
     def after_request_hook(
         self,
-        request,
         request_path,
-        recording_is_running,
         request_method,
         request_base_url,
         response,
@@ -188,14 +184,9 @@ class AppmapMiddleware(ABC):
 
         if DetectEnabled.should_enable("requests"):
             # a) requests
-            rec = Recorder.get_current()
-            # Each time an event is added for a thread_id it's also
-            # added to the global Recorder().  So don't add the event
-            # to the global Recorder() explicitly because that would
-            # add the event in it twice.
+            rec = request_recorder.get()
             try:
-                if rec.get_enabled():
-                    self.after_request_main(rec, response, start, call_event_id)
+                self.after_request_main(rec, response, start, call_event_id)
 
                 output_dir = Env.current.output_dir / "requests"
                 create_appmap_file(
@@ -209,11 +200,11 @@ class AppmapMiddleware(ABC):
                 )
             finally:
                 rec.stop_recording()
-        elif DetectEnabled.should_enable("remote") or recording_is_running:
-            # b) APPMAP=true, or
-            # c) remote, enabled by POST to /_appmap/record, which set
-            #    recording_is_running
-            rec = Recorder.get_current()
+                Recorder.set_current(None)
+                request_recorder.set(None)
+
+        elif DetectEnabled.should_enable("remote"):
+            rec = Recorder.get_global()
             if rec.get_enabled():
                 self.after_request_main(rec, response, start, call_event_id)
 
@@ -222,3 +213,7 @@ class AppmapMiddleware(ABC):
     @abstractmethod
     def after_request_main(self, rec, response, start, call_event_id):
         pass
+
+
+def initialize():
+    remote_recording.initialize()

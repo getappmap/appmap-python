@@ -90,7 +90,7 @@ class Event:
     __slots__ = ["id", "event", "thread_id"]
 
     def __init__(self, event):
-        self.id = Recorder.get_current().next_event_id()
+        self.id = Recorder.next_event_id()
         self.event = event
         self.thread_id = _EventIds.get_thread_id()
 
