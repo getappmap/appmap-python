@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/getappmap/appmap-python/compare/v1.12.0...v1.12.1) (2022-11-04)
+
+
+### Bug Fixes
+
+* Avoid calling __class__ when describing values ([91be26e](https://github.com/getappmap/appmap-python/commit/91be26eecd04c2291c86e43043f1aee8a29f510f))
+
 # [1.12.0](https://github.com/getappmap/appmap-python/compare/v1.11.0...v1.12.0) (2022-10-25)
 
 
