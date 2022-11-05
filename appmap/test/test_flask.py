@@ -12,18 +12,15 @@ from appmap.flask import AppmapFlask
 from appmap.test.helpers import DictIncluding
 
 from .._implementation.metadata import Metadata
+from .web_framework import (  # pylint: disable=unused-import
+    TestRecordRequests,
+    exec_cmd,
+    wait_until_port_is,
+)
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
 pytest.register_assert_rewrite("appmap.test.web_framework")
-
-from .web_framework import (  # pylint: disable=unused-import
-    TestRecording,
-    TestRecordRequests,
-    TestRequestCapture,
-    exec_cmd,
-    wait_until_port_is,
-)
 
 
 @pytest.fixture(name="client")
@@ -38,7 +35,7 @@ def flask_app(data_dir, monkeypatch):
 
     Env.current.set("APPMAP_CONFIG", data_dir / "flask" / "appmap.yml")
 
-    import app  # pylint: disable=import-error
+    import app  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
 
     importlib.reload(app)
 

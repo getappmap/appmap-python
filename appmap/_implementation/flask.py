@@ -14,17 +14,17 @@ app = Flask(__name__)
 
 @app.route("/record", methods=["GET"])
 def status():
-    body, status = remote_recording.status()
-    return Response(body, status=status, mimetype="application/json")
+    body, rrstatus = remote_recording.status()
+    return Response(body, status=rrstatus, mimetype="application/json")
 
 
 @app.route("/record", methods=["POST"])
 def start():
-    body, status = remote_recording.start()
-    return Response(body, status=status, mimetype="application/json")
+    body, rrstatus = remote_recording.start()
+    return Response(body, status=rrstatus, mimetype="application/json")
 
 
 @app.route("/record", methods=["DELETE"])
 def stop():
-    body, status = remote_recording.stop()
-    return Response(body, status=status, mimetype="application/json")
+    body, rrstatus = remote_recording.stop()
+    return Response(body, status=rrstatus, mimetype="application/json")

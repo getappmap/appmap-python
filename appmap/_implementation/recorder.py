@@ -2,12 +2,12 @@ import logging
 import threading
 import traceback
 from abc import ABC, abstractmethod
-from copy import copy
 
 from appmap._implementation.utils import appmap_tls
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=global-statement
 _default_recorder = None
 
 
@@ -70,19 +70,19 @@ class Recorder(ABC):
 
     @classmethod
     def get_enabled(cls):
-        return cls.get_current()._enabled
+        return cls.get_current()._enabled  # pylint: disable=protected-access
 
     @classmethod
     def set_enabled(cls, e):
-        cls.get_current()._enabled = e
+        cls.get_current()._enabled = e  # pylint: disable=protected-access
 
     @classmethod
     def start_recording(cls):
-        cls.get_current()._start_recording()
+        cls.get_current()._start_recording()  # pylint: disable=protected-access
 
     @classmethod
     def stop_recording(cls):
-        return cls.get_current()._stop_recording()
+        return cls.get_current()._stop_recording()  # pylint: disable=protected-access
 
     @classmethod
     def add_event(cls, event):
@@ -91,15 +91,14 @@ class Recorder(ABC):
         one).
         """
         perthread, shared = cls._get_current()
-        shared._add_event(event)
+        shared._add_event(event)  # pylint: disable=protected-access
         if perthread:
-            perthread._add_event(event)
+            perthread._add_event(event)  # pylint: disable=protected-access
 
     _RECORDER_KEY = "appmap_recorder"
 
     @classmethod
     def _get_current(cls):
-        global _default_recorder
         perthread = appmap_tls().get(cls._RECORDER_KEY, None)
 
         return [perthread, _default_recorder]
@@ -153,6 +152,8 @@ class ThreadRecorder(Recorder):
     def events(self):
         return super().events
 
+    # They're not useless, because they're abtract with a default implementation
+    # pragma pylint: disable=useless-super-delegation
     def _start_recording(self):
         super()._start_recording()
 
@@ -161,6 +162,8 @@ class ThreadRecorder(Recorder):
 
     def _add_event(self, event):
         super()._add_event(event)
+
+    # pragma pylint: enable=useless-super-delegation
 
 
 class SharedRecorder(Recorder):
@@ -197,4 +200,4 @@ class SharedRecorder(Recorder):
 
 
 def initialize():
-    Recorder._initialize()
+    Recorder._initialize()  # pylint: disable=protected-access

@@ -16,7 +16,6 @@ from django.core.handlers.base import BaseHandler
 from django.db.backends.signals import connection_created
 from django.db.backends.utils import CursorDebugWrapper
 from django.dispatch import receiver
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import Template
 from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
@@ -24,7 +23,6 @@ from django.urls.resolvers import _route_to_regex
 
 from appmap._implementation.detect_enabled import DetectEnabled
 
-from ._implementation import generation
 from ._implementation.event import (
     ExceptionEvent,
     HttpServerRequestEvent,

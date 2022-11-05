@@ -6,6 +6,7 @@ from . import generation
 from .detect_enabled import DetectEnabled
 from .recorder import Recorder
 
+# pylint: disable=global-statement
 _enabled_lock = Lock()
 _enabled = False
 

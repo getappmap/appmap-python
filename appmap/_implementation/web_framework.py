@@ -13,7 +13,7 @@ from tempfile import NamedTemporaryFile
 from . import generation, remote_recording
 from .detect_enabled import DetectEnabled
 from .env import Env
-from .event import Event, ReturnEvent, _EventIds, describe_value
+from .event import Event, ReturnEvent, describe_value
 from .recorder import Recorder, ThreadRecorder
 from .utils import root_relative_path, scenario_filename
 

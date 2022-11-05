@@ -108,8 +108,6 @@ class TestRecordingWhenEnabled:
             modfunc,
         )
 
-        from appmap.wrapt import FunctionWrapper
-
         rec = appmap.Recording()
         with rec:
             f1 = deepcopy(modfunc)

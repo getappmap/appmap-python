@@ -244,7 +244,7 @@ class TestRecording:
     def test_appmap_disabled(client, monkeypatch):
         # since APPMAP records by default, disable it explicitly
         monkeypatch.setenv("APPMAP", "false")
-        appmap._implementation.initialize()
+        appmap._implementation.initialize()  # pylint: disable=protected-access
         assert not appmap.enabled()
         assert not DetectEnabled.should_enable("remote")
 
@@ -280,8 +280,7 @@ class TestRecording:
 
     @staticmethod
     @pytest.mark.appmap_enabled
-    def test_can_record(data_dir, client, monkeypatch):
-        # monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_can_record(data_dir, client):
         res = client.post("/_appmap/record")
         assert res.status_code == 200
 
@@ -298,7 +297,7 @@ class TestRecording:
         generated_appmap = normalize_appmap(data)
 
         expected_path = data_dir / "remote.appmap.json"
-        with open(expected_path) as expected:
+        with open(expected_path, encoding="utf-8") as expected:
             expected_appmap = json.load(expected)
 
         assert (
@@ -317,7 +316,7 @@ def exec_cmd(command):
         stdin=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    output, errors = p.communicate()
+    output, _ = p.communicate()
     return output.decode()
 
 
@@ -327,7 +326,7 @@ def port_state(address, port):
     try:
         s.connect((address, port))
         ret = "open"
-    except:
+    except Exception:  # pylint: disable=broad-except
         ret = "closed"
         s.close()
     return ret
@@ -354,7 +353,7 @@ class TestRecordRequests:
     server_port = 8000
 
     @abstractmethod
-    def server_start():
+    def server_start(env_vars_str):
         """
         Start the webserver in the background. Don't block execution.
         """
@@ -406,7 +405,7 @@ class TestRecordRequests:
             for future in concurrent.futures.as_completed(future_to_request_number):
                 try:
                     response = future.result()
-                except Exception as e:
+                except Exception:  # pylint: disable=broad-except
                     traceback.print_exc()
                 assert response.status_code == 200
 
@@ -434,7 +433,7 @@ class TestRecordRequests:
                     == "http_127_0_0_1_8000_test.appmap.json"
                 )
 
-                with open(appmap_file_name) as f:
+                with open(appmap_file_name, encoding="utf-8") as f:
                     appmap = json.loads(f.read())
 
                     # Every event should come from the same thread
