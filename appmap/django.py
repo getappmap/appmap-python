@@ -16,29 +16,26 @@ from django.core.handlers.base import BaseHandler
 from django.db.backends.signals import connection_created
 from django.db.backends.utils import CursorDebugWrapper
 from django.dispatch import receiver
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.template import Template
 from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation import generation, recording, web_framework
-from appmap._implementation.env import Env
-from appmap._implementation.event import (
+from appmap._implementation.detect_enabled import DetectEnabled
+
+from ._implementation.event import (
     ExceptionEvent,
     HttpServerRequestEvent,
     HttpServerResponseEvent,
     ReturnEvent,
     SqlEvent,
-    _EventIds,
 )
-from appmap._implementation.instrument import is_instrumentation_disabled
-from appmap._implementation.recorder import Recorder
-from appmap._implementation.web_framework import AppmapMiddleware
-from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
-
+from ._implementation.instrument import is_instrumentation_disabled
 from ._implementation.metadata import Metadata
+from ._implementation.recorder import Recorder
 from ._implementation.utils import patch_class, values_dict
+from ._implementation.web_framework import AppmapMiddleware
+from ._implementation.web_framework import TemplateHandler as BaseTemplateHandler
 
 
 def parse_pg_version(version):
@@ -233,12 +230,7 @@ class Middleware(AppmapMiddleware):
         if not self.should_record():
             return self.get_response(request)
 
-        if request.path_info == self.record_url:
-            return self.recording(request)
-
-        rec, start, call_event_id = self.before_request_hook(
-            request, request.path_info, self.recorder.get_enabled()
-        )
+        rec, start, call_event_id = self.before_request_hook(request, request.path_info)
 
         try:
             response = self.get_response(request)
@@ -254,9 +246,7 @@ class Middleware(AppmapMiddleware):
             raise
 
         self.after_request_hook(
-            request,
             request.path_info,
-            self.recorder.get_enabled(),
             request.method,
             request.build_absolute_uri(),
             response,
@@ -302,32 +292,14 @@ class Middleware(AppmapMiddleware):
         )
         rec.add_event(return_event)
 
-    def recording(self, request):
-        """Handle recording requests."""
-        if request.method == "GET":
-            return JsonResponse({"enabled": self.recorder.get_enabled()})
-        if request.method == "POST":
-            if self.recorder.get_enabled():
-                return HttpResponse("Recording is already in progress", status=409)
-            self.recorder.start_recording()
-            return HttpResponse()
-
-        if request.method == "DELETE":
-            if not self.recorder.get_enabled():
-                return HttpResponse("No recording is in progress", status=404)
-
-            self.recorder.stop_recording()
-            return HttpResponse(
-                generation.dump(self.recorder), content_type="application/json"
-            )
-
-        return HttpResponseBadRequest()
-
 
 def inject_middleware():
     """Make sure AppMap middleware is added to the stack"""
     if "appmap.django.Middleware" not in settings.MIDDLEWARE:
-        settings.MIDDLEWARE.insert(0, "appmap.django.Middleware")
+        new_middleware = ["appmap.django.Middleware"]
+        if DetectEnabled.should_enable("remote"):
+            new_middleware.insert(0, "appmap._implementation.django.RemoteRecording")
+        settings.MIDDLEWARE[0:0] = new_middleware
 
 
 original_load_middleware = BaseHandler.load_middleware

@@ -218,7 +218,7 @@ class Config:
                 Env.current.enabled = should_enable
             except ParserError:
                 pass
-            logger.info("config: %s", self._config)
+            logger.debug("config: %s", self._config)
             return
 
         if not Env.current.enabled:

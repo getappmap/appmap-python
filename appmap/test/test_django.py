@@ -1,9 +1,10 @@
 # flake8: noqa: E402
-# pylint: disable=unused-import, redefined-outer-name, missing-function-docstring
+# pylint: disable=missing-function-docstring,redefined-outer-name
 
 import json
 import sys
 from pathlib import Path
+from threading import Thread
 
 import django
 import django.conf
@@ -19,23 +20,17 @@ import appmap
 import appmap.django  # noqa: F401
 from appmap.test.helpers import DictIncluding
 
-sys.path += [str(Path(__file__).parent / "data" / "django")]
-import app
-
 from .._implementation.metadata import Metadata
+from .web_framework import TestRecordRequests, exec_cmd, wait_until_port_is
+
+sys.path += [str(Path(__file__).parent / "data" / "django")]
+
+# Import app just for the side-effects. It must happen after sys.path has been modified.
+import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
 pytest.register_assert_rewrite("appmap.test.web_framework")
-from threading import Thread
-
-from .web_framework import (
-    TestRecording,
-    TestRecordRequests,
-    TestRequestCapture,
-    exec_cmd,
-    wait_until_port_is,
-)
 
 
 @pytest.mark.django_db
@@ -235,7 +230,11 @@ PYTHONPATH="$PYTHONPATH:$PWD/init"
     @staticmethod
     def server_stop():
         exec_cmd(
-            "ps -ef | grep -i 'manage.py runserver' | grep -v grep | awk '{ print $2 }' | xargs kill -9"
+            "ps -ef"
+            + "| grep -i 'manage.py runserver'"
+            + "| grep -v grep"
+            + "| awk '{ print $2 }'"
+            + "| xargs kill -9"
         )
         wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
 

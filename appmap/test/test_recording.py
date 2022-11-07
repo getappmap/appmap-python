@@ -108,8 +108,6 @@ class TestRecordingWhenEnabled:
             modfunc,
         )
 
-        from appmap.wrapt import FunctionWrapper
-
         rec = appmap.Recording()
         with rec:
             f1 = deepcopy(modfunc)
@@ -174,5 +172,4 @@ class TestRecordingPerThread:
         for n in range(thread_count):
             events = recorders[f"thread{n}"].events
             assert len(events) == 1
-            assert events[0].id == 1
             assert events[0].event["name"] == f"thread{n}"

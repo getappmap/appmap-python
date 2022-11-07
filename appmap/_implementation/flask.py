@@ -1,39 +1,30 @@
-""" remote_recording is a Flask app that can be mounted to expose the remote-recording endpoint. """
-import json
+"""
+This file contains a Flask app that is mounted on /_appmap to expose the remote-recording endpoint
+in a user's app.
 
-from flask import Flask
+It should only be imported if other code has already verified that Flask is available.
+"""
 
-from . import generation
-from .recorder import Recorder
-from .web_framework import AppmapMiddleware
+from flask import Flask, Response
 
-remote_recording = Flask(__name__)
+from . import remote_recording
+
+app = Flask(__name__)
 
 
-@remote_recording.route("/record", methods=["GET"])
+@app.route("/record", methods=["GET"])
 def status():
-    if not AppmapMiddleware.should_record():
-        return "Appmap is disabled.", 404
-
-    return {"enabled": Recorder.get_current().get_enabled()}
+    body, rrstatus = remote_recording.status()
+    return Response(body, status=rrstatus, mimetype="application/json")
 
 
-@remote_recording.route("/record", methods=["POST"])
+@app.route("/record", methods=["POST"])
 def start():
-    r = Recorder.get_current()
-    if r.get_enabled():
-        return "Recording is already in progress", 409
-
-    r.start_recording()
-    return "", 200
+    body, rrstatus = remote_recording.start()
+    return Response(body, status=rrstatus, mimetype="application/json")
 
 
-@remote_recording.route("/record", methods=["DELETE"])
+@app.route("/record", methods=["DELETE"])
 def stop():
-    r = Recorder.get_current()
-    if not r.get_enabled():
-        return "No recording is in progress", 404
-
-    r.stop_recording()
-
-    return json.loads(generation.dump(r))
+    body, rrstatus = remote_recording.stop()
+    return Response(body, status=rrstatus, mimetype="application/json")
