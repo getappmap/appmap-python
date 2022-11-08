@@ -15,10 +15,10 @@ import importlib_metadata
 import yaml
 from yaml.parser import ParserError
 
-from appmap._implementation.detect_enabled import DetectEnabled
+from appmap.labeling import presets as label_presets
 
-from ..labeling import presets as label_presets
 from . import utils
+from .detect_enabled import DetectEnabled
 from .env import Env
 from .importer import Filter, Importer
 from .instrument import instrument

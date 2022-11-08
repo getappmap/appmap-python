@@ -4,7 +4,7 @@ set -e
 pip install -U pip pytest "flask<2" python-decouple
 pip install /dist/appmap-*-py3-none-any.whl
 
-cp -R /appmap/test/data/unittest/simple ./.
+cp -R /_appmap/test/data/unittest/simple ./.
 
 appmap-agent-init |\
   python -c 'import json,sys; print(json.load(sys.stdin)["configuration"]["contents"])' > /tmp/appmap.yml

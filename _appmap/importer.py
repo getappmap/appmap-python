@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
 
-import appmap.wrapt as wrapt
+from appmap import wrapt
 
 from .env import Env
 from .utils import FnType
@@ -172,7 +172,7 @@ class Importer:
     @classmethod
     def do_import(cls, *args, **kwargs):
         mod = args[0]
-        if mod.__name__.startswith("appmap"):
+        if mod.__name__.startswith(("appmap", "_appmap")):
             return
 
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
@@ -201,7 +201,7 @@ class Importer:
         logger.debug("  classes %s", classes)
         for c in classes:
             fc = FilterableCls(c)
-            if fc.fqname.startswith("appmap"):
+            if fc.fqname.startswith(("appmap", "_appmap")):
                 logger.debug(f"  not instrumenting {fc.fqname}")
                 continue
             instrument_functions(fc)

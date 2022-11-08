@@ -6,11 +6,10 @@ import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
-from appmap._implementation.event import ReturnEvent, SqlEvent
-from appmap._implementation.instrument import is_instrumentation_disabled
-from appmap._implementation.recorder import Recorder
-
-from ._implementation.metadata import Metadata
+from _appmap.event import ReturnEvent, SqlEvent
+from _appmap.instrument import is_instrumentation_disabled
+from _appmap.metadata import Metadata
+from _appmap.recorder import Recorder
 
 
 @event.listens_for(Engine, "before_cursor_execute")

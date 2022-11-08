@@ -6,7 +6,7 @@ structured exactly like the labels section in appmap.yml.
 import yaml
 from importlib_resources import files
 
-from .._implementation.labels import LabelSet
+from _appmap.labels import LabelSet
 
 
 def presets() -> LabelSet:

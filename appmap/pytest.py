@@ -1,9 +1,8 @@
 import pytest
 
-import appmap
-import appmap.wrapt as wrapt
-from appmap._implementation import testing_framework
-from appmap._implementation.detect_enabled import DetectEnabled
+from _appmap import testing_framework
+from _appmap.detect_enabled import DetectEnabled
+from appmap import wrapt
 
 
 class recorded_testcase:

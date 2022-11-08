@@ -49,7 +49,7 @@ class DetectEnabled:
     @classmethod
     def is_appmap_repo(cls):
         return os.path.exists("appmap/__init__.py") and os.path.exists(
-            "appmap/_implementation/__init__.py"
+            "_appmap/__init__.py"
         )
 
     @classmethod
@@ -63,7 +63,7 @@ class DetectEnabled:
             enabled, log_level, message = cls._detect_should_enable(recording_method)
             cls._detected_for_method[recording_method] = enabled
             # don't log enabled messages more than once
-            if (not cls._logged_at_least_once and logger.isEnabledFor(log_level)):
+            if not cls._logged_at_least_once and logger.isEnabledFor(log_level):
                 cls._logged_at_least_once = True
                 logger.log(log_level, message)
             return enabled
@@ -88,11 +88,19 @@ class DetectEnabled:
     @classmethod
     def _detect_should_enable(cls, recording_method):
         if not recording_method:
-            return False, logging.WARNING, cls._log_prefix(False, "no recording method is set")
+            return (
+                False,
+                logging.WARNING,
+                cls._log_prefix(False, "no recording method is set"),
+            )
 
         if recording_method not in RECORDING_METHODS:
-            return False, logging.WARNING, cls._log_prefix(
+            return (
+                False,
+                logging.WARNING,
+                cls._log_prefix(
                     False, f"{recording_method} is an invalid recording method"
+                ),
             )
 
         # explicitly disabled or enabled
@@ -102,7 +110,13 @@ class DetectEnabled:
             elif os.environ["APPMAP"].lower() == "true":
                 return True, logging.INFO, cls._log_prefix(True, f"APPMAP=true")
             else:
-                return False, logging.WARNING, cls._log_prefix(False, f"APPMAP={os.environ['APPMAP']} is an invalid option")
+                return (
+                    False,
+                    logging.WARNING,
+                    cls._log_prefix(
+                        False, f"APPMAP={os.environ['APPMAP']} is an invalid option"
+                    ),
+                )
 
         # recording method explicitly disabled or enabled
         if recording_method:
@@ -111,11 +125,26 @@ class DetectEnabled:
                     env_var = "_".join(["APPMAP", "RECORD", recording_method.upper()])
                     if env_var in os.environ:
                         if os.environ[env_var].lower() == "false":
-                            return False, logging.INFO, cls._log_prefix(False, f"{env_var}=false")
+                            return (
+                                False,
+                                logging.INFO,
+                                cls._log_prefix(False, f"{env_var}=false"),
+                            )
                         elif os.environ[env_var].lower() == "true":
-                            return True, logging.INFO, cls._log_prefix(True, f"{env_var}=true")
+                            return (
+                                True,
+                                logging.INFO,
+                                cls._log_prefix(True, f"{env_var}=true"),
+                            )
                         else:
-                            return False, logging.WARNING, cls._log_prefix(False, f"{env_var}={os.environ[env_var]} is an invalid option")
+                            return (
+                                False,
+                                logging.WARNING,
+                                cls._log_prefix(
+                                    False,
+                                    f"{env_var}={os.environ[env_var]} is an invalid option",
+                                ),
+                            )
 
         # check if name of APPMAP_RECORD_ env variable was defined incorrectly
         for env_var in os.environ:
@@ -126,22 +155,42 @@ class DetectEnabled:
                 and env_var_as_list[1] == "RECORD"
             ):
                 if not (env_var_as_list[2].lower() in RECORDING_METHODS):
-                    return False, logging.WARNING, cls._log_prefix(False, f"{env_var} is an invalid recording method")
+                    return (
+                        False,
+                        logging.WARNING,
+                        cls._log_prefix(
+                            False, f"{env_var} is an invalid recording method"
+                        ),
+                    )
 
         # it's flask
         message, should_enable = cls.is_flask_and_should_enable()
         if should_enable in [True, False]:
-            return should_enable, logging.INFO, cls._log_prefix(should_enable, f"{message}")
+            return (
+                should_enable,
+                logging.INFO,
+                cls._log_prefix(should_enable, f"{message}"),
+            )
 
         # it's django
         message, should_enable = cls.is_django_and_should_enable()
         if should_enable in [True, False]:
-            return should_enable, logging.INFO, cls._log_prefix(should_enable, f"{message}")
+            return (
+                should_enable,
+                logging.INFO,
+                cls._log_prefix(should_enable, f"{message}"),
+            )
 
         if recording_method in RECORDING_METHODS:
             return True, logging.INFO, cls._log_prefix(True, f"will record by default")
 
-        return False, logging.INFO, cls._log_prefix(False, f"it's not enabled by any configuration or framework")
+        return (
+            False,
+            logging.INFO,
+            cls._log_prefix(
+                False, f"it's not enabled by any configuration or framework"
+            ),
+        )
 
     @classmethod
     def is_flask_and_should_enable(cls):

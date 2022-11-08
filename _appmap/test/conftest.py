@@ -4,15 +4,15 @@ from distutils.dir_util import copy_tree
 import pytest
 import yaml
 
-import appmap._implementation
-from appmap._implementation import utils
-from appmap._implementation.detect_enabled import RECORDING_METHODS, DetectEnabled
-from appmap._implementation.env import Env
-from appmap._implementation.recorder import Recorder
+import _appmap
+from _appmap import utils
+from _appmap.detect_enabled import RECORDING_METHODS, DetectEnabled
+from _appmap.env import Env
+from _appmap.recorder import Recorder
 
 
 def _data_dir(pytestconfig):
-    return pytestconfig.rootpath / "appmap" / "test" / "data"
+    return pytestconfig.rootpath / "_appmap" / "test" / "data"
 
 
 @pytest.fixture(name="data_dir")
@@ -70,7 +70,7 @@ def pytest_runtest_setup(item):
         if isinstance(appmap_record_requests, str):
             env["APPMAP_RECORD_REQUESTS"] = appmap_record_requests
 
-    appmap._implementation.initialize(env=env)  # pylint: disable=protected-access
+    _appmap.initialize(env=env)  # pylint: disable=protected-access
 
     # Some tests want yaml instrumented, others don't.
     # Reload it to make sure it's instrumented, or not, as set in appmap.yml.

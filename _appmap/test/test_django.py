@@ -18,9 +18,9 @@ from django.test.client import MULTIPART_CONTENT
 
 import appmap
 import appmap.django  # noqa: F401
-from appmap.test.helpers import DictIncluding
+from _appmap.metadata import Metadata
 
-from .._implementation.metadata import Metadata
+from .helpers import DictIncluding
 from .web_framework import TestRecordRequests, exec_cmd, wait_until_port_is
 
 sys.path += [str(Path(__file__).parent / "data" / "django")]
@@ -30,7 +30,7 @@ import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
-pytest.register_assert_rewrite("appmap.test.web_framework")
+pytest.register_assert_rewrite("_appmap.test.web_framework")
 
 
 @pytest.mark.django_db
@@ -73,9 +73,9 @@ def test_template(events, monkeypatch):
     render_to_string("hello_world.html")
     assert events[0].to_dict() == DictIncluding(
         {
-            "path": "appmap/test/data/django/app/hello_world.html",
+            "path": "_appmap/test/data/django/app/hello_world.html",
             "event": "call",
-            "defined_class": "<templates>.AppmapTestDataDjangoAppHello_WorldHtml",
+            "defined_class": "<templates>._AppmapTestDataDjangoAppHello_WorldHtml",
             "method_id": "render",
             "static": False,
         }
@@ -210,7 +210,7 @@ class TestRecordRequestsDjango(TestRecordRequests):
             """
 export PYTHONPATH="$PWD"
 
-cd appmap/test/data/django/
+cd _appmap/test/data/django/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
             + env_vars_str

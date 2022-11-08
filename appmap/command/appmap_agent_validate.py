@@ -4,7 +4,7 @@ import sys
 from importlib_metadata import PackageNotFoundError, version
 from packaging.version import Version, parse
 
-from .._implementation.py_version_check import AppMapPyVerException, check_py_version
+from _appmap.py_version_check import AppMapPyVerException, check_py_version
 
 
 class ValidationFailure(Exception):

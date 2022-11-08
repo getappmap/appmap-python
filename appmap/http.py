@@ -8,9 +8,9 @@ import time
 from http.client import HTTPConnection
 from urllib.parse import parse_qs, urlsplit
 
-from ._implementation.event import HttpClientRequestEvent, HttpClientResponseEvent
-from ._implementation.recorder import Recorder
-from ._implementation.utils import patch_class, values_dict
+from _appmap.event import HttpClientRequestEvent, HttpClientResponseEvent
+from _appmap.recorder import Recorder
+from _appmap.utils import patch_class, values_dict
 
 
 def is_secure(self: HTTPConnection):

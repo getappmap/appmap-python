@@ -6,10 +6,10 @@ from contextlib import contextmanager
 
 import inflection
 
-from appmap._implementation import configuration, env, generation, web_framework
-from appmap._implementation.env import Env
-from appmap._implementation.recording import Recording
-from appmap._implementation.utils import fqname
+from _appmap import configuration, env, generation, web_framework
+from _appmap.env import Env
+from _appmap.recording import Recording
+from _appmap.utils import fqname
 
 from .metadata import Metadata
 

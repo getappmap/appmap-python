@@ -2,7 +2,7 @@
 
 import sys
 
-from appmap._implementation.importer import Importer, wrap_exec_module
+from _appmap.importer import Importer, wrap_exec_module
 
 
 def test_exec_module_protection(monkeypatch):

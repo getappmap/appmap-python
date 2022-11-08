@@ -5,8 +5,8 @@ from operator import itemgetter
 
 import pytest
 
-import appmap._implementation
-from appmap._implementation.recorder import Recorder
+import _appmap
+from _appmap.recorder import Recorder
 
 
 def normalize_path(path):
@@ -19,7 +19,7 @@ def normalize_path(path):
 
 class AppMapTestBase:
     def setup_method(self, _):
-        appmap._implementation.initialize()  # pylint: disable=protected-access
+        _appmap.initialize()  # pylint: disable=protected-access
 
     @staticmethod
     @pytest.fixture

@@ -21,21 +21,20 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation.detect_enabled import DetectEnabled
-
-from ._implementation.event import (
+from _appmap.detect_enabled import DetectEnabled
+from _appmap.event import (
     ExceptionEvent,
     HttpServerRequestEvent,
     HttpServerResponseEvent,
     ReturnEvent,
     SqlEvent,
 )
-from ._implementation.instrument import is_instrumentation_disabled
-from ._implementation.metadata import Metadata
-from ._implementation.recorder import Recorder
-from ._implementation.utils import patch_class, values_dict
-from ._implementation.web_framework import AppmapMiddleware
-from ._implementation.web_framework import TemplateHandler as BaseTemplateHandler
+from _appmap.instrument import is_instrumentation_disabled
+from _appmap.metadata import Metadata
+from _appmap.recorder import Recorder
+from _appmap.utils import patch_class, values_dict
+from _appmap.web_framework import AppmapMiddleware
+from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
 
 def parse_pg_version(version):
@@ -298,7 +297,7 @@ def inject_middleware():
     if "appmap.django.Middleware" not in settings.MIDDLEWARE:
         new_middleware = ["appmap.django.Middleware"]
         if DetectEnabled.should_enable("remote"):
-            new_middleware.insert(0, "appmap._implementation.django.RemoteRecording")
+            new_middleware.insert(0, "_appmap.django.RemoteRecording")
         settings.MIDDLEWARE[0:0] = new_middleware
 
 

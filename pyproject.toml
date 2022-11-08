@@ -26,6 +26,7 @@ include = ['appmap.pth']
 
 packages = [
     { include = "appmap" },
+    { include = "_appmap" },
     { include = "appmap/wrapt/*.py", from="vendor/wrapt/src" }
 ]
 

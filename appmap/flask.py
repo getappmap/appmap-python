@@ -9,16 +9,15 @@ from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-import appmap.wrapt as wrapt
-from appmap._implementation.detect_enabled import DetectEnabled
-from appmap._implementation.env import Env
-from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
-from appmap._implementation.flask import app as remote_recording_app
-from appmap._implementation.web_framework import AppmapMiddleware
-from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
-
-from ._implementation.metadata import Metadata
-from ._implementation.utils import patch_class, values_dict
+from _appmap.detect_enabled import DetectEnabled
+from _appmap.env import Env
+from _appmap.event import HttpServerRequestEvent, HttpServerResponseEvent
+from _appmap.flask import app as remote_recording_app
+from _appmap.metadata import Metadata
+from _appmap.utils import patch_class, values_dict
+from _appmap.web_framework import AppmapMiddleware
+from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
+from appmap import wrapt
 
 try:
     # pylint: disable=unused-import

@@ -102,7 +102,12 @@ class Env(metaclass=_EnvMeta):
                     "level": log_level,
                     "handlers": ["default"],
                     "propagate": True,
-                }
+                },
+                "_appmap": {
+                    "level": log_level,
+                    "handlers": ["default"],
+                    "propagate": True,
+                },
             },
         }
         if log_config is not None:

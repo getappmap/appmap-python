@@ -7,9 +7,9 @@ import sys
 
 import pytest
 
-from appmap.test.helpers import DictIncluding
+from _appmap import web_framework
 
-from .._implementation import web_framework
+from .helpers import DictIncluding
 from .normalize import normalize_appmap
 
 

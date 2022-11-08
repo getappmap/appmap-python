@@ -17,9 +17,9 @@ import pytest
 import requests
 
 import appmap
-from appmap._implementation.detect_enabled import DetectEnabled
-from appmap.test.helpers import DictIncluding
+from _appmap.detect_enabled import DetectEnabled
 
+from .helpers import DictIncluding
 from .normalize import normalize_appmap
 
 SR = SystemRandom()
@@ -244,7 +244,7 @@ class TestRecording:
     def test_appmap_disabled(client, monkeypatch):
         # since APPMAP records by default, disable it explicitly
         monkeypatch.setenv("APPMAP", "false")
-        appmap._implementation.initialize()  # pylint: disable=protected-access
+        _appmap.initialize()  # pylint: disable=protected-access
         assert not appmap.enabled()
         assert not DetectEnabled.should_enable("remote")
 
