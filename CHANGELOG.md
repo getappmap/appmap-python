@@ -1,3 +1,11 @@
+## [1.12.2](https://github.com/getappmap/appmap-python/compare/v1.12.1...v1.12.2) (2022-11-08)
+
+
+### Bug Fixes
+
+* allow concurrent remote and request recording ([65f106b](https://github.com/getappmap/appmap-python/commit/65f106bc107f80110b39f5647716c91f9f6a0929))
+* use log level INFO by default ([6604dd4](https://github.com/getappmap/appmap-python/commit/6604dd4755dcc44eb4e0011568d81900a3afd17e))
+
 ## [1.12.1](https://github.com/getappmap/appmap-python/compare/v1.12.0...v1.12.1) (2022-11-04)
 
 
