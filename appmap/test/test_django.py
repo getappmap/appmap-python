@@ -191,7 +191,8 @@ def test_middleware_reset(pytester, monkeypatch):
 
     # To really check middleware reset, the tests must run in order,
     # so disable randomly.
-    pytester.runpytest("-svv", "-p", "no:randomly")
+    result = pytester.runpytest("-svv", "-p", "no:randomly")
+    result.assert_outcomes(passed=3, failed=0, errors=0)
 
     # Look for the http_server_request event in test_app's appmap. If
     # middleware reset is broken, it won't be there.

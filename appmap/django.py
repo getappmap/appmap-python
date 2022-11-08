@@ -6,6 +6,7 @@ and run with APPMAP=true set in the environment.
 """
 
 import json
+import logging
 import re
 import sys
 import time
@@ -36,6 +37,8 @@ from ._implementation.recorder import Recorder
 from ._implementation.utils import patch_class, values_dict
 from ._implementation.web_framework import AppmapMiddleware
 from ._implementation.web_framework import TemplateHandler as BaseTemplateHandler
+
+logger = logging.getLogger(__name__)
 
 
 def parse_pg_version(version):
@@ -296,10 +299,23 @@ class Middleware(AppmapMiddleware):
 def inject_middleware():
     """Make sure AppMap middleware is added to the stack"""
     if "appmap.django.Middleware" not in settings.MIDDLEWARE:
+        stack = list(settings.MIDDLEWARE)
+
         new_middleware = ["appmap.django.Middleware"]
         if DetectEnabled.should_enable("remote"):
             new_middleware.insert(0, "appmap._implementation.django.RemoteRecording")
-        settings.MIDDLEWARE[0:0] = new_middleware
+
+        stack[0:0] = new_middleware
+        # Django is ok with settings.MIDDLEWARE being any kind iterable. Update it, without changing
+        # its type, if we can.
+        if isinstance(settings.MIDDLEWARE, list):
+            settings.MIDDLEWARE = stack
+        elif isinstance(settings.MIDDLEWARE, tuple):
+            settings.MIDDLEWARE = tuple(stack)
+        else:
+            logger.warning(
+                f"Don't know how to update settings.MIDDLEWARE of type {type(settings.MIDDLEWARE)}, recording is not enabled."
+            )
 
 
 original_load_middleware = BaseHandler.load_middleware
