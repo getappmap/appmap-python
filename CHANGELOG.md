@@ -1,3 +1,10 @@
+## [1.12.3](https://github.com/getappmap/appmap-python/compare/v1.12.2...v1.12.3) (2022-11-08)
+
+
+### Bug Fixes
+
+* handle a tuple value for settings.MIDDLEWARE ([672e078](https://github.com/getappmap/appmap-python/commit/672e0786b75eb120f211e5eaf3d30fa839d8a8d3))
+
 ## [1.12.2](https://github.com/getappmap/appmap-python/compare/v1.12.1...v1.12.2) (2022-11-08)
 
 
