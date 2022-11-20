@@ -6,11 +6,11 @@ pip install /dist/appmap-*-py3-none-any.whl
 
 cp -R /appmap/test/data/unittest/simple ./.
 
-appmap-agent-init |\
+python -m appmap.command.appmap_agent_init |\
   python -c 'import json,sys; print(json.load(sys.stdin)["configuration"]["contents"])' > /tmp/appmap.yml
 cat /tmp/appmap.yml
 
-appmap-agent-validate
+python -m appmap.command.appmap_agent_validate
 
 APPMAP=true pytest -v -k test_hello_world
 
