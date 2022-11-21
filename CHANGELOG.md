@@ -1,3 +1,10 @@
+## [1.12.4](https://github.com/getappmap/appmap-python/compare/v1.12.3...v1.12.4) (2022-11-21)
+
+
+### Bug Fixes
+
+* allow scripts to be run with -m ([dc75658](https://github.com/getappmap/appmap-python/commit/dc75658090c6baab7fd214c4f1221098917c1939))
+
 ## [1.12.3](https://github.com/getappmap/appmap-python/compare/v1.12.2...v1.12.3) (2022-11-08)
 
 
