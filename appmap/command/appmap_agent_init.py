@@ -26,3 +26,7 @@ def _run():
 
 def run():
     sys.exit(_run())
+
+
+if __name__ == "__main__":
+    run()

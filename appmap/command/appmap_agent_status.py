@@ -136,3 +136,7 @@ def run():
     )
     args = parser.parse_args()
     sys.exit(_run(discover_tests=args.discover_tests))
+
+
+if __name__ == "__main__":
+    run()
