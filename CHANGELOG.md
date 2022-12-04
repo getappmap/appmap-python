@@ -1,3 +1,10 @@
+## [1.12.5](https://github.com/getappmap/appmap-python/compare/v1.12.4...v1.12.5) (2022-12-04)
+
+
+### Bug Fixes
+
+* log at warning by default ([450c3b9](https://github.com/getappmap/appmap-python/commit/450c3b9043068f2ac0b88195fa9bcc0be9542efa))
+
 ## [1.12.4](https://github.com/getappmap/appmap-python/compare/v1.12.3...v1.12.4) (2022-11-21)
 
 
