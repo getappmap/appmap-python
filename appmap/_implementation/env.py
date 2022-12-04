@@ -80,7 +80,7 @@ class Env(metaclass=_EnvMeta):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
 
     def _configure_logging(self):
-        log_level = self.get("APPMAP_LOG_LEVEL", "info").upper()
+        log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
 
         log_config = self.get("APPMAP_LOG_CONFIG")
         log_stream = self.get("APPMAP_LOG_STREAM", "stderr")
