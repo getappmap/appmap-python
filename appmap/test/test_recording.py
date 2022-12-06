@@ -10,6 +10,7 @@ import pytest
 import appmap
 from appmap._implementation.event import Event
 from appmap._implementation.recorder import Recorder, ThreadRecorder
+from appmap.wrapt import FunctionWrapper
 
 from .normalize import normalize_appmap, remove_line_numbers
 
@@ -110,9 +111,22 @@ class TestRecordingWhenEnabled:
 
         rec = appmap.Recording()
         with rec:
+            assert isinstance(modfunc, FunctionWrapper)
             f1 = deepcopy(modfunc)
             f1()
 
+    def test_can_pickle(self):
+        import pickle
+
+        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+            modfunc,
+        )
+
+        rec = appmap.Recording()
+        with rec:
+            assert isinstance(modfunc, FunctionWrapper)
+            f = pickle.loads(pickle.dumps(modfunc))
+            f()
         evt = rec.events[-2]
         assert evt.event == "call"
         assert evt.method_id == "modfunc"
