@@ -1,3 +1,10 @@
+## [1.12.6](https://github.com/getappmap/appmap-python/compare/v1.12.5...v1.12.6) (2022-12-07)
+
+
+### Bug Fixes
+
+* allow instrumented functions to be pickled ([1c04dc0](https://github.com/getappmap/appmap-python/commit/1c04dc005cb49aa36cc6fa40952c743672882940))
+
 ## [1.12.5](https://github.com/getappmap/appmap-python/compare/v1.12.4...v1.12.5) (2022-12-04)
 
 
