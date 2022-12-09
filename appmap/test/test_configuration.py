@@ -137,6 +137,7 @@ class DefaultHelpers:
             {"path": "package"},
             {"path": "test"},
         ]
+        assert default_config.default["appmap_dir"] == "tmp/appmap"
 
 
 class TestDefaultConfig(DefaultHelpers):

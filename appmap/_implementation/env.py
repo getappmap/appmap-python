@@ -43,8 +43,15 @@ class Env(metaclass=_EnvMeta):
         self._root_dir = str(self._cwd) + "/"
         self._root_dir_len = len(self._root_dir)
 
-        output_dir = Path(self.get("APPMAP_OUTPUT_DIR", "tmp/appmap"))
-        self._output_dir = output_dir.resolve()
+        logger = logging.getLogger(__name__)
+        # The user shouldn't set APPMAP_OUTPUT_DIR, but some tests depend on being able to use it.
+        appmap_output_dir = self.get("APPMAP_OUTPUT_DIR", None)
+        if appmap_output_dir is not None:
+            logger.warning("Setting APPMAP_OUTPUT_DIR is not supported")
+        else:
+            appmap_output_dir = "tmp/appmap"
+
+        self._output_dir = Path(appmap_output_dir).resolve()
 
     def set(self, name, value):
         self._env[name] = value
