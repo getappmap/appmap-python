@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "appmap"
-version = "1.12.6"
+version = "1.12.7"
 description = "Create AppMap files by recording a Python application."
 readme = "README.md"
 authors = [

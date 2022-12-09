@@ -1,3 +1,10 @@
+## [1.12.7](https://github.com/getappmap/appmap-python/compare/v1.12.6...v1.12.7) (2022-12-09)
+
+
+### Bug Fixes
+
+* set appmap_dir, language in default config ([7383c18](https://github.com/getappmap/appmap-python/commit/7383c18344f1567f7e91651144f1754b066754a5))
+
 ## [1.12.6](https://github.com/getappmap/appmap-python/compare/v1.12.5...v1.12.6) (2022-12-07)
 
 
