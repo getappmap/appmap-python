@@ -16,7 +16,7 @@ from .normalize import normalize_appmap
 def test_unittest_runner(testdir):
     testdir.run(sys.executable, "-m", "unittest", "-vv")
 
-    assert len(list(testdir.output().iterdir())) == 6
+    assert len(list(testdir.output().iterdir())) == 7
     verify_expected_appmap(testdir)
     verify_expected_metadata(testdir)
 
@@ -48,10 +48,10 @@ def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
 def test_pytest_runner_unittests(testdir):
     testdir.test_type = "pytest"
     result = testdir.runpytest("-svv")
-    result.assert_outcomes(passed=2, failed=3, xfailed=1)
+    result.assert_outcomes(passed=3, failed=3, xfailed=1)
 
     # unittest cases run by pytest should get recorded as pytest tests
-    assert len(list(testdir.output().iterdir())) == 6
+    assert len(list(testdir.output().iterdir())) == 7
     assert len(list(testdir.path.glob("tmp/appmap/unittest/*"))) == 0
 
     verify_expected_appmap(testdir)
