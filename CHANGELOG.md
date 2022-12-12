@@ -1,3 +1,10 @@
+## [1.12.8](https://github.com/getappmap/appmap-python/compare/v1.12.7...v1.12.8) (2022-12-12)
+
+
+### Bug Fixes
+
+* don't fail on unittest subtests ([4832377](https://github.com/getappmap/appmap-python/commit/4832377884780acf8be41f6fd7099737170ea6e2))
+
 ## [1.12.7](https://github.com/getappmap/appmap-python/compare/v1.12.6...v1.12.7) (2022-12-09)
 
 
