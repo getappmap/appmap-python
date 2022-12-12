@@ -34,7 +34,11 @@ def setup_unittest():
 
         test_case, is_test = _args(*args, **kwargs)
         already_recording = getattr(test_case, "_appmap_pytest_recording", None)
-        if (not is_test) or already_recording:
+        if (
+            (not is_test)
+            or isinstance(test_case, unittest.case._SubTest)
+            or already_recording
+        ):
             with wrapped(*args, **kwargs):
                 yield
             return

@@ -39,3 +39,7 @@ class UnitTestTest(unittest.TestCase):
 
     def tearDown(self):
         simple.Simple().finishUp()
+
+    def test_with_subtest(self):
+        with self.subTest("subtest"):
+            self.assertEqual(simple.Simple().hello_world("!"), "Hello world!")
