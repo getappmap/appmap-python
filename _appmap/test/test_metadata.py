@@ -3,8 +3,9 @@
 
 import pytest
 
-from appmap._implementation.metadata import Metadata
-from appmap.test.helpers import DictIncluding
+from _appmap.metadata import Metadata
+
+from ..test.helpers import DictIncluding
 
 
 def test_missing_git(git, monkeypatch):

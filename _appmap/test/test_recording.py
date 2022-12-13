@@ -8,8 +8,8 @@ from threading import Thread
 import pytest
 
 import appmap
-from appmap._implementation.event import Event
-from appmap._implementation.recorder import Recorder, ThreadRecorder
+from _appmap.event import Event
+from _appmap.recorder import Recorder, ThreadRecorder
 from appmap.wrapt import FunctionWrapper
 
 from .normalize import normalize_appmap, remove_line_numbers

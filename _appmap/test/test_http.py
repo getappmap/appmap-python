@@ -5,7 +5,8 @@ import pytest
 import requests
 
 import appmap.http
-from appmap.test.helpers import DictIncluding
+
+from ..test.helpers import DictIncluding
 
 
 def test_http_client_capture(mock_requests, events):

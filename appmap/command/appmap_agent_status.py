@@ -9,7 +9,7 @@ from pathlib import Path
 import yaml
 from importlib_metadata import PackageNotFoundError, distribution, version
 
-from .._implementation.configuration import Config
+from _appmap.configuration import Config
 
 logger = logging.getLogger(__name__)
 

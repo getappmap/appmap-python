@@ -7,8 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from appmap._implementation.detect_enabled import RECORDING_METHODS, DetectEnabled
-from appmap._implementation.testing_framework import file_delete
+from _appmap.detect_enabled import RECORDING_METHODS, DetectEnabled
+from _appmap.testing_framework import file_delete
 
 
 class TestDetectEnabled:

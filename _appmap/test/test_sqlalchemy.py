@@ -13,9 +13,9 @@ from sqlalchemy import (
 )
 
 import appmap.sqlalchemy  # pylint: disable=unused-import
-from appmap.test.helpers import DictIncluding
+from _appmap.metadata import Metadata
 
-from .._implementation.metadata import Metadata
+from ..test.helpers import DictIncluding
 from .appmap_test_base import AppMapTestBase
 
 

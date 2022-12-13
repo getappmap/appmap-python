@@ -7,11 +7,11 @@ from threading import Thread
 import flask
 import pytest
 
-from appmap._implementation.env import Env
+from _appmap.env import Env
+from _appmap.metadata import Metadata
 from appmap.flask import AppmapFlask
-from appmap.test.helpers import DictIncluding
 
-from .._implementation.metadata import Metadata
+from ..test.helpers import DictIncluding
 from .web_framework import (  # pylint: disable=unused-import
     TestRecordRequests,
     exec_cmd,
@@ -20,7 +20,7 @@ from .web_framework import (  # pylint: disable=unused-import
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
-pytest.register_assert_rewrite("appmap.test.web_framework")
+pytest.register_assert_rewrite("test.web_framework")
 
 
 @pytest.fixture(name="client")
@@ -61,9 +61,9 @@ def test_template(app, events):
         flask.render_template("test.html")
     assert events[0].to_dict() == DictIncluding(
         {
-            "path": "appmap/test/data/flask/templates/test.html",
+            "path": "_appmap/test/data/flask/templates/test.html",
             "event": "call",
-            "defined_class": "<templates>.AppmapTestDataFlaskTemplatesTestHtml",
+            "defined_class": "<templates>._AppmapTestDataFlaskTemplatesTestHtml",
             "method_id": "render",
             "static": False,
         }
@@ -80,7 +80,7 @@ class TestRecordRequestsFlask(TestRecordRequests):
             """
 export PYTHONPATH="$PWD"
 
-cd appmap/test/data/flask/
+cd _appmap/test/data/flask/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
             + env_vars_str

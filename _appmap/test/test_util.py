@@ -2,7 +2,7 @@
 Test util functionality
 """
 
-from appmap._implementation.utils import scenario_filename
+from _appmap.utils import scenario_filename
 
 
 def test_scenario_filename__short():

@@ -164,6 +164,7 @@ class Importer:
     def initialize(cls):
         cls.filter_stack = [NullFilter]
         cls.filter_chain = []
+        cls._skip_instrumenting = ("appmap", "_appmap")
 
     @classmethod
     def use_filter(cls, filter_class):
@@ -172,7 +173,7 @@ class Importer:
     @classmethod
     def do_import(cls, *args, **kwargs):
         mod = args[0]
-        if mod.__name__.startswith("appmap"):
+        if mod.__name__.startswith(cls._skip_instrumenting):
             return
 
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
@@ -201,7 +202,7 @@ class Importer:
         logger.debug("  classes %s", classes)
         for c in classes:
             fc = FilterableCls(c)
-            if fc.fqname.startswith("appmap"):
+            if fc.fqname.startswith(cls._skip_instrumenting):
                 logger.debug(f"  not instrumenting {fc.fqname}")
                 continue
             instrument_functions(fc)

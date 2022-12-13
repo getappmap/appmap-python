@@ -13,7 +13,7 @@
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "static_method",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [],
       "id": 1,
@@ -33,7 +33,7 @@
     {
       "defined_class": "example_class.ClassMethodMixin",
       "method_id": "class_method",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "receiver": {
         "name": "cls",
@@ -59,7 +59,7 @@
     {
       "defined_class": "example_class.Super",
       "method_id": "instance_method",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": false,
       "receiver": {
         "name": "self",
@@ -85,7 +85,7 @@
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "test_exception",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": false,
       "receiver": {
         "name": "self",
@@ -113,7 +113,7 @@
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "call_yaml",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [],
       "id": 9,
@@ -123,7 +123,7 @@
     {
       "defined_class": "example_class.ExampleClass",
       "method_id": "dump_yaml",
-      "path": "appmap/test/data/example_class.py",
+      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [
         {
@@ -262,7 +262,7 @@
             {
               "name": "class_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": true
             }
           ]
@@ -274,25 +274,25 @@
             {
               "name": "call_yaml",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": true
             },
             {
               "name": "dump_yaml",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": true
             },
             {
               "name": "static_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": true
             },
             {
               "name": "test_exception",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": false,
               "labels": ["example-label"]
             }
@@ -305,7 +305,7 @@
             {
               "name": "instance_method",
               "type": "function",
-              "location": "appmap/test/data/example_class.py",
+              "location": "_appmap/test/data/example_class.py",
               "static": false
             }
           ]

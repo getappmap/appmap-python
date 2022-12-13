@@ -3,7 +3,7 @@ from functools import partialmethod
 import pytest
 
 import appmap
-from appmap._implementation import generation
+from _appmap import generation
 
 
 @pytest.fixture(name="verify_appmap")

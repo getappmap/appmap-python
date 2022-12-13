@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from importlib_metadata import version
 
-import appmap._implementation
+import _appmap
 from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_validate
 
 from .helpers import DictIncluding
@@ -20,7 +20,7 @@ def cmd_setup(request, git, data_dir, monkeypatch):
     monkeypatch.chdir(repo_root)
 
     # pylint: disable=protected-access
-    appmap._implementation.initialize(cwd=repo_root)
+    _appmap.initialize(cwd=repo_root)
 
     return monkeypatch
 
@@ -111,11 +111,11 @@ class TestAgentValidate:
 
     def test_python_version(self, capsys, mocker):
         mocker.patch(
-            "appmap._implementation.py_version_check._get_py_version",
+            "_appmap.py_version_check._get_py_version",
             return_value=(3, 5),
         )
         mocker.patch(
-            "appmap._implementation.py_version_check._get_platform_version",
+            "_appmap.py_version_check._get_platform_version",
             return_value="3.5",
         )
 

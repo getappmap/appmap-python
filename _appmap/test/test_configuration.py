@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
+import _appmap
 import appmap
-import appmap._implementation
-from appmap._implementation.configuration import Config, ConfigFilter
-from appmap._implementation.env import Env
-from appmap._implementation.importer import Filterable, NullFilter
+from _appmap.configuration import Config, ConfigFilter
+from _appmap.env import Env
+from _appmap.importer import Filterable, NullFilter
 
 
 def test_can_be_enabled():
@@ -62,7 +62,7 @@ def test_is_disabled_when_false():
 
 
 def test_config_not_found(caplog):
-    appmap._implementation.initialize(
+    _appmap.initialize(
         env={  # pylint: disable=protected-access
             "APPMAP": "true",
             "APPMAP_CONFIG": "notfound.yml",
@@ -147,7 +147,7 @@ class TestDefaultConfig(DefaultHelpers):
         monkeypatch.chdir(repo_root)
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=repo_root, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=repo_root, env={"APPMAP": "true"})
 
         self.check_default_config(repo_root.name)
 
@@ -156,11 +156,11 @@ class TestDefaultConfig(DefaultHelpers):
         monkeypatch.chdir(tmpdir)
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=tmpdir, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=tmpdir, env={"APPMAP": "true"})
         self.check_default_config(Path(tmpdir).name)
 
     def test_skipped_when_overridden(self):
-        appmap._implementation.initialize(
+        _appmap.initialize(
             env={  # pylint: disable=protected-access
                 "APPMAP": "true",
                 "APPMAP_CONFIG": "/tmp/appmap.yml",
@@ -173,12 +173,12 @@ class TestDefaultConfig(DefaultHelpers):
         copy_tree(data_dir / "config-exclude", str(tmpdir))
         monkeypatch.chdir(tmpdir)
         mocker.patch(
-            "appmap._implementation.configuration._get_sys_prefix",
+            "_appmap.configuration._get_sys_prefix",
             return_value=str(tmpdir / "venv"),
         )
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=tmpdir, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=tmpdir, env={"APPMAP": "true"})
         self.check_default_config(Path(tmpdir).name)
 
     def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch):
@@ -190,7 +190,7 @@ class TestDefaultConfig(DefaultHelpers):
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=repo_root, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=repo_root, env={"APPMAP": "true"})
 
         c = Config()
         assert path.is_file()
@@ -205,7 +205,7 @@ class TestDefaultConfig(DefaultHelpers):
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        appmap._implementation.initialize(cwd=repo_root)
+        _appmap.initialize(cwd=repo_root)
 
         c = Config()
         assert not path.is_file()
@@ -226,7 +226,7 @@ class TestEmpty(DefaultHelpers):
 
     def test_empty(self, tmpdir):
         with self.incomplete_config():
-            appmap._implementation.initialize(
+            _appmap.initialize(
                 cwd=tmpdir,
                 env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
@@ -235,7 +235,7 @@ class TestEmpty(DefaultHelpers):
     def test_missing_name(self, tmpdir):
         with self.incomplete_config() as f:
             print('packages: [{"path": "package"}, {"path": "test"}]', file=f)
-            appmap._implementation.initialize(
+            _appmap.initialize(
                 cwd=tmpdir,
                 env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
@@ -244,7 +244,7 @@ class TestEmpty(DefaultHelpers):
     def test_missing_packages(self, tmpdir):
         with self.incomplete_config() as f:
             print(f"name: {Path(tmpdir).name}", file=f)
-            appmap._implementation.initialize(
+            _appmap.initialize(
                 cwd=tmpdir,
                 env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
             )

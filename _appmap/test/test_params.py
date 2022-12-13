@@ -8,8 +8,8 @@ import sys
 import pytest
 
 import vendor.wrapt.src.appmap.wrapt as wrapt
-from appmap._implementation.event import CallEvent
-from appmap._implementation.importer import FilterableCls, FilterableFn
+from _appmap.event import CallEvent
+from _appmap.importer import FilterableCls, FilterableFn
 
 empty_args = {"name": "args", "class": "builtins.tuple", "kind": "rest", "value": "()"}
 

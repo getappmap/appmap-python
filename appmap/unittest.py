@@ -4,8 +4,8 @@ from contextlib import contextmanager
 
 import appmap
 import appmap.wrapt as wrapt
-from appmap._implementation import testing_framework
-from appmap._implementation.detect_enabled import DetectEnabled
+from _appmap import testing_framework
+from _appmap.detect_enabled import DetectEnabled
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ def setup_unittest():
     session = testing_framework.session("unittest", "tests")
 
     def get_test_location(cls, method_name):
-        from appmap._implementation.utils import get_function_location
+        from _appmap.utils import get_function_location
 
         fn = getattr(cls, method_name)
         return get_function_location(fn)

@@ -3,7 +3,7 @@ import threading
 import traceback
 from abc import ABC, abstractmethod
 
-from appmap._implementation.utils import appmap_tls
+from _appmap.utils import appmap_tls
 
 logger = logging.getLogger(__name__)
 
