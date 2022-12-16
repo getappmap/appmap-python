@@ -2,18 +2,14 @@ import logging
 import unittest
 from contextlib import contextmanager
 
-import appmap
-import appmap.wrapt as wrapt
 from _appmap import testing_framework
-from _appmap.detect_enabled import DetectEnabled
+from _appmap.env import Env
+from appmap import wrapt
 
 logger = logging.getLogger(__name__)
 
 
 def setup_unittest():
-    if DetectEnabled.is_appmap_repo() or not DetectEnabled.should_enable("unittest"):
-        return
-
     session = testing_framework.session("unittest", "tests")
 
     def get_test_location(cls, method_name):
@@ -34,11 +30,13 @@ def setup_unittest():
 
         test_case, is_test = _args(*args, **kwargs)
         already_recording = getattr(test_case, "_appmap_pytest_recording", None)
+        # fmt: off
         if (
             (not is_test)
-            or isinstance(test_case, unittest.case._SubTest)
+            or isinstance(test_case, unittest.case._SubTest) # pylint: disable=protected-access
             or already_recording
         ):
+        # fmt: on
             with wrapped(*args, **kwargs):
                 yield
             return
@@ -58,7 +56,6 @@ def setup_unittest():
                 yield
 
 
-setup_unittest()
-
-if __name__ == "__main__":
-    unittest.main(module=None)
+if not Env.current.is_appmap_repo and Env.current.enables("unittest"):
+    logger.debug("Test recording is enabled (unittest)")
+    setup_unittest()

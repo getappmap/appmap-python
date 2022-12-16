@@ -4,6 +4,7 @@
 import json
 import re
 import sys
+from abc import ABC, abstractmethod
 
 import pytest
 
@@ -13,74 +14,107 @@ from ..test.helpers import DictIncluding
 from .normalize import normalize_appmap
 
 
-def test_unittest_runner(testdir):
-    testdir.run(sys.executable, "-m", "unittest", "-vv")
+class _TestTestRunner(ABC):
+    """
+    Test-runner test cases should inherit from this class to test disabling recording.
 
-    assert len(list(testdir.output().iterdir())) == 7
-    verify_expected_appmap(testdir)
-    verify_expected_metadata(testdir)
+    Note that pytest won't collect classes with __init__ methods, so initialization of _test_type
+    needs to be done in setup_class.
+    """
 
+    _test_type = ""
 
-def test_appmap_unittest_runner(testdir):
-    testdir.run(sys.executable, "-m", "appmap.unittest", "-vv")
+    @abstractmethod
+    def run_tests(self, testdir):
+        """Run the tests."""
 
-    verify_expected_appmap(testdir)
-    verify_expected_metadata(testdir)
+    def test_with_appmap_false(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP", "false")
 
+        self.run_tests(testdir)
 
-def test_appmap_unittest_runner_disabled(testdir, monkeypatch):
-    # since not setting APPMAP records by default, must disable it explicitly
-    monkeypatch.setenv("APPMAP", "false")
+        assert not testdir.output().exists()
 
-    result = testdir.run(
-        sys.executable,
-        "-m",
-        "appmap.unittest",
-        "-vv",
-        "simple.test_simple.UnitTestTest.test_hello_world",
-    )
-    assert result.ret == 0
-    r = re.compile(r"AppMap disabled")
-    # when APPMAP=false it no longer prints a warning
-    assert [l for l in filter(r.search, result.errlines)] == []
+    def test_disabled(self, testdir, monkeypatch):
+        monkeypatch.setenv(f"APPMAP_RECORD_{self._test_type.upper()}", "false")
+
+        self.run_tests(testdir)
+        assert not testdir.output().exists()
 
 
-def test_pytest_runner_unittests(testdir):
-    testdir.test_type = "pytest"
-    result = testdir.runpytest("-svv")
-    result.assert_outcomes(passed=3, failed=3, xfailed=1)
+class TestUnittestRunner(_TestTestRunner):
+    @classmethod
+    def setup_class(cls):
+        cls._test_type = "unittest"
 
-    # unittest cases run by pytest should get recorded as pytest tests
-    assert len(list(testdir.output().iterdir())) == 7
-    assert len(list(testdir.path.glob("tmp/appmap/unittest/*"))) == 0
+    def run_tests(self, testdir):
+        testdir.run(sys.executable, "-m", "unittest", "-vv")
 
-    verify_expected_appmap(testdir)
-    verify_expected_metadata(testdir)
+    def test_enabled(self, testdir):
+        self.run_tests(testdir)
+
+        assert len(list(testdir.output().iterdir())) == 7
+        verify_expected_appmap(testdir)
+        verify_expected_metadata(testdir)
+
+
+class TestPytestRunnerUnittest(_TestTestRunner):
+    @classmethod
+    def setup_class(cls):
+        cls._test_type = "pytest"
+
+    def run_tests(self, testdir):
+        testdir.test_type = "pytest"
+        result = testdir.runpytest("-svv")
+        result.assert_outcomes(passed=3, failed=3, xfailed=1)
+
+    def test_enabled(self, testdir):
+        self.run_tests(testdir)
+        # unittest cases run by pytest should get recorded as pytest tests
+        assert len(list(testdir.output().iterdir())) == 7
+        assert len(list(testdir.path.glob("tmp/appmap/unittest/*"))) == 0
+
+        verify_expected_appmap(testdir)
+        verify_expected_metadata(testdir)
 
 
 @pytest.mark.example_dir("pytest")
-def test_pytest_runner_pytest(testdir):
-    result = testdir.runpytest("-vv")
-    result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
+class TestPytestRunnerPytest(_TestTestRunner):
+    @classmethod
+    def setup_class(cls):
+        cls._test_type = "pytest"
 
-    assert len(list(testdir.output().iterdir())) == 5
-    verify_expected_appmap(testdir)
-    verify_expected_metadata(testdir)
+    def run_tests(self, testdir):
+        result = testdir.runpytest("-vv")
+        result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
+
+    def test_enabled(self, testdir):
+        self.run_tests(testdir)
+        assert len(list(testdir.output().iterdir())) == 5
+        verify_expected_appmap(testdir)
+        verify_expected_metadata(testdir)
 
 
 @pytest.mark.example_dir("trial")
-def test_pytest_trial(testdir):
-    testdir.test_type = "pytest"
-    result = testdir.runpytest("-svv")
+class TestPytestRunnerTrial(_TestTestRunner):
+    @classmethod
+    def setup_class(cls):
+        cls._test_type = "pytest"
 
-    # The single test for trial has been written so that it will xfail
-    # if all the testing machinery is working correctly. If we've
-    # somehow borked it up (e.g. by failing to return the Deferred
-    # from the test case), it won't show as an expected failure. It
-    # will either pass, or it will error out because the reactor is
-    # unclean.
-    result.assert_outcomes(xfailed=1)
-    verify_expected_appmap(testdir)
+    def run_tests(self, testdir):
+        testdir.test_type = "pytest"
+        result = testdir.runpytest("-svv")
+        # The single test for trial has been written so that it will xfail
+        # if all the testing machinery is working correctly. If we've
+        # somehow borked it up (e.g. by failing to return the Deferred
+        # from the test case), it won't show as an expected failure. It
+        # will either pass, or it will error out because the reactor is
+        # unclean.
+        result.assert_outcomes(xfailed=1)
+
+    def test_pytest_trial(self, testdir):
+        self.run_tests(testdir)
+        verify_expected_appmap(testdir)
 
 
 def test_overwrites_existing(tmp_path):

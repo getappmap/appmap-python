@@ -13,6 +13,7 @@ import django.db
 import django.http
 import django.test
 import pytest
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.test.client import MULTIPART_CONTENT
 
@@ -26,17 +27,21 @@ from ..test.helpers import DictIncluding
 # diffs in generated appmaps)
 pytest.register_assert_rewrite("test.web_framework")
 
-from .web_framework import TestRecordRequests, exec_cmd, wait_until_port_is
+from .web_framework import (  # pylint: disable=wrong-import-position
+    _TestRecordRequests,
+    exec_cmd,
+    wait_until_port_is,
+)
 
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
 # Import app just for the side-effects. It must happen after sys.path has been modified.
-import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order
+import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
 
 
 @pytest.mark.django_db
-def test_sql_capture(events, monkeypatch):
-    monkeypatch.setenv("APPMAP", "false")
+@pytest.mark.appmap_enabled(appmap_enabled=False)
+def test_sql_capture(events):
     conn = django.db.connections["default"]
     conn.cursor().execute("SELECT 1").fetchall()
     assert events[0].sql_query == DictIncluding(
@@ -48,29 +53,24 @@ def test_sql_capture(events, monkeypatch):
     ]
 
 
-@pytest.mark.appmap_enabled
-def test_framework_metadata(
-    client, events, monkeypatch
-):  # pylint: disable=unused-argument
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+# Recording is enabled as a side-effect of requesting the events fixture. There's probably a better
+# way, but leave it here for now.
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     client.get("/")
     assert Metadata()["frameworks"] == [
         {"name": "Django", "version": django.get_version()}
     ]
 
 
-@pytest.mark.appmap_enabled
-def test_app_can_read_body(
-    client, events, monkeypatch
-):  # pylint: disable=unused-argument
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_app_can_read_body(client):
     response = client.post("/echo", json={"test": "json"})
     assert response.content == b'{"test": "json"}'
 
 
-@pytest.mark.appmap_enabled
-def test_template(events, monkeypatch):
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_template(events):
     render_to_string("hello_world.html")
     assert events[0].to_dict() == DictIncluding(
         {
@@ -97,7 +97,7 @@ class ClientAdaptor(django.test.Client):
         secure=False,
         headers=None,
         json=None,
-        **kwargs
+        **kwargs,
     ):
         headers = {
             "HTTP_" + k.replace("-", "_").upper(): v for k, v in (headers or {}).items()
@@ -121,12 +121,12 @@ class ClientAdaptor(django.test.Client):
 
 @pytest.fixture
 def client():
+    settings.DEBUG = True
     return ClientAdaptor()
 
 
-@pytest.mark.appmap_enabled
-def test_unnamed(client, events, monkeypatch):
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_unnamed(client, events):
     client.get("/post/unnamed/5")
 
     assert appmap.enabled()  # sanity check
@@ -135,9 +135,8 @@ def test_unnamed(client, events, monkeypatch):
     assert len(events[0].message) == 0
 
 
-@pytest.mark.appmap_enabled
-def test_included_view(client, events, monkeypatch):
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_included_view(client, events):
     client.get("/post/included/test_user")
 
     assert len(events) == 2
@@ -149,10 +148,8 @@ def test_included_view(client, events, monkeypatch):
     )
 
 
-@pytest.mark.appmap_enabled
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
 def test_exception(client, events, monkeypatch):
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
-
     def raise_on_call(*args):
         raise RuntimeError("An error")
 
@@ -173,9 +170,8 @@ def test_exception(client, events, monkeypatch):
     ]
 
 
-@pytest.mark.appmap_enabled
-def test_deeply_nested_routes(client, events, monkeypatch):
-    monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_deeply_nested_routes(client, events):
     client.get("/admincp/permissions/edit/1")
 
     assert len(events) == 2
@@ -184,30 +180,43 @@ def test_deeply_nested_routes(client, events, monkeypatch):
     )
 
 
-def test_middleware_reset(pytester, monkeypatch):
-    monkeypatch.setenv("PYTHONPATH", "init")
-    monkeypatch.setenv("APPMAP", "true")
+class TestDjangoApp:
+    """
+    Run the tests in the fixture app. These depend on being able to manipulate the app's config in
+    ways that are difficult to do from here.
+    """
 
-    pytester.copy_example("django")
+    @pytest.fixture(autouse=True)
+    def beforeEach(self, monkeypatch, pytester):  # pylint: disable=no-self-use
+        monkeypatch.setenv("PYTHONPATH", "init")
+        pytester.copy_example("django")
 
-    # To really check middleware reset, the tests must run in order,
-    # so disable randomly.
-    result = pytester.runpytest("-svv", "-p", "no:randomly")
-    result.assert_outcomes(passed=3, failed=0, errors=0)
+    def test_enabled(self, pytester):  # pylint: disable=no-self-use
+        # To really check middleware reset, the tests must run in order,
+        # so disable randomly.
+        result = pytester.runpytest("-svv", "-p", "no:randomly")
+        result.assert_outcomes(passed=4, failed=0, errors=0)
+        # Look for the http_server_request event in test_app's appmap. If
+        # middleware reset is broken, it won't be there.
+        appmap_file = (
+            pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
+        )
+        events = json.loads(appmap_file.read_text())["events"]
+        assert "http_server_request" in events[0]
 
-    # Look for the http_server_request event in test_app's appmap. If
-    # middleware reset is broken, it won't be there.
-    appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_app.appmap.json"
-    events = json.loads(appmap_file.read_text())["events"]
-    assert "http_server_request" in events[0]
+    def test_disabled(self, pytester, monkeypatch):  # pylint: disable=no-self-use
+        monkeypatch.setenv("APPMAP", "false")
+        result = pytester.runpytest("-svv", "-p", "no:randomly", "-k", "test_request")
+        result.assert_outcomes(passed=1, failed=0, errors=0)
+        assert not (pytester.path / "tmp").exists()
 
 
-class TestRecordRequestsDjango(TestRecordRequests):
-    @staticmethod
-    def server_start_thread(env_vars_str):
+class TestRecordRequestsDjango(_TestRecordRequests):
+    def server_start_thread(self, debug=True):
         # Use appmap from our working copy, not the module installed by virtualenv. Add the init
         # directory so the sitecustomize.py file it contains will be loaded on startup. This
         # simulates a real installation.
+        settings = "settings_dev" if debug else "settings"
         exec_cmd(
             """
 export PYTHONPATH="$PWD"
@@ -215,22 +224,20 @@ export PYTHONPATH="$PWD"
 cd _appmap/test/data/django/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
-            + env_vars_str
-            + """ APPMAP_OUTPUT_DIR=/tmp  python manage.py runserver 127.0.0.1:"""
-            + str(TestRecordRequests.server_port)
+            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings} python manage.py runserver 127.0.0.1:"
+            + str(_TestRecordRequests.server_port)
         )
 
-    @staticmethod
-    def server_start(env_vars_str):
+    def server_start(self, debug=True):
+        def start_with_debug():
+            self.server_start_thread(debug)
+
         # start as background thread so running the tests can continue
-        thread = Thread(
-            target=TestRecordRequestsDjango.server_start_thread, args=(env_vars_str,)
-        )
+        thread = Thread(target=start_with_debug)
         thread.start()
-        wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "open")
+        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "open")
 
-    @staticmethod
-    def server_stop():
+    def server_stop(self):
         exec_cmd(
             "ps -ef"
             + "| grep -i 'manage.py runserver'"
@@ -238,28 +245,19 @@ PYTHONPATH="$PYTHONPATH:$PWD/init"
             + "| awk '{ print $2 }'"
             + "| xargs kill -9"
         )
-        wait_until_port_is("127.0.0.1", TestRecordRequests.server_port, "closed")
+        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "closed")
 
-    def test_record_request_appmap_enabled_requests_enabled_no_remote(client, events):
-        TestRecordRequestsDjango.server_stop()  # ensure it's not running
-        TestRecordRequestsDjango.server_start("APPMAP=true APPMAP_RECORD_REQUESTS=true")
-        TestRecordRequests.record_request(client, events, False)
-        TestRecordRequestsDjango.server_stop()
+    def test_record_request_appmap_enabled_requests_enabled_no_remote(self):
+        self.server_stop()  # ensure it's not running
+        self.server_start()
+        self.record_request(False)
+        self.server_stop()
 
-    def test_record_request_appmap_enabled_requests_enabled_and_remote(client, events):
-        TestRecordRequestsDjango.server_stop()  # ensure it's not running
-        TestRecordRequestsDjango.server_start("APPMAP=true APPMAP_RECORD_REQUESTS=true")
-        TestRecordRequests.record_request(client, events, True)
-        TestRecordRequestsDjango.server_stop()
-
-    # not enabled means APPMAP isn't set.  This isn't the same as APPMAP=false.
-    def test_record_request_appmap_not_enabled_requests_enabled_no_remote(
-        client, events
-    ):
-        TestRecordRequestsDjango.server_stop()  # ensure it's not running
-        TestRecordRequestsDjango.server_start("APPMAP_RECORD_REQUESTS=true")
-        TestRecordRequests.record_request(client, events, False)
-        TestRecordRequestsDjango.server_stop()
+    def test_record_request_appmap_enabled_requests_enabled_and_remote(self):
+        self.server_stop()  # ensure it's not running
+        self.server_start()
+        self.record_request(True)
+        self.server_stop()
 
     # it's not possible to test for
     # appmap_not_enabled_requests_enabled_and_remote because when

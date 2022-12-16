@@ -17,7 +17,7 @@ import pytest
 import requests
 
 import appmap
-from _appmap.detect_enabled import DetectEnabled
+from _appmap.env import Env
 
 from ..test.helpers import DictIncluding
 from .normalize import normalize_appmap
@@ -33,14 +33,13 @@ def content_type(res):
     return getter("Content-Type")
 
 
-@pytest.mark.appmap_enabled
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
 class TestRequestCapture:
     """Common tests for HTTP server request and response capture."""
 
     @staticmethod
-    def test_http_capture(client, events, monkeypatch):
+    def test_http_capture(client, events):
         """Test GET request and response capture."""
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
         client.get("/test")
 
         assert events[0].http_server_request == DictIncluding(
@@ -55,9 +54,8 @@ class TestRequestCapture:
         assert "ETag" in response["headers"]
 
     @staticmethod
-    def test_http_capture_post(client, events, monkeypatch):
+    def test_http_capture_post(client, events):
         """Test POST request with JSON body capture."""
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
         client.post(
             "/test",
             json={"my_param": "example"},
@@ -83,8 +81,7 @@ class TestRequestCapture:
         )
 
     @staticmethod
-    def test_post(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_post(events, client):
         client.post(
             "/test",
             data=json.dumps({"my_param": "example"}),
@@ -116,8 +113,7 @@ class TestRequestCapture:
         )
 
     @staticmethod
-    def test_get(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_get(events, client):
         client.get("/test?my_param=example")
 
         assert events[0].message == [
@@ -127,8 +123,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_get_arr(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_get_arr(events, client):
         client.get("/test?my_param=example&my_param=example2")
 
         assert events[0].message == [
@@ -142,8 +137,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_post_form_urlencoded(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_post_form_urlencoded(events, client):
         client.post(
             "/test",
             data="my_param=example",
@@ -157,8 +151,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_put(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_put(events, client):
         client.put("/test", json={"my_param": "example"})
 
         assert events[0].message == [
@@ -168,8 +161,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_post_bad_json(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_post_bad_json(events, client):
         client.post(
             "/test?my_param=example", data="bad json", content_type="application/json"
         )
@@ -181,8 +173,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_post_multipart(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_post_multipart(events, client):
         client.post(
             "/test", data={"my_param": "example"}, content_type="multipart/form-data"
         )
@@ -194,8 +185,7 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_post_with_query(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_post_with_query(events, client):
         client.post("/test?my_param=get", data={"my_param": "example"})
 
         assert events[0].message == [
@@ -217,16 +207,14 @@ class TestRequestCapture:
             ("/post/test_user/123/summary", "/post/{username}/{post_id}/summary"),
         ],
     )
-    def test_path_normalization(client, events, url, expected, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_path_normalization(client, events, url, expected):
         client.get(url)
         np = events[0].http_server_request["normalized_path_info"]
         assert np == expected
 
     @staticmethod
     @pytest.mark.appmap_enabled
-    def test_message_path_segments(events, client, monkeypatch):
-        monkeypatch.setenv("APPMAP_RECORD_REQUESTS", "false")
+    def test_message_path_segments(events, client):
         client.get("/post/alice/42/summary")
 
         assert events[0].message == [
@@ -244,9 +232,9 @@ class TestRecording:
     def test_appmap_disabled(client, monkeypatch):
         # since APPMAP records by default, disable it explicitly
         monkeypatch.setenv("APPMAP", "false")
-        _appmap.initialize()  # pylint: disable=protected-access
+        appmap.initialize()  # pylint: disable=protected-access
         assert not appmap.enabled()
-        assert not DetectEnabled.should_enable("remote")
+        assert not Env.current.enables("remote")
 
         res = client.get("/_appmap/record")
         assert res.status_code == 404
@@ -347,25 +335,22 @@ def wait_until_port_is(address, port, desired_state):
         count += 1
 
 
-class TestRecordRequests:
+class _TestRecordRequests:
     """Common tests for per-requests recording (record requests.)"""
 
     server_port = 8000
 
     @abstractmethod
-    def server_start(env_vars_str):
-        """
-        Start the webserver in the background. Don't block execution.
-        """
+    def server_start(self, debug=False):
+        """Start the webserver in the background. Don't block execution."""
 
     @abstractmethod
-    def server_stop():
-        """
-        Stop the webserver.
-        """
+    def server_stop(self):
+        """Stop the webserver."""
 
+    @staticmethod
     def server_url():
-        return "http://127.0.0.1:" + str(TestRecordRequests.server_port)
+        return "http://127.0.0.1:" + str(_TestRecordRequests.server_port)
 
     @staticmethod
     def record_request_thread():
@@ -373,21 +358,17 @@ class TestRecordRequests:
         # barrage of requests. A tiny bit of delay still causes many, many concurrent requests, but
         # eliminates the failures.
         time.sleep(SR.uniform(0, 0.1))
-        return requests.get(TestRecordRequests.server_url() + "/test")
+        return requests.get(_TestRecordRequests.server_url() + "/test")
 
     @staticmethod
     @pytest.mark.appmap_enabled
-    @pytest.mark.appmap_record_requests
-    def record_request(
-        client, events, record_remote
-    ):  # pylint: disable=unused-argument
-
+    def record_request(record_remote):
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
             # events when per-request recording is enabled
             response = requests.post(
-                TestRecordRequests.server_url() + "/_appmap/record"
+                _TestRecordRequests.server_url() + "/_appmap/record"
             )
             assert response.status_code == 200
 
@@ -398,7 +379,7 @@ class TestRecordRequests:
             max_number_of_threads = 400
             future_to_request_number = {}
             for n in range(max_number_of_threads):
-                future = executor.submit(TestRecordRequests.record_request_thread)
+                future = executor.submit(_TestRecordRequests.record_request_thread)
                 future_to_request_number[future] = n
 
             # wait for all threads to complete
@@ -457,3 +438,18 @@ class TestRecordRequests:
                     assert len(http_server_responses) == 1
 
                 os.remove(appmap_file_name)
+
+    def test_remote_disabled_in_prod(self):
+        self.server_stop()
+        self.server_start(debug=False)
+        response = requests.get(self.server_url() + "/_appmap/record")
+        assert response.status_code == 404
+        self.server_stop()
+
+    def test_remote_enabled_in_prod(self, monkeypatch):
+        self.server_stop()
+        monkeypatch.setenv("APPMAP_RECORD_REMOTE", "true")
+        self.server_start(debug=False)
+        response = requests.get(self.server_url() + "/_appmap/record")
+        assert response.status_code == 200
+        self.server_stop()

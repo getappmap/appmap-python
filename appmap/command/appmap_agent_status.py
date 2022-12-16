@@ -84,7 +84,7 @@ def _run(*, discover_tests):
             has_tests = has_unittest_tests()
 
     if has_tests:
-        test_command = {"args": [], "environment": {"APPMAP": "true"}}
+        test_command = {"args": []}
 
         if uses_pytest:
             test_command.update({"framework": "pytest", "command": "pytest"})

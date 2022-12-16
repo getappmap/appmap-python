@@ -15,7 +15,6 @@ import importlib_metadata
 import yaml
 from yaml.parser import ParserError
 
-from _appmap.detect_enabled import DetectEnabled
 from appmap.labeling import presets as label_presets
 
 from . import utils
@@ -260,7 +259,7 @@ It will be created with this configuration:
 
     def write_config_file(self, filepath, config):
         # HACK: don't scribble on the repo when testing
-        if DetectEnabled.is_appmap_repo():
+        if Env.current.is_appmap_repo:
             return
         basedir = filepath.parent
         if not basedir.exists():
@@ -399,7 +398,6 @@ class BuiltinFilter(MatcherFilter):
 
 
 def initialize():
-    DetectEnabled.initialize()
     Config().initialize()
     Importer.use_filter(BuiltinFilter)
     Importer.use_filter(ConfigFilter)

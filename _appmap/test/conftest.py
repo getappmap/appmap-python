@@ -6,7 +6,6 @@ import yaml
 
 import _appmap
 from _appmap import utils
-from _appmap.detect_enabled import RECORDING_METHODS, DetectEnabled
 from _appmap.env import Env
 from _appmap.recorder import Recorder
 
@@ -38,37 +37,24 @@ def events():
 
 @pytest.hookimpl
 def pytest_runtest_setup(item):
-    mark_enabled = item.get_closest_marker("appmap_enabled")
-    mark_record_requests = item.get_closest_marker("appmap_record_requests")
+    mark = item.get_closest_marker("appmap_enabled")
     env = {}
 
-    if mark_enabled or mark_record_requests:
-        mark = mark_enabled
-        if not mark:
-            mark = mark_record_requests
+    if mark:
+        env = mark.kwargs.get("env", {})
+
         appmap_yml = mark.kwargs.get("config", "appmap.yml")
         d = _data_dir(item.config)
         config = d / appmap_yml
-        Env.current.set("APPMAP_CONFIG", config)
-        env = {"APPMAP_CONFIG": config}
+        env["APPMAP_CONFIG"] = config
 
-    if mark_enabled:
-        appmap_enabled = mark_enabled.kwargs.get("appmap_enabled", "true")
+        appmap_enabled = mark.kwargs.get("appmap_enabled", None)
         if isinstance(appmap_enabled, str):
             env["APPMAP"] = appmap_enabled
-        elif appmap_enabled is True:
-            env["APPMAP"] = "true"
         elif appmap_enabled is False:
             env["APPMAP"] = "false"
         elif appmap_enabled is None:
             env.pop("APPMAP", None)
-
-    if mark_record_requests:
-        appmap_record_requests = mark_record_requests.kwargs.get(
-            "appmap_record_requests", "true"
-        )
-        if isinstance(appmap_record_requests, str):
-            env["APPMAP_RECORD_REQUESTS"] = appmap_record_requests
 
     _appmap.initialize(env=env)  # pylint: disable=protected-access
 

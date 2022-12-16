@@ -14,20 +14,14 @@ from _appmap.env import Env
 from _appmap.importer import Filterable, NullFilter
 
 
-def test_can_be_enabled():
-    """
-    Test that recording is enabled when APPMAP=true.
-    """
-    Env.current.set("APPMAP", "true")
-
+def test_enabled_by_default():
     assert appmap.enabled()
 
 
 @pytest.mark.appmap_enabled
 def test_can_be_configured():
     """
-    Test the happy path: APPMAP is true, appmap.yml is found, and the
-    YAML is valid.
+    Test the happy path: recording is enabled, appmap.yml is found, and the YAML is valid.
     """
     assert appmap.enabled()
 
@@ -46,9 +40,9 @@ def test_reports_invalid():
     assert not Config().file_valid
 
 
-@pytest.mark.appmap_enabled(config="appmap-broken.yml", appmap_enabled=None)
+@pytest.mark.appmap_enabled(config="appmap-broken.yml")
 def test_is_disabled_when_unset():
-    """Test that recording is disabled when APPMAP is unset"""
+    """Test that recording is disabled when APPMAP is unset but the config is broken"""
     assert Env.current.get("APPMAP", None) is None
 
     assert not appmap.enabled()
@@ -64,7 +58,6 @@ def test_is_disabled_when_false():
 def test_config_not_found(caplog):
     _appmap.initialize(
         env={  # pylint: disable=protected-access
-            "APPMAP": "true",
             "APPMAP_CONFIG": "notfound.yml",
         }
     )
@@ -147,7 +140,7 @@ class TestDefaultConfig(DefaultHelpers):
         monkeypatch.chdir(repo_root)
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=repo_root, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=repo_root)
 
         self.check_default_config(repo_root.name)
 
@@ -156,13 +149,12 @@ class TestDefaultConfig(DefaultHelpers):
         monkeypatch.chdir(tmpdir)
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=tmpdir, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=tmpdir)
         self.check_default_config(Path(tmpdir).name)
 
     def test_skipped_when_overridden(self):
         _appmap.initialize(
             env={  # pylint: disable=protected-access
-                "APPMAP": "true",
                 "APPMAP_CONFIG": "/tmp/appmap.yml",
             }
         )
@@ -178,7 +170,7 @@ class TestDefaultConfig(DefaultHelpers):
         )
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=tmpdir, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=tmpdir)
         self.check_default_config(Path(tmpdir).name)
 
     def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch):
@@ -190,13 +182,12 @@ class TestDefaultConfig(DefaultHelpers):
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=repo_root, env={"APPMAP": "true"})
+        _appmap.initialize(cwd=repo_root)
 
         c = Config()
         assert path.is_file()
 
     def test_not_created_if_missing_and_not_enabled(self, git, data_dir, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
         repo_root = git.cwd
         copy_tree(data_dir / "config", str(repo_root))
         monkeypatch.chdir(repo_root)
@@ -205,7 +196,7 @@ class TestDefaultConfig(DefaultHelpers):
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=repo_root)
+        _appmap.initialize(cwd=repo_root, env={"APPMAP": "false"})
 
         c = Config()
         assert not path.is_file()
@@ -228,7 +219,7 @@ class TestEmpty(DefaultHelpers):
         with self.incomplete_config():
             _appmap.initialize(
                 cwd=tmpdir,
-                env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
+                env={"APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
             self.check_default_config(Path(tmpdir).name)
 
@@ -237,7 +228,7 @@ class TestEmpty(DefaultHelpers):
             print('packages: [{"path": "package"}, {"path": "test"}]', file=f)
             _appmap.initialize(
                 cwd=tmpdir,
-                env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
+                env={"APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
             self.check_default_config(Path(tmpdir).name)
 
@@ -246,6 +237,6 @@ class TestEmpty(DefaultHelpers):
             print(f"name: {Path(tmpdir).name}", file=f)
             _appmap.initialize(
                 cwd=tmpdir,
-                env={"APPMAP": "true", "APPMAP_CONFIG": "appmap-incomplete.yml"},
+                env={"APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
             self.check_default_config(Path(tmpdir).name)

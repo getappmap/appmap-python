@@ -12,7 +12,7 @@ cat /tmp/appmap.yml
 
 python -m appmap.command.appmap_agent_validate
 
-APPMAP=true pytest -v -k test_hello_world
+pytest -v -k test_hello_world
 
 if [[ -f tmp/appmap/pytest/simple_test_simple_UnitTestTest_test_hello_world.appmap.json ]]; then
   echo 'Success'

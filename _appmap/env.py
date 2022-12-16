@@ -2,10 +2,9 @@
 
 import logging
 import logging.config
+import os
 from os import environ
 from pathlib import Path
-
-from .detect_enabled import DetectEnabled
 
 _cwd = Path.cwd()
 _bootenv = environ.copy()
@@ -38,7 +37,7 @@ class Env(metaclass=_EnvMeta):
             self._env.update(env)
 
         self._configure_logging()
-        self._enabled = DetectEnabled.any_enabled()
+        self._enabled = self._env.get("APPMAP", "").lower() != "false"
 
         self._root_dir = str(self._cwd) + "/"
         self._root_dir_len = len(self._root_dir)
@@ -81,6 +80,19 @@ class Env(metaclass=_EnvMeta):
     @enabled.setter
     def enabled(self, value):
         self._enabled = value
+
+    def enables(self, recording_method, default="true"):
+        if not self.enabled:
+            return False
+
+        v = self.get(f"APPMAP_RECORD_{recording_method.upper()}", default).lower()
+        return v != "false"
+
+    @property
+    def is_appmap_repo(self):
+        return os.path.exists("appmap/__init__.py") and os.path.exists(
+            "_appmap/__init__.py"
+        )
 
     @property
     def display_params(self):
@@ -127,6 +139,5 @@ class Env(metaclass=_EnvMeta):
 
 
 def initialize(**kwargs):
-    DetectEnabled.initialize()
     Env.reset(**kwargs)
     logging.info("appmap enabled: %s", Env.current.enabled)

@@ -3,7 +3,6 @@ import json
 from threading import Lock
 
 from . import generation
-from .detect_enabled import DetectEnabled
 from .recorder import Recorder
 
 # pylint: disable=global-statement
@@ -12,9 +11,6 @@ _enabled = False
 
 
 def status():
-    if not DetectEnabled.should_enable("remote"):
-        return "Appmap is disabled.", 404
-
     with _enabled_lock:
         return json.dumps({"enabled": _enabled}), 200
 

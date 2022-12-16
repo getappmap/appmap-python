@@ -70,12 +70,7 @@ class TestAgentStatus:
                     },
                 },
                 "test_commands": [
-                    {
-                        "args": [],
-                        "framework": "pytest",
-                        "command": "pytest",
-                        "environment": {"APPMAP": "true"},
-                    }
+                    {"args": [], "framework": "pytest", "command": "pytest"}
                 ],
             }
         )

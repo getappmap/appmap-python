@@ -17,6 +17,12 @@ except ImportError:
     # not using flask
     pass
 
+# Note: pytest integration is configured as a pytest plugin, so it doesn't need to be imported here
+
+# unittest is part of the standard library, so it should always be importable (and therefore doesn't
+# need to be in a try .. except block)
+from . import unittest  # noqa: F401
+
 
 def enabled():
     return Env.current.enabled

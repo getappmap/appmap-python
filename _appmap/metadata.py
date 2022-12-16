@@ -28,7 +28,6 @@ class Metadata(dict):
 
     def __init__(self, root_dir=None):
         super().__init__(self.base(root_dir or Env.current.root_dir))
-
         if any(self.__class__.frameworks):
             self["frameworks"] = self.__class__.frameworks
             self.reset()

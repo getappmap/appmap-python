@@ -1,24 +1,33 @@
-import app
 import pytest
 from django.core.handlers.base import BaseHandler
-from django.test import Client
 
 
 @pytest.mark.parametrize(
-    "mware", [["app.middleware.hello_world"], ("app.middleware.hello_world",)]
+    "mware",
+    [["app.middleware.hello_world"], ("app.middleware.hello_world",)],
 )
-def test_middleware(rf, settings, mware):
+def test_middleware_iterable_with_reset(client, settings, mware):
+    """
+    Test that we can update the middleware, whatever type of iterable it may be (Django doesn't
+    care).
+    """
+    settings.DEBUG = True
     settings.MIDDLEWARE = mware
     orig_type = type(settings.MIDDLEWARE)
-    request = rf.get("/_appmap/record")
+    response = client.get("/_appmap/record")
     handler = BaseHandler()
     handler.load_middleware()
     assert type(settings.MIDDLEWARE) == orig_type
-    response = handler.get_response(request)
     assert response.status_code == 200
 
 
-def test_app(settings):
-    response = Client().get("/")
+def test_request(client):
+    response = client.get("/")
 
     assert response.status_code == 200
+
+
+def test_remote_disabled_in_prod(client, settings):
+    settings.DEBUG = False
+    response = client.get("/_appmap/record")
+    assert response.status_code == 404
