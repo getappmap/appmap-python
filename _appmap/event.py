@@ -120,10 +120,7 @@ class Param:
     def __init__(self, sigp):
         self.name = sigp.name
         has_default = sigp.default is not Signature.empty
-        if (
-            sigp.kind == Parameter.POSITIONAL_ONLY
-            or sigp.kind == Parameter.POSITIONAL_OR_KEYWORD
-        ):  # noqa: E129
+        if sigp.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD):
             self.kind = "opt" if has_default else "req"
         elif sigp.kind == Parameter.VAR_POSITIONAL:
             self.kind = "rest"
@@ -226,7 +223,7 @@ class CallEvent(Event):
                     value = kwargs[p.name]
                 else:
                     continue  # required argument missing
-            elif p.kind == "opt" or p.kind == "key":
+            elif p.kind in ("opt", "key"):
                 value = kwargs.get(p.name, p.default)
             elif p.kind == "rest":
                 value = tuple(args)

@@ -1,12 +1,8 @@
 import json
 import logging
-import os
 import sys
-import time
 from argparse import ArgumentParser
-from pathlib import Path
 
-import yaml
 from importlib_metadata import PackageNotFoundError, distribution, version
 
 from _appmap.configuration import Config
@@ -23,7 +19,7 @@ def has_dist(dist):
     return False
 
 
-class AgentFileCollector:
+class AgentFileCollector:  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.collected = set()
 

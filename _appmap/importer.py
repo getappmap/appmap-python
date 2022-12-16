@@ -203,7 +203,7 @@ class Importer:
         for c in classes:
             fc = FilterableCls(c)
             if fc.fqname.startswith(cls._skip_instrumenting):
-                logger.debug(f"  not instrumenting {fc.fqname}")
+                logger.debug("  not instrumenting %s", fc.fqname)
                 continue
             instrument_functions(fc)
 

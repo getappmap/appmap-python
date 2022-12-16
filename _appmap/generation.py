@@ -10,7 +10,7 @@ from .metadata import Metadata
 # our encoder. So, just implement the methods we need.
 class ClassMapDict:
     def __init__(self):
-        self._dict = dict()
+        self._dict = {}
 
     def setdefault(self, k, default):
         return self._dict.setdefault(k, default)

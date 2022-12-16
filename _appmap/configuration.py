@@ -101,23 +101,23 @@ def find_top_packages(rootdir):
     packages = set()
     import os
 
-    def excluded(dir):
-        excluded = dir == "node_modules" or dir[0] == "."
+    def excluded(d):
+        excluded = d == "node_modules" or d[0] == "."
         if excluded:
-            logger.debug("excluding dir %s", dir)
+            logger.debug("excluding dir %s", d)
         return excluded
 
     sys_prefix = _get_sys_prefix()
 
-    for dir, dirs, files in os.walk(rootdir):
-        logger.debug("dir %s dirs %s", dir, dirs)
-        if realpath(dir) == sys_prefix:
+    for d, dirs, files in os.walk(rootdir):
+        logger.debug("dir %s dirs %s", d, dirs)
+        if realpath(d) == sys_prefix:
             logger.debug("skipping sys.prefix %s", sys_prefix)
             dirs.clear()
             continue
 
         if "__init__.py" in files:
-            packages.add(Path(dir).name)
+            packages.add(Path(d).name)
             dirs.clear()
         else:
             dirs[:] = [d for d in dirs if not excluded(d)]
@@ -244,7 +244,7 @@ class Config:
             logger.warning(
                 dedent(
                     f"""
-It will be created with this configuration: 
+It will be created with this configuration:
 
 {yaml.dump(self.default)}
             """

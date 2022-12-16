@@ -27,7 +27,7 @@ class Recording:
 
     def stop(self):
         if not Env.current.enabled:
-            return False
+            return
 
         self.events += Recorder.stop_recording()
 

@@ -142,7 +142,7 @@ class AppmapMiddleware(ABC):
         env = Env.current
         record_requests = env.enables("requests")
         if record_requests:
-            logger.debug(f"Requests will be recorded ({framework_name}")
+            logger.debug("Requests will be recorded (%s)", framework_name)
 
         self.should_record = env.enables("remote") or record_requests
 
