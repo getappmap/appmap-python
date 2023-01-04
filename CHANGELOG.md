@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/getappmap/appmap-python/compare/v1.12.8...v1.13.0) (2023-01-04)
+
+
+### Features
+
+* record unittest testcases by default ([f40434d](https://github.com/getappmap/appmap-python/commit/f40434d74731cc76ac1ed2cfea41a8655c6f6c1e))
+
 ## [1.12.8](https://github.com/getappmap/appmap-python/compare/v1.12.7...v1.12.8) (2022-12-12)
 
 
