@@ -1,15 +1,11 @@
 import json
 import logging
-import os
 import sys
-import time
 from argparse import ArgumentParser
-from pathlib import Path
 
-import yaml
 from importlib_metadata import PackageNotFoundError, distribution, version
 
-from .._implementation.configuration import Config
+from _appmap.configuration import Config
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +19,7 @@ def has_dist(dist):
     return False
 
 
-class AgentFileCollector:
+class AgentFileCollector:  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.collected = set()
 
@@ -84,7 +80,7 @@ def _run(*, discover_tests):
             has_tests = has_unittest_tests()
 
     if has_tests:
-        test_command = {"args": [], "environment": {"APPMAP": "true"}}
+        test_command = {"args": []}
 
         if uses_pytest:
             test_command.update({"framework": "pytest", "command": "pytest"})

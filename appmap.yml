@@ -1,0 +1,8 @@
+appmap_dir: tmp/appmap
+language: python
+name: appmap-python
+packages:
+- path: wrapt
+- path: _appmap
+- path: appmap
+- path: test

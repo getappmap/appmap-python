@@ -2,13 +2,14 @@ import json
 import sys
 
 from importlib_metadata import PackageNotFoundError, version
-from packaging.version import Version, parse
+from packaging.version import parse
 
-from .._implementation.py_version_check import AppMapPyVerException, check_py_version
+from _appmap.py_version_check import AppMapPyVerException, check_py_version
 
 
 class ValidationFailure(Exception):
     def __init__(self, message, level="error", detailed_message=None, help_urls=None):
+        super().__init__()
         self.message = message
         self.level = level
         self.detailed_message = detailed_message
@@ -22,7 +23,7 @@ def check_python_version():
     try:
         check_py_version()
     except AppMapPyVerException as e:
-        raise ValidationFailure(str(e))
+        raise ValidationFailure(str(e)) from e
 
 
 def _check_version(dist, v):
@@ -65,7 +66,7 @@ def _run():
         flask_version = check_flask_version()
         if not (django_version or flask_version):
             raise ValidationFailure(
-                f"No web framework found. Expected one of: Django, Flask"
+                "No web framework found. Expected one of: Django, Flask"
             )
 
         check_pytest_version()

@@ -1,12 +1,9 @@
 import json
-import logging
-import os
 import sys
-from pathlib import Path
 
 import yaml
 
-from .._implementation.configuration import Config
+from _appmap.configuration import Config
 
 
 def _run():

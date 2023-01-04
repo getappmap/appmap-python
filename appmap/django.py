@@ -1,8 +1,6 @@
 """Django integration. Captures HTTP requests and SQL queries.
 
-Automatically used in pytest tests. To enable remote recording,
-add appmap.django.Middleware to MIDDLEWARE in your app configuration
-and run with APPMAP=true set in the environment.
+Automatically used in pytest tests.
 """
 
 import json
@@ -12,7 +10,7 @@ import sys
 import time
 
 import django
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.core.handlers.base import BaseHandler
 from django.db.backends.signals import connection_created
 from django.db.backends.utils import CursorDebugWrapper
@@ -22,21 +20,20 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 from django.urls.resolvers import _route_to_regex
 
-from appmap._implementation.detect_enabled import DetectEnabled
-
-from ._implementation.event import (
+from _appmap.env import Env
+from _appmap.event import (
     ExceptionEvent,
     HttpServerRequestEvent,
     HttpServerResponseEvent,
     ReturnEvent,
     SqlEvent,
 )
-from ._implementation.instrument import is_instrumentation_disabled
-from ._implementation.metadata import Metadata
-from ._implementation.recorder import Recorder
-from ._implementation.utils import patch_class, values_dict
-from ._implementation.web_framework import AppmapMiddleware
-from ._implementation.web_framework import TemplateHandler as BaseTemplateHandler
+from _appmap.instrument import is_instrumentation_disabled
+from _appmap.metadata import Metadata
+from _appmap.recorder import Recorder
+from _appmap.utils import patch_class, values_dict
+from _appmap.web_framework import AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +62,7 @@ def add_metadata():
     Metadata.add_framework("Django", django.get_version())
 
 
-class ExecuteWrapper:
+class ExecuteWrapper:  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.recorder = Recorder.get_current()
 
@@ -225,12 +222,12 @@ class Middleware(AppmapMiddleware):
     """
 
     def __init__(self, get_response):
-        super().__init__()
+        super().__init__("Django")
         self.get_response = get_response
         self.recorder = Recorder.get_current()
 
     def __call__(self, request):
-        if not self.should_record():
+        if not self.should_record:
             return self.get_response(request)
 
         rec, start, call_event_id = self.before_request_hook(request, request.path_info)
@@ -296,26 +293,42 @@ class Middleware(AppmapMiddleware):
         rec.add_event(return_event)
 
 
-def inject_middleware():
-    """Make sure AppMap middleware is added to the stack"""
-    if "appmap.django.Middleware" not in settings.MIDDLEWARE:
-        stack = list(settings.MIDDLEWARE)
+class DjangoInserter(MiddlewareInserter):
+    def __init__(self, settings):
+        super().__init__(settings.DEBUG)
+        self.settings = settings
+
+    def middleware_present(self):
+        return "appmap.django.Middleware" in self.settings.MIDDLEWARE
+
+    def insert_middleware(self):
+        stack = list(self.settings.MIDDLEWARE)
 
         new_middleware = ["appmap.django.Middleware"]
-        if DetectEnabled.should_enable("remote"):
-            new_middleware.insert(0, "appmap._implementation.django.RemoteRecording")
+        enable_by_default = "true" if self.debug else "false"
+        if Env.current.enables("remote", enable_by_default):
+            new_middleware.insert(0, "_appmap.django.RemoteRecording")
 
         stack[0:0] = new_middleware
         # Django is ok with settings.MIDDLEWARE being any kind iterable. Update it, without changing
         # its type, if we can.
-        if isinstance(settings.MIDDLEWARE, list):
-            settings.MIDDLEWARE = stack
-        elif isinstance(settings.MIDDLEWARE, tuple):
-            settings.MIDDLEWARE = tuple(stack)
+        if isinstance(self.settings.MIDDLEWARE, list):
+            self.settings.MIDDLEWARE = stack
+        elif isinstance(self.settings.MIDDLEWARE, tuple):
+            self.settings.MIDDLEWARE = tuple(stack)
         else:
             logger.warning(
-                f"Don't know how to update settings.MIDDLEWARE of type {type(settings.MIDDLEWARE)}, recording is not enabled."
+                "Don't know how to update settings.MIDDLEWARE of type %s, recording is not enabled.",
+                type(self.settings.MIDDLEWARE),
             )
+
+    def remote_enabled(self):
+        return "_appmap.django.RemoteRecording" in self.settings.MIDDLEWARE
+
+
+def inject_middleware():
+    """Make sure AppMap middleware is added to the stack"""
+    DjangoInserter(django_settings).run()
 
 
 original_load_middleware = BaseHandler.load_middleware

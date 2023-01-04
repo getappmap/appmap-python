@@ -1,12 +1,15 @@
+import logging
+
 import pytest
 
-import appmap
-import appmap.wrapt as wrapt
-from appmap._implementation import testing_framework
-from appmap._implementation.detect_enabled import DetectEnabled
+from _appmap import testing_framework
+from _appmap.env import Env
+from appmap import wrapt
+
+logger = logging.getLogger(__name__)
 
 
-class recorded_testcase:
+class recorded_testcase:  # pylint: disable=too-few-public-methods
     def __init__(self, item):
         self.item = item
 
@@ -20,7 +23,8 @@ class recorded_testcase:
                 return wrapped(*args, **kwargs)
 
 
-if not DetectEnabled.is_appmap_repo() and DetectEnabled.should_enable("pytest"):
+if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
+    logger.debug("Test recording is enabled (Pytest)")
 
     @pytest.hookimpl
     def pytest_sessionstart(session):

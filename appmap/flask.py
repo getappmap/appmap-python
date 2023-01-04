@@ -1,3 +1,4 @@
+import logging
 import re
 import time
 
@@ -9,16 +10,14 @@ from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
-import appmap.wrapt as wrapt
-from appmap._implementation.detect_enabled import DetectEnabled
-from appmap._implementation.env import Env
-from appmap._implementation.event import HttpServerRequestEvent, HttpServerResponseEvent
-from appmap._implementation.flask import app as remote_recording_app
-from appmap._implementation.web_framework import AppmapMiddleware
-from appmap._implementation.web_framework import TemplateHandler as BaseTemplateHandler
-
-from ._implementation.metadata import Metadata
-from ._implementation.utils import patch_class, values_dict
+from _appmap.env import Env
+from _appmap.event import HttpServerRequestEvent, HttpServerResponseEvent
+from _appmap.flask import app as remote_recording_app
+from _appmap.metadata import Metadata
+from _appmap.utils import patch_class, values_dict
+from _appmap.web_framework import AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
+from appmap import wrapt
 
 try:
     # pylint: disable=unused-import
@@ -26,6 +25,8 @@ try:
 except ImportError:
     # not using sqlalchemy
     pass
+
+logger = logging.getLogger(__name__)
 
 
 def request_params(req):
@@ -46,6 +47,9 @@ def request_params(req):
 NP_PARAMS = re.compile(r"<Rule '(.*?)'")
 NP_PARAM_DELIMS = str.maketrans("<>", "{}")
 
+_REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
+_REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
+
 
 class AppmapFlask(AppmapMiddleware):
     """
@@ -62,25 +66,33 @@ class AppmapFlask(AppmapMiddleware):
     ```
     """
 
+    def __init__(self):
+        super().__init__("Flask")
+
     def init_app(self, app):
-        if DetectEnabled.should_enable("remote"):
+        enable_by_default = "true" if app.debug else "false"
+        remote_enabled = Env.current.enables("remote", enable_by_default)
+        if remote_enabled:
+            logger.debug("Remote recording is enabled (Flask)")
             app.wsgi_app = DispatcherMiddleware(
                 app.wsgi_app, {"/_appmap": remote_recording_app}
             )
+        setattr(app, _REMOTE_ENABLED_ATTR, remote_enabled)
 
         app.before_request(self.before_request)
         app.after_request(self.after_request)
+        setattr(app, _REQUEST_ENABLED_ATTR, True)
 
     def before_request(self):
-        if not self.should_record():
+        if not self.should_record:
             return
 
         self.before_request_hook(request, request.path)
 
-    def before_request_main(self, rec, request):
+    def before_request_main(self, rec, req):
         Metadata.add_framework("flask", flask.__version__)
         np = None
-        if request.url_rule:
+        if req.url_rule:
             # pragma pylint: disable=line-too-long
             # Transform request.url to the expected normalized-path form. For example,
             # "/post/<username>/<post_id>/summary" becomes "/post/{username}/{post_id}/summary".
@@ -90,16 +102,16 @@ class AppmapFlask(AppmapMiddleware):
             #     * flask 1: https://github.com/pallets/werkzeug/blob/1dde4b1790f9c46b7122bb8225e6b48a5b22a615/src/werkzeug/routing.py#L143
             #     * flask 2: https://github.com/pallets/werkzeug/blob/99f328cf2721e913bd8a3128a9cdd95ca97c334c/src/werkzeug/routing/rules.py#L56
             # pragma pylint: enable=line-too-long
-            r = repr(request.url_rule)
+            r = repr(req.url_rule)
             np = NP_PARAMS.findall(r)[0].translate(NP_PARAM_DELIMS)
 
         call_event = HttpServerRequestEvent(
-            request_method=request.method,
-            path_info=request.path,
-            message_parameters=request_params(request),
+            request_method=req.method,
+            path_info=req.path,
+            message_parameters=request_params(req),
             normalized_path_info=np,
-            protocol=request.environ.get("SERVER_PROTOCOL"),
-            headers=request.headers,
+            protocol=req.environ.get("SERVER_PROTOCOL"),
+            headers=req.headers,
         )
         rec.add_event(call_event)
 
@@ -110,7 +122,7 @@ class AppmapFlask(AppmapMiddleware):
         return None, None
 
     def after_request(self, response):
-        if not self.should_record():
+        if not self.should_record:
             return response
 
         return self.after_request_hook(
@@ -123,7 +135,7 @@ class AppmapFlask(AppmapMiddleware):
             None,
         )
 
-    def after_request_main(self, rec, response, start, call_event_id):
+    def after_request_main(self, rec, response, start, _):
         parent_id = g._appmap_request_event.id  # pylint: disable=protected-access
         start = g._appmap_request_start  # pylint: disable=protected-access
         duration = time.monotonic() - start
@@ -142,10 +154,25 @@ class TemplateHandler(BaseTemplateHandler):
     pass
 
 
-def install_extension(wrapped, _, args, kwargs):
+class FlaskInserter(MiddlewareInserter):
+    def __init__(self, app):
+        super().__init__(app.debug)
+        self.app = app
+
+    def middleware_present(self):
+        return hasattr(self.app, _REQUEST_ENABLED_ATTR)
+
+    def insert_middleware(self):
+        AppmapFlask().init_app(self.app)
+
+    def remote_enabled(self):
+        return getattr(self.app, _REMOTE_ENABLED_ATTR, None)
+
+
+def install_extension(wrapped, instance, args, kwargs):
     app = wrapped(*args, **kwargs)
     if app:
-        AppmapFlask().init_app(app)
+        FlaskInserter(app).run()
 
     return app
 
