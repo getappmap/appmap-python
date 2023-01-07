@@ -7,7 +7,6 @@ from pathlib import Path
 from threading import Thread
 
 import django
-import django.conf
 import django.core.handlers.exception
 import django.db
 import django.http
@@ -25,13 +24,14 @@ from ..test.helpers import DictIncluding
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
-pytest.register_assert_rewrite("test.web_framework")
+pytest.register_assert_rewrite("_appmap.test.web_framework")
 
-from .web_framework import (  # pylint: disable=wrong-import-position
-    _TestRecordRequests,
-    exec_cmd,
-    wait_until_port_is,
-)
+# pylint: disable=unused-import,wrong-import-position
+from .web_framework import TestRemoteRecording  # pyright:ignore
+from .web_framework import TestRequestCapture  # pyright: ignore
+from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
+
+# pylint: enable=unused-import
 
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
@@ -120,7 +120,9 @@ class ClientAdaptor(django.test.Client):
 
 
 @pytest.fixture
-def client():
+def client(settings):
+    # We might be able to set DEBUG in the app's settings. But, using the settings fixture here
+    # ensures that all the settings (esp MIDDLEWARE) will be reset before each test run.
     settings.DEBUG = True
     return ClientAdaptor()
 

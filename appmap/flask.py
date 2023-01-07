@@ -15,7 +15,7 @@ from _appmap.event import HttpServerRequestEvent, HttpServerResponseEvent
 from _appmap.flask import app as remote_recording_app
 from _appmap.metadata import Metadata
 from _appmap.utils import patch_class, values_dict
-from _appmap.web_framework import AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import JSON_ERRORS, AppmapMiddleware, MiddlewareInserter
 from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 from appmap import wrapt
 

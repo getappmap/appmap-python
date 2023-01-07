@@ -13,6 +13,7 @@ django.conf.settings.configure(
             "DIRS": [Path(__file__).parent],
         }
     ],
+    SECRET_KEY="not-a-secret",
 )
 
 django.setup()

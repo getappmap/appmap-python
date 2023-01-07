@@ -32,7 +32,7 @@ from _appmap.instrument import is_instrumentation_disabled
 from _appmap.metadata import Metadata
 from _appmap.recorder import Recorder
 from _appmap.utils import patch_class, values_dict
-from _appmap.web_framework import AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import JSON_ERRORS, AppmapMiddleware, MiddlewareInserter
 from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
 logger = logging.getLogger(__name__)
@@ -151,7 +151,7 @@ def request_params(request):
             # directly reading request. This way the application can still
             # access the body which is now cached in the request object.
             params.update(json.loads(request.body))
-        except (json.decoder.JSONDecodeError, AttributeError):
+        except JSON_ERRORS:
             pass  # invalid json or not an object
 
     return values_dict(params.lists())
