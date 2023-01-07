@@ -106,9 +106,9 @@ class AppMapEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Event):
             return o.to_dict()
-        elif isinstance(o, ClassMapDict):
+        if isinstance(o, ClassMapDict):
             return list(o.values())
-        elif isinstance(o, ClassMapEntry):
+        if isinstance(o, ClassMapEntry):
             return o.to_dict()
 
         return json.JSONEncoder.default(self, o)

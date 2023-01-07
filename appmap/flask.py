@@ -38,8 +38,13 @@ def request_params(req):
     params.update(req.view_args or {})
     try:
         params.update(req.json or {})
-    except BadRequest:
-        pass  # probably a JSON parse error
+    # pylint is wrong about this "exception operation":
+    except (BadRequest,) + JSON_ERRORS:  # pylint: disable=wrong-exception-operation
+        # If request claims to be application/json, but its body is unparsable, BadRequest will be
+        # raised. json is pretty forgiving about what it will parse, though, so req.json may not be
+        # a dict. When that's the case, ValueError or TypeError may be raised when trying to update
+        # params.
+        pass
 
     return values_dict(params.lists())
 
@@ -169,7 +174,7 @@ class FlaskInserter(MiddlewareInserter):
         return getattr(self.app, _REMOTE_ENABLED_ATTR, None)
 
 
-def install_extension(wrapped, instance, args, kwargs):
+def install_extension(wrapped, _, args, kwargs):
     app = wrapped(*args, **kwargs)
     if app:
         FlaskInserter(app).run()

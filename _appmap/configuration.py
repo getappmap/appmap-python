@@ -4,7 +4,7 @@ Manage Configuration AppMap recorder for Python.
 
 import inspect
 import logging
-import re
+import os
 import sys
 from functools import lru_cache
 from os.path import realpath
@@ -23,12 +23,6 @@ from .importer import Filter, Importer
 from .instrument import instrument
 
 logger = logging.getLogger(__name__)
-
-
-def warn_config_missing(path):
-    """Display a warning about missing config file in path."""
-    name = path.resolve().parent.name
-    package = re.sub(r"\W", ".", name).lower()
 
 
 def default_app_name(rootdir):
@@ -99,7 +93,6 @@ def find_top_packages(rootdir):
     # Use a set so we don't get duplicates, e.g. if the project's
     # build process copies its source to a subdirectory.
     packages = set()
-    import os
 
     def excluded(d):
         excluded = d == "node_modules" or d[0] == "."
@@ -219,7 +212,7 @@ class Config:
             Env.current.enabled = False
             self.file_valid = False
             try:
-                self._config = yaml.safe_load(path.read_text())
+                self._config = yaml.safe_load(path.read_text(encoding="utf-8"))
                 if not self._config:
                     # It parsed, but was (effectively) empty.
                     self._config = self.default
@@ -264,7 +257,7 @@ It will be created with this configuration:
         basedir = filepath.parent
         if not basedir.exists():
             basedir.mkdir(parents=True, exist_ok=True)
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(yaml.dump(config, sort_keys=True))
 
 
@@ -393,7 +386,7 @@ class BuiltinFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [PathMatcher(f) for f in {"os.read", "os.write"}]
+            matchers = [PathMatcher(f) for f in ("os.read", "os.write")]
         super().__init__(matchers, *args, **kwargs)
 
 

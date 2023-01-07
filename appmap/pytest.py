@@ -54,8 +54,10 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
         # TestCase run by pytest.)
         if hasattr(item, "_testcase"):
             setattr(
-                item._testcase, "_appmap_pytest_recording", True
-            )  # pylint: disable=protected-access
+                item._testcase,  # pylint: disable=protected-access
+                "_appmap_pytest_recording",
+                True,
+            )
             item.obj = recorded_testcase(item)(item.obj)
 
     @pytest.hookimpl(hookwrapper=True)

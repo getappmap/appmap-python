@@ -168,7 +168,7 @@ class AppmapMiddleware(ABC):
         return rec, start, call_event_id
 
     @abstractmethod
-    def before_request_main(self, rec):
+    def before_request_main(self, rec, req):
         """Specify the main operations to be performed by a request is processed."""
 
     def after_request_hook(

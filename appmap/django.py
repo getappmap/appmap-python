@@ -66,7 +66,10 @@ class ExecuteWrapper:  # pylint: disable=too-few-public-methods
     def __init__(self):
         self.recorder = Recorder.get_current()
 
-    def __call__(self, execute, sql, params, many, context):
+    # This signature is correct, the implementation confuses pylint:
+    def __call__(
+        self, execute, sql, params, many, context
+    ):  # pylint: disable=too-many-arguments
         start = time.monotonic()
         try:
             return execute(sql, params, many, context)
@@ -112,7 +115,8 @@ def wrapped_execute(self, sql, params=None):
     disabled, to avoid capturing queries not issued by the application."""
     if is_instrumentation_disabled():
         # fmt: off
-        return super().execute(sql, params) # pyright: ignore (seems like [superCallZeroArgForm] should suppress this, it doesn't)
+        # Seems like pyright: ignore [superCallZeroArgForm] should suppress this, it doesn't:
+        return super().execute(sql, params) # pyright: ignore
         # fmt on
     return original_execute(self, sql, params)
 
@@ -257,26 +261,26 @@ class Middleware(AppmapMiddleware):
 
         return response
 
-    def before_request_main(self, rec, request):
+    def before_request_main(self, rec, req):
         add_metadata()
         start = time.monotonic()
-        params = request_params(request)
+        params = request_params(req)
         try:
-            resolved = resolve(request.path_info)
+            resolved = resolve(req.path_info)
             params.update(resolved.kwargs)
-            normalized_path_info = normalize_path_info(request.path_info, resolved)
+            normalized_path_info = normalize_path_info(req.path_info, resolved)
         except Resolver404:
             # If the request was for a bad path (e.g. when an app
             # is testing 404 handling), resolving will fail.
             normalized_path_info = None
 
         call_event = HttpServerRequestEvent(
-            request_method=request.method,
-            path_info=request.path_info,
+            request_method=req.method,
+            path_info=req.path_info,
             message_parameters=params,
             normalized_path_info=normalized_path_info,
-            protocol=request.META["SERVER_PROTOCOL"],
-            headers=request.headers,
+            protocol=req.META["SERVER_PROTOCOL"],
+            headers=req.headers,
         )
         rec.add_event(call_event)
 
@@ -312,13 +316,16 @@ class DjangoInserter(MiddlewareInserter):
         stack[0:0] = new_middleware
         # Django is ok with settings.MIDDLEWARE being any kind iterable. Update it, without changing
         # its type, if we can.
+        msg = (
+            "Don't know how to update settings.MIDDLEWARE of type %s, recording is not enabled.",
+        )
         if isinstance(self.settings.MIDDLEWARE, list):
             self.settings.MIDDLEWARE = stack
         elif isinstance(self.settings.MIDDLEWARE, tuple):
             self.settings.MIDDLEWARE = tuple(stack)
         else:
             logger.warning(
-                "Don't know how to update settings.MIDDLEWARE of type %s, recording is not enabled.",
+                msg,
                 type(self.settings.MIDDLEWARE),
             )
 
