@@ -6,22 +6,23 @@ from threading import Thread
 
 import flask
 import pytest
-import requests
 
 from _appmap.env import Env
 from _appmap.metadata import Metadata
-from appmap.flask import AppmapFlask
+from appmap.flask import AppmapFlask, FlaskInserter
 
 from ..test.helpers import DictIncluding
-from .web_framework import (  # pylint: disable=unused-import
-    _TestRecordRequests,
-    exec_cmd,
-    wait_until_port_is,
-)
 
 # Make sure assertions in web_framework get rewritten (e.g. to show
 # diffs in generated appmaps)
-pytest.register_assert_rewrite("test.web_framework")
+pytest.register_assert_rewrite("_appmap.test.web_framework")
+
+# pylint: disable=unused-import,wrong-import-position
+from .web_framework import TestRemoteRecording  # pyright:ignore
+from .web_framework import TestRequestCapture  # pyright: ignore
+from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
+
+# pylint: enable=unused-import
 
 
 @pytest.fixture(name="app")
@@ -29,6 +30,8 @@ def flask_app(data_dir, monkeypatch):
     monkeypatch.syspath_prepend(data_dir / "flask")
 
     Env.current.set("APPMAP_CONFIG", data_dir / "flask" / "appmap.yml")
+
+    monkeypatch.setenv("FLASK_DEBUG", "True")
 
     import app  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
 

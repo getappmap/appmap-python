@@ -11,6 +11,7 @@ import time
 from abc import ABC, abstractmethod
 from contextvars import ContextVar
 from hashlib import sha256
+from json.decoder import JSONDecodeError
 from tempfile import NamedTemporaryFile
 
 from . import generation, remote_recording
@@ -21,6 +22,10 @@ from .utils import root_relative_path, scenario_filename
 
 logger = logging.getLogger(__name__)
 request_recorder = ContextVar("appmap_request_recorder")
+
+# These are the errors that can get raised when trying to update params based on the results of
+# parsing the body of an application/json request:
+JSON_ERRORS = (JSONDecodeError, AttributeError, TypeError, ValueError)
 
 
 class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
@@ -168,7 +173,7 @@ class AppmapMiddleware(ABC):
         return rec, start, call_event_id
 
     @abstractmethod
-    def before_request_main(self, rec):
+    def before_request_main(self, rec, req):
         """Specify the main operations to be performed by a request is processed."""
 
     def after_request_hook(

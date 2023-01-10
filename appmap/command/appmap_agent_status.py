@@ -44,7 +44,7 @@ def discover_pytest_tests():
     #
     collector = AgentFileCollector()
 
-    import pytest
+    import pytest  # pylint: disable=import-outside-toplevel
 
     pytest.main(
         [

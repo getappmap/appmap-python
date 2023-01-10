@@ -160,10 +160,12 @@ class TestRequestCapture:
             )
         ]
 
-    @staticmethod
-    def test_post_bad_json(events, client):
+    @pytest.mark.parametrize("bad_json", ["bad json", 1, False, None, [2, 3]])
+    def test_post_bad_json(self, events, client, bad_json):
         client.post(
-            "/test?my_param=example", data="bad json", content_type="application/json"
+            "/test?my_param=example",
+            data=str(bad_json),
+            content_type="application/json",
         )
 
         assert events[0].message == [
@@ -213,7 +215,6 @@ class TestRequestCapture:
         assert np == expected
 
     @staticmethod
-    @pytest.mark.appmap_enabled
     def test_message_path_segments(events, client):
         client.get("/post/alice/42/summary")
 
@@ -225,14 +226,14 @@ class TestRequestCapture:
         ]
 
 
-class TestRecording:
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+class TestRemoteRecording:
     """Common tests for remote recording."""
 
     @staticmethod
-    def test_appmap_disabled(client, monkeypatch):
-        # since APPMAP records by default, disable it explicitly
-        monkeypatch.setenv("APPMAP", "false")
-        appmap.initialize()  # pylint: disable=protected-access
+    # since APPMAP records by default, disable it explicitly
+    @pytest.mark.appmap_enabled(appmap_enabled=False)
+    def test_appmap_disabled(client):
         assert not appmap.enabled()
         assert not Env.current.enables("remote")
 
@@ -240,7 +241,6 @@ class TestRecording:
         assert res.status_code == 404
 
     @staticmethod
-    @pytest.mark.appmap_enabled
     def test_starts_disabled(client):
         res = client.get("/_appmap/record")
         assert res.status_code == 200
@@ -253,13 +253,11 @@ class TestRecording:
         assert data == {"enabled": False}
 
     @staticmethod
-    @pytest.mark.appmap_enabled
     def test_can_be_enabled(client):
         res = client.post("/_appmap/record")
         assert res.status_code == 200
 
     @staticmethod
-    @pytest.mark.appmap_enabled
     def test_can_only_enable_once(client):
         res = client.post("/_appmap/record")
         assert res.status_code == 200
@@ -267,7 +265,6 @@ class TestRecording:
         assert res.status_code == 409
 
     @staticmethod
-    @pytest.mark.appmap_enabled
     def test_can_record(data_dir, client):
         res = client.post("/_appmap/record")
         assert res.status_code == 200
@@ -415,23 +412,23 @@ class _TestRecordRequests:
                 )
 
                 with open(appmap_file_name, encoding="utf-8") as f:
-                    appmap = json.loads(f.read())
+                    recording = json.loads(f.read())
 
                     # Every event should come from the same thread
                     thread_ids = {
-                        event["thread_id"]: True for event in appmap["events"]
+                        event["thread_id"]: True for event in recording["events"]
                     }
                     assert len(thread_ids) == 1
 
                     # AppMap should contain only one request and response
                     http_server_requests = [
                         event["http_server_request"]
-                        for event in appmap["events"]
+                        for event in recording["events"]
                         if "http_server_request" in event
                     ]
                     http_server_responses = [
                         event["http_server_response"]
-                        for event in appmap["events"]
+                        for event in recording["events"]
                         if "http_server_response" in event
                     ]
                     assert len(http_server_requests) == 1
