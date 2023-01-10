@@ -30,11 +30,12 @@ jobs:
     - poetry build
     - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
     - ci/run_tests.sh
-  - stage: deploy
+  - stage: release
     if: branch = master
     script: skip
     before_deploy:
     - pip install poetry
+    - nvm install lts/*
     - npm i -g
       semantic-release
       @semantic-release/exec
