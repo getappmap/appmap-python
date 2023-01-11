@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/getappmap/appmap-python/compare/v1.13.0...v1.13.1) (2023-01-11)
+
+
+### Bug Fixes
+
+* improve handling of application/json requests ([7f4dc2d](https://github.com/getappmap/appmap-python/commit/7f4dc2d42efa26f4e32e6685c7afc9aec71e1766))
+
 # [1.13.0](https://github.com/getappmap/appmap-python/compare/v1.12.8...v1.13.0) (2023-01-04)
 
 
