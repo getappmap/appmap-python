@@ -1,0 +1,13 @@
+pseudorandom:
+  - random.random
+
+random.insecure:
+  - random.random
+
+random.secure:
+  - os.urandom
+  - secrets.randbelow
+  - secrets.randbits
+  - secrets.token_bytes
+  - secrets.token_hex
+  - secrets.token_urlsafe

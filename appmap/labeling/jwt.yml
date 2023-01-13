@@ -1,0 +1,5 @@
+jwt.encode:
+  - jwt.encode
+
+jwt.decode:
+  - jwt.decode

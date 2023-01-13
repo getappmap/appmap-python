@@ -1,0 +1,18 @@
+security.authentication:
+ - werkzeug.security.check_password_hash
+
+security.authorization:
+ - flask_login.UserMixin.is_authenticated
+ - flask_login.UserMixin.is_active
+ - flask_login.UserMixin.is_anonymous
+ - flask_login.AnonymousUserMixin.is_authenticated
+ - flask_login.AnonymousUserMixin.is_active
+ - flask_login.AnonymousUserMixin.is_anonymous
+ - flask_authorize.has_permission
+ - flask_authorize.user_has_role
+ - flask_authorize.user_in_group
+ - flask_authorize.authorize.has_role
+ - flask_authorize.authorize.in_group
+ - flask_authorize.authorize.read
+ - flask_authorize.authorize.update
+ - flask_authorize.authorize.delete
