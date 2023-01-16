@@ -1,4 +1,3 @@
-import logging
 import unittest
 from contextlib import contextmanager
 
@@ -7,7 +6,7 @@ from _appmap.env import Env
 from _appmap.utils import get_function_location
 from appmap import wrapt
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def setup_unittest():

@@ -1,13 +1,13 @@
 import json
-import logging
 import sys
 from argparse import ArgumentParser
 
 from importlib_metadata import PackageNotFoundError, distribution, version
 
 from _appmap.configuration import Config
+from _appmap.env import Env
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def has_dist(dist):

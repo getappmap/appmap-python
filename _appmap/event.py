@@ -17,7 +17,7 @@ from .utils import (
     split_function_name,
 )
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 class _EventIds:

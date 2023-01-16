@@ -1,12 +1,10 @@
-import logging
-
 import pytest
 
 from _appmap import testing_framework
 from _appmap.env import Env
 from appmap import wrapt
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 class recorded_testcase:  # pylint: disable=too-few-public-methods

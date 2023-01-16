@@ -1,11 +1,11 @@
-import logging
 import threading
 import traceback
 from abc import ABC, abstractmethod
 
-from _appmap.utils import appmap_tls
+from .env import Env
+from .utils import appmap_tls
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 # pylint: disable=global-statement
 _default_recorder = None

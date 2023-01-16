@@ -1,15 +1,15 @@
-import logging
 import sys
 import time
 from collections import namedtuple
 from contextlib import contextmanager
 
 from . import event
+from .env import Env
 from .event import CallEvent
 from .recorder import Recorder
 from .utils import appmap_tls
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 @contextmanager

@@ -1,6 +1,5 @@
 import functools
 import inspect
-import logging
 import sys
 import types
 from abc import ABC, abstractmethod
@@ -12,7 +11,7 @@ import appmap.wrapt as wrapt
 from .env import Env
 from .utils import FnType
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 Filterable = namedtuple("Filterable", "fqname obj")

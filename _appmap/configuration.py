@@ -3,7 +3,6 @@ Manage Configuration AppMap recorder for Python.
 """
 
 import inspect
-import logging
 import os
 import sys
 from functools import lru_cache
@@ -22,7 +21,7 @@ from .env import Env
 from .importer import Filter, Importer
 from .instrument import instrument
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def default_app_name(rootdir):

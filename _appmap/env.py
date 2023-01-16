@@ -98,6 +98,9 @@ class Env(metaclass=_EnvMeta):
     def display_params(self):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
 
+    def getLogger(self, name):
+        return logging.getLogger(name)
+
     def _configure_logging(self):
         log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
 
@@ -121,7 +124,12 @@ class Env(metaclass=_EnvMeta):
                     "level": log_level,
                     "handlers": ["default"],
                     "propagate": True,
-                }
+                },
+                "_appmap": {
+                    "level": log_level,
+                    "handlers": ["default"],
+                    "propagate": True,
+                },
             },
         }
         if log_config is not None:

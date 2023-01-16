@@ -1,4 +1,3 @@
-import logging
 import re
 import time
 
@@ -26,7 +25,7 @@ except ImportError:
     # not using sqlalchemy
     pass
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def request_params(req):
