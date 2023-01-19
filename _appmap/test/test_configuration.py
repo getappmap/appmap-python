@@ -6,6 +6,7 @@ from distutils.dir_util import copy_tree
 from pathlib import Path
 
 import pytest
+import yaml
 
 import _appmap
 import appmap
@@ -120,16 +121,16 @@ class TestConfiguration:
 
 
 class DefaultHelpers:
+    def check_default_packages(self, actual_packages):
+        pkgs = [p["path"] for p in actual_packages if p["path"] in ("package", "test")]
+        assert ["package", "test"] == sorted(pkgs)
+
     def check_default_config(self, expected_name):
         assert appmap.enabled()
 
         default_config = Config()
         assert default_config.name == expected_name
-        assert len(default_config.packages) == 2
-        assert sorted(default_config.packages, key=lambda p: p["path"]) == [
-            {"path": "package"},
-            {"path": "test"},
-        ]
+        self.check_default_packages(default_config.packages)
         assert default_config.default["appmap_dir"] == "tmp/appmap"
 
 
@@ -173,7 +174,7 @@ class TestDefaultConfig(DefaultHelpers):
         _appmap.initialize(cwd=tmpdir)
         self.check_default_config(Path(tmpdir).name)
 
-    def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch):
+    def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch, tmpdir):
         repo_root = git.cwd
         copy_tree(data_dir / "config", str(repo_root))
         monkeypatch.chdir(repo_root)
@@ -184,8 +185,14 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root)
 
-        c = Config()
+        Config()  # write the file as a side-effect
         assert path.is_file()
+        with open(path, encoding="utf-8") as cfg:
+            actual_config = yaml.safe_load(cfg)
+        assert Path(tmpdir).name == actual_config["name"]
+        assert "tmp/appmap" == actual_config["appmap_dir"]
+        assert "packages" in actual_config
+        self.check_default_packages(actual_config["packages"])
 
     def test_not_created_if_missing_and_not_enabled(self, git, data_dir, monkeypatch):
         repo_root = git.cwd

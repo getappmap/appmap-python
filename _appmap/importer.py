@@ -5,6 +5,7 @@ import types
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
+from functools import reduce
 
 import appmap.wrapt as wrapt
 
@@ -120,9 +121,7 @@ def get_members(cls):
 
     def is_member_func(m):
         t = type(m)
-        if (
-            t == types.BuiltinFunctionType or t == types.BuiltinMethodType  # noqa: E721
-        ):  # noqa: E129
+        if t in (types.BuiltinFunctionType, types.BuiltinMethodType):
             return False
 
         return (
@@ -154,14 +153,14 @@ def get_members(cls):
 
 class Importer:
     filter_stack = [NullFilter]
-    filter_chain = []
+    filter_chain = None
 
     def get_filter_stack(self):
         return self.filter_stack
 
     @classmethod
     def initialize(cls):
-        cls.filter_stack = [NullFilter]
+        cls.filter_stack = []
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
 
@@ -177,13 +176,11 @@ class Importer:
 
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
-            logger.debug("  filter_stack %s", cls.filter_stack)
-            cls.filter_chain = cls.filter_stack[0](None)
-            for filter_ in cls.filter_stack[1:]:
-                cls.filter_chain = filter_(cls.filter_chain)
-                logger.debug("  self.filter chain: %s", cls.filter_chain)
+            cls.filter_chain = reduce(
+                lambda acc, e: e(acc), cls.filter_stack, NullFilter(None)
+            )
 
-        def instrument_functions(filterable):
+        def instrument_functions(filterable, selected_functions=None):
             if not cls.filter_chain.filter(filterable):
                 return
 
@@ -192,11 +189,19 @@ class Importer:
             logger.debug("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
+                if selected_functions and fn_name not in selected_functions:
+                    continue
+
                 new_fn = cls.filter_chain.wrap(FilterableFn(filterable, fn, static_fn))
                 if fn != new_fn:
                     wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
-        instrument_functions(FilterableMod(mod))
+        # Import Config here, to avoid circular top-level imports.
+        from .configuration import Config  # pylint: disable=import-outside-toplevel
+
+        package_functions = Config().package_functions
+        fm = FilterableMod(mod)
+        instrument_functions(fm, package_functions.get(fm.fqname))
         classes = get_classes(mod)
         logger.debug("  classes %s", classes)
         for c in classes:
@@ -204,7 +209,7 @@ class Importer:
             if fc.fqname.startswith(cls._skip_instrumenting):
                 logger.debug("  not instrumenting %s", fc.fqname)
                 continue
-            instrument_functions(fc)
+            instrument_functions(fc, package_functions.get(fc.fqname))
 
 
 def wrap_finder_function(fn, decorator):

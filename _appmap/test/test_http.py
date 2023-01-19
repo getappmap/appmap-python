@@ -12,7 +12,16 @@ from ..test.helpers import DictIncluding
 def test_http_client_capture(mock_requests, events):
     requests.get("https://example.test/foo/bar?q=one&q=two&q2=%F0%9F%A6%A0")
 
-    request = events[0]
+    assert events[0].to_dict() == DictIncluding(
+        {
+            "event": "call",
+            "defined_class": "http.client.HTTPConnection",
+            "method_id": "request",
+        }
+    )
+    assert events[1].to_dict() == DictIncluding({"event": "return"})
+
+    request = events[2]
     assert request.http_client_request == {
         "request_method": "GET",
         "url": "https://example.test/foo/bar",
@@ -24,7 +33,7 @@ def test_http_client_capture(mock_requests, events):
         message[1] == DictIncluding({"name": "q2", "value": "'\\U0001f9a0'"})
     )
 
-    assert events[1].http_client_response == DictIncluding(
+    assert events[3].http_client_response == DictIncluding(
         {"status_code": 200, "mime_type": "text/plain; charset=utf-8"}
     )
 

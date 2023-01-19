@@ -5,7 +5,6 @@ Manage Configuration AppMap recorder for Python.
 import inspect
 import os
 import sys
-from functools import lru_cache
 from os.path import realpath
 from pathlib import Path
 from textwrap import dedent
@@ -14,6 +13,7 @@ import importlib_metadata
 import yaml
 from yaml.parser import ParserError
 
+from _appmap.labels import LabelSet
 from appmap.labeling import presets as label_presets
 
 from . import utils
@@ -137,8 +137,15 @@ class Config:
 
         self.file_present = False
         self.file_valid = False
+        self.package_functions = {}
+        self.labels = LabelSet()
 
         self._load_config()
+        self._load_functions()
+
+        if "labels" in self._config:
+            self.labels.append(self._config["labels"])
+
         self._initialized = True
 
     @classmethod
@@ -152,15 +159,6 @@ class Config:
     @property
     def packages(self):
         return self._config["packages"]
-
-    @property
-    @lru_cache(maxsize=None)
-    def labels(self):
-        """The LabelSet defined in the configuration, plus any presets."""
-        labels = label_presets()
-        if "labels" in self._config:
-            labels.append(self._config["labels"])
-        return labels
 
     @property
     def default(self):
@@ -217,10 +215,11 @@ class Config:
                     self._config = self.default
                 else:
                     # It parsed, make sure it has name and packages set.
-                    if not self._config.get("name", None):
+                    if "name" not in self._config:
                         self._config["name"] = self.default_name
-                    if not self._config.get("packages", None):
+                    if "packages" not in self._config:
                         self._config["packages"] = self.default_packages
+
                 self.file_valid = True
                 Env.current.enabled = should_enable
             except ParserError:
@@ -258,6 +257,19 @@ It will be created with this configuration:
             basedir.mkdir(parents=True, exist_ok=True)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(yaml.dump(config, sort_keys=True))
+
+    def _load_functions(self):
+        for preset in label_presets():
+            self.labels.append(preset)
+
+        functions = self.labels.labels.keys()
+        modules = {}
+        for fqname in functions:
+            mod, name = fqname.rsplit(".", 1)
+            modules[mod] = modules[mod] + [name] if mod in modules else [name]
+
+        self.package_functions.update(modules)
+        self._config["packages"] += [{"path": pkg} for pkg in modules]
 
 
 def startswith(prefix, sequence):
