@@ -4,7 +4,6 @@ Automatically used in pytest tests.
 """
 
 import json
-import logging
 import re
 import sys
 import time
@@ -35,7 +34,7 @@ from _appmap.utils import patch_class, values_dict
 from _appmap.web_framework import JSON_ERRORS, AppmapMiddleware, MiddlewareInserter
 from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def parse_pg_version(version):

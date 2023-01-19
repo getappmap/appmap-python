@@ -1,7 +1,10 @@
 from collections import defaultdict
 from typing import Dict, List, Optional, Union
 
+from .env import Env
 from .importer import Filterable
+
+logger = Env.current.getLogger(__name__)
 
 
 class labels:
@@ -23,11 +26,8 @@ Config = Dict[Label, Union[FunctionName, List[FunctionName]]]
 class LabelSet:
     """A set of labels defined to be applied on specific functions."""
 
-    def __init__(self, config: Optional[Config] = None):
-        """Create the LabelSet, optionally pre-populating it with the provided config."""
+    def __init__(self):
         self.labels = defaultdict(list)
-        if config:
-            self.append(config)
 
     def append(self, config: Config):
         """Update this LabelSet to contain definitions from the config."""
@@ -50,7 +50,7 @@ class LabelSet:
         if not self.labels:
             return "LabelSet()"
         inverted = defaultdict(list)
-        for function, labels in self.labels.items():
-            for label in labels:
+        for function, lbls in self.labels.items():
+            for label in lbls:
                 inverted[label].append(function)
         return "LabelSet(%s)" % dict(inverted)

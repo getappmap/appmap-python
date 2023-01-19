@@ -1,13 +1,16 @@
 import importlib
 from distutils.dir_util import copy_tree
+from functools import partialmethod
 
 import pytest
 import yaml
 
 import _appmap
-from _appmap import utils
-from _appmap.env import Env
-from _appmap.recorder import Recorder
+import appmap
+from appmap import generation
+
+from .. import utils
+from ..recorder import Recorder
 
 
 def _data_dir(pytestconfig):
@@ -93,3 +96,27 @@ def tmp_git(git_directory, tmp_path):
 def _dj_autoclear_mailbox() -> None:
     # Override the `_dj_autoclear_mailbox` test fixture in `pytest_django`.
     pass
+
+
+@pytest.fixture(name="verify_example_appmap")
+def fixture_verify_appmap(monkeypatch):
+    def _generate(check_fn, method_name):
+        monkeypatch.setattr(
+            generation.FuncEntry,
+            "to_dict",
+            partialmethod(check_fn, generation.FuncEntry.to_dict),
+        )
+
+        rec = appmap.Recording()
+        with rec:
+            # pylint: disable=import-outside-toplevel, import-error
+            from example_class import ExampleClass
+
+            # pylint: enable=import-outside-toplevel, import-error
+
+            m = getattr(ExampleClass(), method_name)
+            m()
+
+        return generation.dump(rec)
+
+    return _generate

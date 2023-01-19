@@ -1,7 +1,6 @@
 """Common utilities for web framework integration"""
 
 import datetime
-import logging
 import os
 import os.path
 import re
@@ -20,7 +19,7 @@ from .event import Event, ReturnEvent, describe_value
 from .recorder import Recorder, ThreadRecorder
 from .utils import root_relative_path, scenario_filename
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 request_recorder = ContextVar("appmap_request_recorder")
 
 # These are the errors that can get raised when trying to update params based on the results of

@@ -1,9 +1,7 @@
-import logging
-
 from .env import Env
 from .recorder import Recorder
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 class Recording:

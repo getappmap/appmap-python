@@ -1,5 +1,5 @@
 """Test recording functions called and defined in various ways."""
-# pylint: disable=missing-function-docstring
+# pylint: disable=missing-function-docstring, import-outside-toplevel
 
 import json
 import os
@@ -20,10 +20,11 @@ from .normalize import normalize_appmap, remove_line_numbers
 class TestRecordingWhenEnabled:
     def test_recording_works(self, with_data_dir):
         expected_path = os.path.join(with_data_dir, "expected.appmap.json")
-        with open(expected_path) as f:
+        with open(expected_path, encoding="utf-8") as f:
             expected_appmap = json.load(f)
 
         r = appmap.Recording()
+
         with r:
             from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
                 ExampleClass,
@@ -135,7 +136,7 @@ class TestRecordingWhenEnabled:
 @pytest.mark.appmap_enabled
 @pytest.mark.usefixtures("with_data_dir")
 def test_static_cached(events):
-    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-outside-toplevel,import-error
+    from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
         ExampleClass,
     )
 

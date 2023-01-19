@@ -1,6 +1,5 @@
 """Shared metadata gathering"""
 
-import logging
 import platform
 import re
 from functools import lru_cache
@@ -9,7 +8,7 @@ from . import utils
 from .env import Env
 from .utils import compact_dict
 
-logger = logging.getLogger(__name__)
+logger = Env.current.getLogger(__name__)
 
 
 def _lines(text):
