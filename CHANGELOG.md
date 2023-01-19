@@ -1,3 +1,11 @@
+## [1.13.2](https://github.com/getappmap/appmap-python/compare/v1.13.1...v1.13.2) (2023-01-19)
+
+
+### Bug Fixes
+
+* enable logging from _appmap module ([f00fd2d](https://github.com/getappmap/appmap-python/commit/f00fd2d111ddc7b38953c9585f2f751feaf80157))
+* instrument functions based on label config ([4f491cc](https://github.com/getappmap/appmap-python/commit/4f491cc4bb57f161c9470e9683dfc89f8ae6b7ad))
+
 ## [1.13.1](https://github.com/getappmap/appmap-python/compare/v1.13.0...v1.13.1) (2023-01-11)
 
 
