@@ -142,6 +142,8 @@ class Config:
 
         self._load_config()
         self._load_functions()
+        logger.info("config: %s", self._config)
+        logger.info("package_functions: %s", self.package_functions)
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
@@ -224,7 +226,6 @@ class Config:
                 Env.current.enabled = should_enable
             except ParserError:
                 pass
-            logger.debug("config: %s", self._config)
             return
 
         if not Env.current.enabled:
@@ -269,7 +270,6 @@ It will be created with this configuration:
             modules[mod] = modules[mod] + [name] if mod in modules else [name]
 
         self.package_functions.update(modules)
-        self._config["packages"] += [{"path": pkg} for pkg in modules]
 
 
 def startswith(prefix, sequence):
@@ -295,6 +295,8 @@ class PathMatcher:
         if startswith(self.prefix, name):
             name = name[len(self.prefix) :]
             result = not any(startswith(x, name) for x in self.excludes)
+            if not result:
+                logger.info("%r excluded", fqname)
         else:
             result = False
         logger.debug("%r.matches(%r) -> %r", self, fqname, result)
@@ -349,21 +351,28 @@ class MatcherFilter(Filter):
         return result
 
     def wrap(self, filterable):
+        # For historical reasons, this implementation is a little weird.
+        #
+        # It used to be that this function would use self.match to decide whether or not a
+        # filterable function should be wrapped. That decision is now made in _appmap.importer,
+        # which will only call Filter.wrap when appropriate.
+        #
+        # We can't completely get rid of the use of self.match, though. We still use it to determine
+        # whether a shallow mapping is turned on for a package, setting _appmap_shallow as
+        # appropriate.
+        #
         rule = self.match(filterable)
-        if rule:
-            wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
-            if wrapped is None:
-                logger.debug("  wrapping %s", filterable.fqname)
-                Config().labels.apply(filterable)
-                ret = instrument(filterable)
-                if rule.shallow:
-                    setattr(ret, "_appmap_shallow", rule)
-            else:
-                logger.debug("  already wrapped %s", filterable.fqname)
-                ret = filterable.obj
-            return ret
-
-        return self.next_filter.wrap(filterable)
+        wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
+        if wrapped is None:
+            logger.debug("  wrapping %s", filterable.fqname)
+            Config().labels.apply(filterable)
+            ret = instrument(filterable)
+            if rule and rule.shallow:
+                setattr(ret, "_appmap_shallow", rule)
+        else:
+            logger.debug("  already wrapped %s", filterable.fqname)
+            ret = filterable.obj
+        return ret
 
     def match(self, filterable):
         return next((m for m in self.matchers if m.matches(filterable)), None)

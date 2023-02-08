@@ -74,14 +74,6 @@ class Filter(ABC):
         not be, or call the next filter if this filter can't decide.
         """
 
-    @abstractmethod
-    def wrap(self, filterable):
-        """
-        Determine whether the given filterable function should be
-        instrumented.  If so, return a new function that wraps the
-        old.  If not, return the original function.
-        """
-
 
 class NullFilter(Filter):
     def __init__(self, next_filter=None):
@@ -89,9 +81,6 @@ class NullFilter(Filter):
 
     def filter(self, filterable):
         return False
-
-    def wrap(self, filterable):
-        return filterable.obj
 
 
 def is_class(c):
@@ -181,9 +170,6 @@ class Importer:
             )
 
         def instrument_functions(filterable, selected_functions=None):
-            if not cls.filter_chain.filter(filterable):
-                return
-
             logger.debug("  looking for members of %s", filterable.obj)
             functions = get_members(filterable.obj)
             logger.debug("  functions %s", functions)
@@ -201,7 +187,11 @@ class Importer:
 
         package_functions = Config().package_functions
         fm = FilterableMod(mod)
-        instrument_functions(fm, package_functions.get(fm.fqname))
+        if fm.fqname in package_functions:
+            instrument_functions(fm, package_functions.get(fm.fqname))
+        elif cls.filter_chain.filter(fm):
+            instrument_functions(fm)
+
         classes = get_classes(mod)
         logger.debug("  classes %s", classes)
         for c in classes:
@@ -209,7 +199,10 @@ class Importer:
             if fc.fqname.startswith(cls._skip_instrumenting):
                 logger.debug("  not instrumenting %s", fc.fqname)
                 continue
-            instrument_functions(fc, package_functions.get(fc.fqname))
+            if fc.fqname in package_functions:
+                instrument_functions(fc, package_functions.get(fc.fqname))
+            elif cls.filter_chain.filter(fc):
+                instrument_functions(fc)
 
 
 def wrap_finder_function(fn, decorator):
