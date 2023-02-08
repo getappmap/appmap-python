@@ -21,9 +21,9 @@ Filterable = namedtuple("Filterable", "fqname obj")
 class FilterableMod(Filterable):
     __slots__ = ()
 
-    def __new__(c, mod):
+    def __new__(cls, mod):
         fqname = mod.__name__
-        return super(FilterableMod, c).__new__(c, fqname, mod)
+        return super(FilterableMod, cls).__new__(cls, fqname, mod)
 
     def classify_fn(self, _):
         return FnType.MODULE
@@ -32,9 +32,9 @@ class FilterableMod(Filterable):
 class FilterableCls(Filterable):
     __slots__ = ()
 
-    def __new__(c, cls):
-        fqname = "%s.%s" % (cls.__module__, cls.__qualname__)
-        return super(FilterableCls, c).__new__(c, fqname, cls)
+    def __new__(cls, clazz):
+        fqname = "%s.%s" % (clazz.__module__, clazz.__qualname__)
+        return super(FilterableCls, cls).__new__(cls, fqname, clazz)
 
     def classify_fn(self, static_fn):
         return FnType.classify(static_fn)
@@ -52,9 +52,9 @@ class FilterableFn(
 ):
     __slots__ = ()
 
-    def __new__(c, scope, fn, static_fn):
+    def __new__(cls, scope, fn, static_fn):
         fqname = "%s.%s" % (scope.fqname, fn.__name__)
-        self = super(FilterableFn, c).__new__(c, fqname, fn, scope, static_fn)
+        self = super(FilterableFn, cls).__new__(cls, fqname, fn, scope, static_fn)
         return self
 
     @property
@@ -250,7 +250,7 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
             # identifying methods decorated with @staticmethod. It offers two suggested fixes:
             # update the class definition, or patch the function found in __dict__. We can't do the
             # former, so do the latter instead.
-            #   https://github.com/GrahamDumpleton/wrapt/blob/68316bea668fd905a4acb21f37f12596d8c30d80/src/wrapt/wrappers.py#L691
+            #   https://github.com/GrahamDumpleton/wrapt/blob/1.14.1/src/wrapt/wrappers.py#L730
             #
             # TODO: determine if we can use wrapt.wrap_function_wrapper to simplify this code
             exec_module = inspect.getattr_static(loader, "exec_module")
