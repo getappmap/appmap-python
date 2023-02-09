@@ -1,0 +1,37 @@
+security.authentication:
+  - django.contrib.auth.authenticate
+  - django.contrib.auth.backends.ModelBackend.authenticate
+  - django.contrib.auth.backends.RemoteUserBackend.authenticate
+
+security.authorization:
+  - django.contrib.admin.options.BaseModelAdmin.has_add_permission
+  - django.contrib.admin.options.BaseModelAdmin.has_change_permission
+  - django.contrib.admin.options.BaseModelAdmin.has_delete_permission
+  - django.contrib.admin.options.BaseModelAdmin.has_view_permission
+  - django.contrib.admin.options.InlineModelAdmin.has_add_permission
+  - django.contrib.admin.options.InlineModelAdmin.has_change_permission
+  - django.contrib.admin.options.InlineModelAdmin.has_delete_permission
+  - django.contrib.admin.options.InlineModelAdmin.has_view_permission
+  # I don't see these ModelAdmin permissions in the code but the
+  # Django docs mention them
+  - django.contrib.admin.options.ModelAdmin.has_add_permission
+  - django.contrib.admin.options.ModelAdmin.has_change_permission
+  - django.contrib.admin.options.ModelAdmin.has_delete_permission
+  - django.contrib.admin.options.ModelAdmin.has_view_permission
+  - django.contrib.auth.backends.ModelBackend.has_perm
+  - django.contrib.auth.backends.ModelBackend.has_module_perms
+  - django.contrib.auth.backends.ModelBackend.user_can_authenticate
+  - django.contrib.auth.models.User.has_perm
+  - django.contrib.auth.models.User.has_perms
+  - django.contrib.auth.models.AnonymousUser.has_perm
+  - django.contrib.auth.models.AnonymousUser.has_perms
+  - django.contrib.auth.models.AnonymousUser.is_authenticated
+  - django.contrib.auth.models.AnonymousUser.is_anonymous
+  - django.contrib.auth.models.AnonymousUser.has_module_perms
+  - django.contrib.auth.models.AbstractBaseUser.is_authenticated
+  - django.contrib.auth.models.AbstractBaseUser.is_anonymous
+  - django.contrib.auth.models.PermissionsMixin.has_perm
+  - django.contrib.auth.models.PermissionsMixin.has_perms
+  - django.contrib.auth.models.PermissionsMixin.has_module_perms
+  # Added no entries for AbstractUser because it inherits from
+  # AbstractBaseUser, PermissionsMixin

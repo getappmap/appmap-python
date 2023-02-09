@@ -115,8 +115,8 @@ class Recorder(ABC):
     def _start_recording(self):
         logger.debug("AppMap recording started")
         if self._enabled:
-            logger.error("Recording already in progress, previous start:")
-            logger.error("".join(traceback.format_list(self.start_tb)))
+            logger.debug("Recording already in progress, previous start:")
+            logger.debug("".join(traceback.format_list(self.start_tb)))
             raise RuntimeError("Recording already in progress")
         self.start_tb = traceback.extract_stack()
         self._enabled = True

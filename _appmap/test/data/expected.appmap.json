@@ -11,14 +11,14 @@
   },
   "events": [
     {
-      "defined_class": "example_class.ExampleClass",
-      "method_id": "static_method",
-      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [],
       "id": 1,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "static_method",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
       "return_value": {
@@ -31,9 +31,6 @@
       "thread_id": 1
     },
     {
-      "defined_class": "example_class.ClassMethodMixin",
-      "method_id": "class_method",
-      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "receiver": {
         "name": "cls",
@@ -44,7 +41,10 @@
       "parameters": [],
       "id": 3,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.ClassMethodMixin",
+      "method_id": "class_method",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
       "return_value": {
@@ -57,9 +57,6 @@
       "thread_id": 1
     },
     {
-      "defined_class": "example_class.Super",
-      "method_id": "instance_method",
-      "path": "_appmap/test/data/example_class.py",
       "static": false,
       "receiver": {
         "name": "self",
@@ -70,7 +67,10 @@
       "parameters": [],
       "id": 5,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.Super",
+      "method_id": "instance_method",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
       "return_value": {
@@ -83,9 +83,6 @@
       "thread_id": 1
     },
     {
-      "defined_class": "example_class.ExampleClass",
-      "method_id": "test_exception",
-      "path": "_appmap/test/data/example_class.py",
       "static": false,
       "receiver": {
         "name": "self",
@@ -96,7 +93,10 @@
       "parameters": [],
       "id": 7,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "test_exception",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
       "exceptions": [
@@ -111,19 +111,16 @@
       "thread_id": 1
     },
     {
-      "defined_class": "example_class.ExampleClass",
-      "method_id": "call_yaml",
-      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [],
       "id": 9,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "call_yaml",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
-      "defined_class": "example_class.ExampleClass",
-      "method_id": "dump_yaml",
-      "path": "_appmap/test/data/example_class.py",
       "static": true,
       "parameters": [
         {
@@ -135,12 +132,12 @@
       ],
       "id": 10,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "example_class.ExampleClass",
+      "method_id": "dump_yaml",
+      "path": "_appmap/test/data/example_class.py"
     },
     {
-      "defined_class": "yaml",
-      "method_id": "dump",
-      "path": "yaml/__init__.py",
       "static": true,
       "parameters": [
         {
@@ -165,13 +162,16 @@
           "name": "kwds",
           "kind": "keyrest",
           "class": "builtins.dict",
-          "size": 0,
-          "value": "{}"
+          "value": "{}",
+          "size": 0
         }
       ],
       "id": 11,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "yaml",
+      "method_id": "dump",
+      "path": "yaml/__init__.py"
     },
     {
       "return_value": {
@@ -184,9 +184,6 @@
       "thread_id": 1
     },
     {
-      "defined_class": "yaml",
-      "method_id": "dump",
-      "path": "yaml/__init__.py",
       "static": true,
       "parameters": [
         {
@@ -211,13 +208,16 @@
           "name": "kwds",
           "kind": "keyrest",
           "class": "builtins.dict",
-          "size": 0,
-          "value": "{}"
+          "value": "{}",
+          "size": 0
         }
       ],
       "id": 13,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "yaml",
+      "method_id": "dump",
+      "path": "yaml/__init__.py"
     },
     {
       "return_value": {
@@ -294,7 +294,9 @@
               "type": "function",
               "location": "_appmap/test/data/example_class.py",
               "static": false,
-              "labels": ["example-label"]
+              "labels": [
+                "example-label"
+              ]
             }
           ]
         },
@@ -319,10 +321,15 @@
         {
           "name": "dump",
           "type": "function",
-          "comment": "function comment",
           "location": "yaml/__init__.py",
           "static": true,
-          "labels": ["format.yaml.generate", "serialization", "example-label"]
+          "labels": [
+            "format.yaml.generate",
+            "serialize",
+            "serialization",
+            "example-label"
+          ],
+          "comment": "function comment"
         }
       ]
     }
