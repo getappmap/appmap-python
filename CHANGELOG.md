@@ -1,3 +1,15 @@
+# [1.14.0](https://github.com/getappmap/appmap-python/compare/v1.13.3...v1.14.0) (2023-02-09)
+
+
+### Bug Fixes
+
+* Recorder._start_recording uses logger.debug ([6c9b5cc](https://github.com/getappmap/appmap-python/commit/6c9b5ccdcd4265876b2a69677b00c6f256103ee1))
+
+
+### Features
+
+* Add label definitions ([d53f3f4](https://github.com/getappmap/appmap-python/commit/d53f3f4ba2d69d5068a50539a6fdbbb9a4ee53d5))
+
 ## [1.13.3](https://github.com/getappmap/appmap-python/compare/v1.13.2...v1.13.3) (2023-02-09)
 
 
