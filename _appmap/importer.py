@@ -21,9 +21,9 @@ Filterable = namedtuple("Filterable", "fqname obj")
 class FilterableMod(Filterable):
     __slots__ = ()
 
-    def __new__(c, mod):
+    def __new__(cls, mod):
         fqname = mod.__name__
-        return super(FilterableMod, c).__new__(c, fqname, mod)
+        return super(FilterableMod, cls).__new__(cls, fqname, mod)
 
     def classify_fn(self, _):
         return FnType.MODULE
@@ -32,9 +32,9 @@ class FilterableMod(Filterable):
 class FilterableCls(Filterable):
     __slots__ = ()
 
-    def __new__(c, cls):
-        fqname = "%s.%s" % (cls.__module__, cls.__qualname__)
-        return super(FilterableCls, c).__new__(c, fqname, cls)
+    def __new__(cls, clazz):
+        fqname = "%s.%s" % (clazz.__module__, clazz.__qualname__)
+        return super(FilterableCls, cls).__new__(cls, fqname, clazz)
 
     def classify_fn(self, static_fn):
         return FnType.classify(static_fn)
@@ -52,9 +52,9 @@ class FilterableFn(
 ):
     __slots__ = ()
 
-    def __new__(c, scope, fn, static_fn):
+    def __new__(cls, scope, fn, static_fn):
         fqname = "%s.%s" % (scope.fqname, fn.__name__)
-        self = super(FilterableFn, c).__new__(c, fqname, fn, scope, static_fn)
+        self = super(FilterableFn, cls).__new__(cls, fqname, fn, scope, static_fn)
         return self
 
     @property
@@ -74,14 +74,6 @@ class Filter(ABC):
         not be, or call the next filter if this filter can't decide.
         """
 
-    @abstractmethod
-    def wrap(self, filterable):
-        """
-        Determine whether the given filterable function should be
-        instrumented.  If so, return a new function that wraps the
-        old.  If not, return the original function.
-        """
-
 
 class NullFilter(Filter):
     def __init__(self, next_filter=None):
@@ -89,9 +81,6 @@ class NullFilter(Filter):
 
     def filter(self, filterable):
         return False
-
-    def wrap(self, filterable):
-        return filterable.obj
 
 
 def is_class(c):
@@ -181,9 +170,6 @@ class Importer:
             )
 
         def instrument_functions(filterable, selected_functions=None):
-            if not cls.filter_chain.filter(filterable):
-                return
-
             logger.debug("  looking for members of %s", filterable.obj)
             functions = get_members(filterable.obj)
             logger.debug("  functions %s", functions)
@@ -201,7 +187,11 @@ class Importer:
 
         package_functions = Config().package_functions
         fm = FilterableMod(mod)
-        instrument_functions(fm, package_functions.get(fm.fqname))
+        if fm.fqname in package_functions:
+            instrument_functions(fm, package_functions.get(fm.fqname))
+        elif cls.filter_chain.filter(fm):
+            instrument_functions(fm)
+
         classes = get_classes(mod)
         logger.debug("  classes %s", classes)
         for c in classes:
@@ -209,7 +199,10 @@ class Importer:
             if fc.fqname.startswith(cls._skip_instrumenting):
                 logger.debug("  not instrumenting %s", fc.fqname)
                 continue
-            instrument_functions(fc, package_functions.get(fc.fqname))
+            if fc.fqname in package_functions:
+                instrument_functions(fc, package_functions.get(fc.fqname))
+            elif cls.filter_chain.filter(fc):
+                instrument_functions(fc)
 
 
 def wrap_finder_function(fn, decorator):
@@ -257,7 +250,7 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
             # identifying methods decorated with @staticmethod. It offers two suggested fixes:
             # update the class definition, or patch the function found in __dict__. We can't do the
             # former, so do the latter instead.
-            #   https://github.com/GrahamDumpleton/wrapt/blob/68316bea668fd905a4acb21f37f12596d8c30d80/src/wrapt/wrappers.py#L691
+            #   https://github.com/GrahamDumpleton/wrapt/blob/1.14.1/src/wrapt/wrappers.py#L730
             #
             # TODO: determine if we can use wrapt.wrap_function_wrapper to simplify this code
             exec_module = inspect.getattr_static(loader, "exec_module")
