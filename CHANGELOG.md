@@ -1,3 +1,10 @@
+## [1.13.3](https://github.com/getappmap/appmap-python/compare/v1.13.2...v1.13.3) (2023-02-09)
+
+
+### Bug Fixes
+
+* don't instrument extra class members ([68ff82e](https://github.com/getappmap/appmap-python/commit/68ff82eee4600386766ea45af4ab691666abcbad))
+
 ## [1.13.2](https://github.com/getappmap/appmap-python/compare/v1.13.1...v1.13.2) (2023-01-19)
 
 
