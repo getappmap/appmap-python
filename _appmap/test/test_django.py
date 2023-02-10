@@ -189,11 +189,11 @@ class TestDjangoApp:
     """
 
     @pytest.fixture(autouse=True)
-    def beforeEach(self, monkeypatch, pytester):  # pylint: disable=no-self-use
+    def beforeEach(self, monkeypatch, pytester):
         monkeypatch.setenv("PYTHONPATH", "init")
         pytester.copy_example("django")
 
-    def test_enabled(self, pytester):  # pylint: disable=no-self-use
+    def test_enabled(self, pytester):
         # To really check middleware reset, the tests must run in order,
         # so disable randomly.
         result = pytester.runpytest("-svv", "-p", "no:randomly")
@@ -206,7 +206,7 @@ class TestDjangoApp:
         events = json.loads(appmap_file.read_text())["events"]
         assert "http_server_request" in events[0]
 
-    def test_disabled(self, pytester, monkeypatch):  # pylint: disable=no-self-use
+    def test_disabled(self, pytester, monkeypatch):
         monkeypatch.setenv("APPMAP", "false")
         result = pytester.runpytest("-svv", "-p", "no:randomly", "-k", "test_request")
         result.assert_outcomes(passed=1, failed=0, errors=0)
