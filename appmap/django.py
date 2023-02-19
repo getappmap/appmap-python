@@ -159,22 +159,15 @@ def request_params(request):
 def get_resolved_match(path_info, resolver):
     resolver_match = resolver.resolve(path_info)
 
-    # Sometimes the route returned by resolve is a regex, sometimes
-    # it's a url pattern.
-
-    # Start by assuming it's a regex.
-    regex = resolver_match.route
-
-    match = re.match(regex, path_info[1:])
-    if match:
-        return (regex, match)
-
-    # If it didn't match, it's a url pattern. Use _route_to_regex to
-    # turn it into a regex.  (url patterns sometimes start with a
-    # caret, which needs to be stripped before conversion.)
-    if regex[0] == "^":
-        regex = regex[1:]
-    regex = _route_to_regex(regex)[0]
+    # The last element of resolver_match.tried is the list of URLResolvers that matched path_info.
+    # Each URLResolver knows how to turn itself into a regex that will match the appropriate portion
+    # of the path. Iterate through them and create a complete regex for the path.
+    parts = []
+    for part in resolver_match.tried[-1]:
+        # Django inserts a leading '^'.
+        r = part.pattern.regex.pattern.lstrip("^")
+        parts.append(r)
+    regex = "".join(parts)
 
     match = re.match(regex, path_info[1:])
     if not match:

@@ -10,6 +10,10 @@ def user_view(_request, username):
     return django.http.HttpResponse(f"user {username}")
 
 
+def org_user_posts_view(_request, org, username):
+    return django.http.HttpResponse(f"org {org} user {username}")
+
+
 def post_view(_request, post_id):
     return django.http.HttpResponse(f"post {post_id}")
 
@@ -69,5 +73,9 @@ urlpatterns = [
     path("echo", echo_view),
     path("exception", exception_view),
     re_path(r"^post/included/", include([path("<username>", user_view)])),
+    re_path(
+        r"^(?P<org>\d+)/posts/",
+        include([path("<username>", org_user_posts_view)]),
+    ),
     re_path(r"^admincp/", include((admincp_patterns, "admin"), namespace="admin")),
 ]

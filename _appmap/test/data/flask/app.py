@@ -40,3 +40,8 @@ def show_post(post_id):
 def show_user_post(username, post_id):
     # Show the summary of a user's post
     return f"User {escape(username)} post {post_id}"
+
+
+@app.route("/<int:org>/posts/<username>")
+def show_org_user_posts(org, username):
+    return f"org {org} username {username}"

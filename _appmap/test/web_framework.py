@@ -207,6 +207,7 @@ class TestRequestCapture:
             ("/user/test_user", "/user/{username}"),
             ("/post/123", "/post/{post_id}"),
             ("/post/test_user/123/summary", "/post/{username}/{post_id}/summary"),
+            ("/123/posts/test_user", "/{org}/posts/{username}"),
         ],
     )
     def test_path_normalization(client, events, url, expected):
