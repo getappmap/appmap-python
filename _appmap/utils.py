@@ -32,12 +32,12 @@ class FnType(IntFlag):
     @staticmethod
     def classify(fn):
         fn_type = type(fn)
-        if fn_type == staticmethod or fn_type == types.BuiltinMethodType:
+        if fn_type in (staticmethod, types.BuiltinMethodType):
             return FnType.STATIC
-        elif fn_type == classmethod or fn_type == types.BuiltinMethodType:
+        if fn_type in (classmethod, types.BuiltinMethodType):
             return FnType.CLASS
-        else:
-            return FnType.INSTANCE
+
+        return FnType.INSTANCE
 
 
 class ThreadLocalDict(threading.local, MutableMapping):

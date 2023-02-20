@@ -1,8 +1,6 @@
 """Test Metadata"""
 # pylint: disable=protected-access, missing-function-docstring
 
-import pytest
-
 from _appmap.metadata import Metadata
 
 from ..test.helpers import DictIncluding

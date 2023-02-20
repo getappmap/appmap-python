@@ -17,7 +17,6 @@ from django.dispatch import receiver
 from django.template import Template
 from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
-from django.urls.resolvers import _route_to_regex
 
 from _appmap.env import Env
 from _appmap.event import (

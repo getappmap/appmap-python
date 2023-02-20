@@ -328,8 +328,8 @@ def wait_until_port_is(address, port, desired_state):
         current_state = port_state(address, port)
         if current_state == desired_state:
             break
-        else:
-            time.sleep(sleep_time)
+
+        time.sleep(sleep_time)
         count += 1
 
 

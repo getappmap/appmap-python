@@ -1,8 +1,6 @@
 import json
-import os
 import re
 from distutils.dir_util import copy_tree
-from pathlib import Path
 
 import pytest
 from importlib_metadata import version
