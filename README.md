@@ -23,9 +23,9 @@ of code and key data flows.
 
 Visit the [AppMap for Python](https://appland.com/docs/reference/appmap-python.html) reference page on AppLand.com for a complete reference guide.
 
-# Development
+# Development 
 
-[![Build Status](https://travis-ci.com/applandinc/appmap-python.svg?branch=master)](https://travis-ci.com/applandinc/appmap-python)
+[![Build Status](https://travis-ci.com/getappmap/appmap-python.svg?branch=master)](https://travis-ci.com/getappmap/appmap-python)
 
 ## Getting the code
 Clone the repo to begin development. Note that vendored dependencies are included as
