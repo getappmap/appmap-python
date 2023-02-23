@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/getappmap/appmap-python/compare/v1.14.0...v1.14.1) (2023-02-23)
+
+
+### Bug Fixes
+
+* improve Django path normalization ([f536bd3](https://github.com/getappmap/appmap-python/commit/f536bd383a91b3882a10b0b691d186ce7537785d))
+
 # [1.14.0](https://github.com/getappmap/appmap-python/compare/v1.13.3...v1.14.0) (2023-02-09)
 
 
