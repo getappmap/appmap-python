@@ -8,7 +8,6 @@ from threading import Thread
 
 import pytest
 
-import _appmap
 import appmap
 from _appmap.env import Env
 from _appmap.event import _EventIds, describe_value

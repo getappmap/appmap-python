@@ -9,7 +9,7 @@ import pytest
 
 from _appmap.env import Env
 from _appmap.metadata import Metadata
-from appmap.flask import AppmapFlask, FlaskInserter
+from appmap.flask import AppmapFlask
 
 from ..test.helpers import DictIncluding
 
@@ -134,11 +134,11 @@ class TestFlaskApp:
     """
 
     @pytest.fixture(autouse=True)
-    def beforeEach(self, monkeypatch, pytester):  # pylint: disable=no-self-use
+    def beforeEach(self, monkeypatch, pytester):
         monkeypatch.setenv("PYTHONPATH", "init")
         pytester.copy_example("flask")
 
-    def test_enabled(self, pytester):  # pylint: disable=no-self-use
+    def test_enabled(self, pytester):
         result = pytester.runpytest("-svv")
 
         result.assert_outcomes(passed=1, failed=0, errors=0)
@@ -147,7 +147,7 @@ class TestFlaskApp:
         )
         assert appmap_file.exists()
 
-    def test_disabled(self, pytester, monkeypatch):  # pylint: disable=no-self-use
+    def test_disabled(self, pytester, monkeypatch):
         monkeypatch.setenv("APPMAP", "false")
 
         result = pytester.runpytest("-svv")

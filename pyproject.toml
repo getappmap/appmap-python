@@ -13,8 +13,7 @@ license = "MIT"
 classifiers = [
         'Development Status :: 4 - Beta',
         'Framework :: Django',
-        'Framework :: Django :: 2.2',
-        'Framework :: Django :: 3.1',
+        'Framework :: Django :: 3.2',
         'Framework :: Flask',
         'Framework :: Pytest',
         'Intended Audience :: Developers',
@@ -32,21 +31,18 @@ packages = [
 [tool.poetry.dependencies]
 # Please update the documentation if changing the supported python version
 # https://github.com/applandinc/applandinc.github.io/blob/master/_docs/reference/appmap-python.md#supported-versions
-python = "^3.7"
+python = "^3.7.2"
 PyYAML = ">=5.3.0"
 inflection = ">=0.3.0"
 importlib-metadata = ">=0.8"
 importlib-resources = "^5.4.0"
 packaging = "^21.3"
-# If you include "Django" as an optional dependency here, you'll be able to use
-# poetry to install it in your dev environment. However, doing so causes poetry
-# v1.2.0 to remove it from the virtualenv *created and managed by tox*, i.e. not
-# your dev environment. 
+# If you include "Django" as an optional dependency here, you'll be able to use poetry to install it
+# in your dev environment. However, doing so causes poetry v1.2.0 to remove it from the virtualenv
+# *created and managed by tox*, i.e. not your dev environment. 
 # 
-# So, if you'd like to run the tests outside of tox,
-# you'll need to `pip install` the appropriate version of Django, e.g.
-#   pip install django'>=3.2,<4.0'
-#   pip install pytest-django
+# So, if you'd like to run the tests outside of tox, run `pip install -r requirements-dev.txt` to
+# install it and the rest of the dev dependencies.
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
@@ -67,6 +63,7 @@ python-decouple = "^3.5"
 [tool.poetry.group.dev.dependencies]
 black = "^22.8.0"
 isort = "^5.10.1"
+pylint = "^2.16.2"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
