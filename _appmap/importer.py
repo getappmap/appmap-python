@@ -110,11 +110,13 @@ def get_members(cls):
 
     def is_member_func(m):
         t = type(m)
-        if t in (types.BuiltinFunctionType, types.BuiltinMethodType):
-            return False
-
+        # import pdb; pdb.set_trace()
+        # if t in (types.BuiltinFunctionType, types.BuiltinMethodType):
+        #    return False
         return (
-            t == types.FunctionType  # noqa: E721
+            repr(t).find("methoddescriptor") > 0
+            or t in (types.BuiltinFunctionType, types.BuiltinMethodType)
+            or t == types.FunctionType  # noqa: E721
             or t == types.MethodType
             or FnType.classify(m) in FnType.STATIC | FnType.CLASS
         )

@@ -279,7 +279,7 @@ class CallEvent(Event):
         self._fn = fn
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
-        if fntype in FnType.CLASS | FnType.INSTANCE:
+        if fntype in FnType.CLASS | FnType.INSTANCE and len(parameters) > 0:
             self.receiver = parameters[0]
             parameters = parameters[1:]
         self.parameters = parameters
