@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/getappmap/appmap-python/compare/v1.14.1...v1.14.2) (2023-03-08)
+
+
+### Bug Fixes
+
+* bump version of "packaging" ([3224bf6](https://github.com/getappmap/appmap-python/commit/3224bf6bfee49ea95a04663d21442137535e1346))
+
 ## [1.14.1](https://github.com/getappmap/appmap-python/compare/v1.14.0...v1.14.1) (2023-02-23)
 
 
