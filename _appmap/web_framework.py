@@ -34,7 +34,7 @@ class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
 
     def __init__(self, path, instance=None):
         super().__init__("call")
-        self.receiver = describe_value(instance)
+        self.receiver = describe_value(None, instance)
         self.path = root_relative_path(path)
 
     def to_dict(self, attrs=None):
