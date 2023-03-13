@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/getappmap/appmap-python/compare/v1.14.2...v1.15.0) (2023-03-13)
+
+
+### Features
+
+* add schema to event parameters ([838f2de](https://github.com/getappmap/appmap-python/commit/838f2de8addd98f734e15ccc0ad90fc0d73553fc))
+
 ## [1.14.2](https://github.com/getappmap/appmap-python/compare/v1.14.1...v1.14.2) (2023-03-08)
 
 
