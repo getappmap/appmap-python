@@ -258,6 +258,10 @@ class TestInstanceMethods(TestMethodBase):
                 "class": "builtins.dict",
                 "kind": "keyrest",
                 "size": 2,
+                "properties": [
+                    {"name": "p1", "class": "builtins.int"},
+                    {"name": "p2", "class": "builtins.int"},
+                ],
             },
         )
 

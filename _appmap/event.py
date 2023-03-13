@@ -64,14 +64,7 @@ def display_string(val):
     return value
 
 
-def describe_value(val):
-    val_type = type(val)
-    ret = {
-        "class": fqname(val_type),
-        "object_id": id(val),
-        "value": display_string(val),
-    }
-
+def _is_list_or_dict(val_type):
     # We cannot use isinstance here because it uses __class__
     # and val could be overloading it and calling it could cause side effects.
     #
@@ -81,7 +74,45 @@ def describe_value(val):
     # If the object hasn't been evaluated before it could change the
     # observed behavior by doing that prematurely (perhaps even before
     # the evaluation can even succeed).
-    if issubclass(val_type, (list, dict)):
+
+    return issubclass(val_type, list), issubclass(val_type, dict)
+
+
+def _describe_schema(name, val, depth, max_depth):
+
+    val_type = type(val)
+
+    ret = {}
+    if name is not None:
+        ret["name"] = name
+    ret["class"] = fqname(val_type)
+
+    islist, isdict = _is_list_or_dict(val_type)
+    if not (islist or isdict) or (depth >= max_depth and isdict):
+        return ret
+
+    if islist:
+        elts = [(None, v) for v in val]
+        schema_key = "items"
+    elif isdict:
+        elts = val.items()
+        schema_key = "properties"
+
+    schema = [_describe_schema(k, v, depth + 1, max_depth) for k, v in elts]
+    # schema will be [None] if depth is exceeded, don't use it
+    if any(schema):
+        ret[schema_key] = schema
+
+    return ret
+
+
+def describe_value(name, val, max_depth=5):
+    ret = {
+        "object_id": id(val),
+        "value": display_string(val),
+    }
+    ret.update(_describe_schema(name, val, 0, max_depth))
+    if any(_is_list_or_dict(type(val))):
         ret["size"] = len(val)
 
     return ret
@@ -136,8 +167,8 @@ class Param:
         return "<Param name: %s kind: %s>" % (self.name, self.kind)
 
     def to_dict(self, value):
-        ret = {"name": self.name, "kind": self.kind}
-        ret.update(describe_value(value))
+        ret = {"kind": self.kind}
+        ret.update(describe_value(self.name, value))
         return ret
 
 
@@ -321,8 +352,7 @@ class MessageEvent(Event):
         super().__init__("call")
         self.message = []
         for name, value in message_parameters.items():
-            message_object = {"name": name}
-            message_object.update(describe_value(value))
+            message_object = describe_value(name, value)
             self.message.append(message_object)
 
 
@@ -405,7 +435,7 @@ class FuncReturnEvent(ReturnEvent):
 
     def __init__(self, parent_id, elapsed, return_value):
         super().__init__(parent_id, elapsed)
-        self.return_value = describe_value(return_value)
+        self.return_value = describe_value(None, return_value)
 
 
 class HttpResponseEvent(ReturnEvent):
