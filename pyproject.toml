@@ -58,6 +58,11 @@ SQLAlchemy = { version = "^1.4.11", python = "^3.7"}
 tox = "^3.22.0"
 Twisted = "^22.4.0"
 requests = "^2.25.1"
+
+# v2.30.0 of "requests" depends on urllib3 v2, which breaks the tests for http_client_requests. Pin
+# to v1 until this gets fixed.
+urllib3 = "^1"
+
 python-decouple = "^3.5"
 
 [tool.poetry.group.dev.dependencies]
