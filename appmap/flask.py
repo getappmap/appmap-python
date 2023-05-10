@@ -6,7 +6,7 @@ import flask.cli
 import jinja2
 from flask import g, request
 from flask.cli import ScriptInfo
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from _appmap.env import Env
@@ -26,6 +26,10 @@ except ImportError:
     pass
 
 logger = Env.current.getLogger(__name__)
+_JSON_ERRORS = (
+    BadRequest,
+    UnsupportedMediaType,
+)
 
 
 def request_params(req):
@@ -38,7 +42,7 @@ def request_params(req):
     try:
         params.update(req.json or {})
     # pylint is wrong about this "exception operation":
-    except (BadRequest,) + JSON_ERRORS:  # pylint: disable=wrong-exception-operation
+    except _JSON_ERRORS + JSON_ERRORS:  # pylint: disable=wrong-exception-operation
         # If request claims to be application/json, but its body is unparsable, BadRequest will be
         # raised. json is pretty forgiving about what it will parse, though, so req.json may not be
         # a dict. When that's the case, ValueError or TypeError may be raised when trying to update
