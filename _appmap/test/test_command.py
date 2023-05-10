@@ -11,8 +11,8 @@ from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_
 from .helpers import DictIncluding
 
 
-@pytest.fixture
-def cmd_setup(request, git, data_dir, monkeypatch):
+@pytest.fixture(name="cmd_setup")
+def _cmd_setup(request, git, data_dir, monkeypatch):
     repo_root = git.cwd
     copy_tree(data_dir / request.param, str(repo_root))
     monkeypatch.chdir(repo_root)
@@ -25,7 +25,8 @@ def cmd_setup(request, git, data_dir, monkeypatch):
 
 @pytest.mark.parametrize("cmd_setup", ["config"], indirect=True)
 def test_agent_init(cmd_setup, capsys):
-    rc = appmap_agent_init._run()
+    rc = appmap_agent_init._run()  # pylint: disable=protected-access
+
     assert rc == 0
     output = capsys.readouterr()
     config = json.loads(output.out)
@@ -42,40 +43,44 @@ class TestAgentStatus:
     @pytest.mark.parametrize("do_discovery", [True, False])
     def test_test_discovery_control(self, cmd_setup, do_discovery, mocker):
         mocker.patch("appmap.command.appmap_agent_status.discover_pytest_tests")
-        rc = appmap_agent_status._run(discover_tests=do_discovery)
+        rc = appmap_agent_status._run(  # pylint: disable=protected-access
+            discover_tests=do_discovery
+        )
         assert rc == 0
         call_count = 1 if do_discovery else 0
         assert appmap_agent_status.discover_pytest_tests.call_count == call_count
 
     @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
     def test_agent_status(self, cmd_setup, capsys):
-        rc = appmap_agent_status._run(discover_tests=True)
+        rc = appmap_agent_status._run(discover_tests=True)  # pylint: disable=protected-access
+
         assert rc == 0
         output = capsys.readouterr()
         status = json.loads(output.out)
         # XXX This will detect pytest as the test framework, because
         # appmap-python uses it. We need a better mechanism to handle
         # testing more broadly.
-        assert status == DictIncluding(
+        props = status["properties"]
+        config = props["config"]
+        assert config == DictIncluding({"app": "Simple", "present": True, "valid": True})
+        project = props["project"]
+        assert project == DictIncluding(
             {
-                "properties": {
-                    "config": {"app": "Simple", "present": True, "valid": True},
-                    "project": {
-                        "agentVersion": "0.0.0",
-                        "language": "python",
-                        "remoteRecordingCapable": True,
-                        "integrationTests": True,
-                    },
-                },
-                "test_commands": [
-                    {"args": [], "framework": "pytest", "command": "pytest"}
-                ],
+                "language": "python",
+                "remoteRecordingCapable": True,
+                "integrationTests": True,
             }
+        )
+        assert "agentVersion" in project
+        test_commands = status["test_commands"]
+        assert test_commands[0] == DictIncluding(
+            {"args": [], "framework": "pytest", "command": "pytest"}
         )
 
     @pytest.mark.parametrize("cmd_setup", ["package1"], indirect=True)
-    def test_agent_status(self, cmd_setup, capsys):
-        rc = appmap_agent_status._run(discover_tests=True)
+    def test_agent_status_no_commands(self, cmd_setup, capsys):
+        rc = appmap_agent_status._run(discover_tests=True)  # pylint: disable=protected-access
+
         assert rc == 0
         output = capsys.readouterr()
         status = json.loads(output.out)
@@ -85,7 +90,8 @@ class TestAgentStatus:
 
 class TestAgentValidate:
     def check_errors(self, capsys, status, count, msg):
-        rc = appmap_agent_validate._run()
+        rc = appmap_agent_validate._run()  # pylint: disable=protected-access
+
         assert rc == status
 
         output = capsys.readouterr()
@@ -95,7 +101,7 @@ class TestAgentValidate:
         if count > 0:
             err = errors[0]
             assert err["level"] == "error"
-            assert re.match(msg, err["message"]) != None
+            assert re.match(msg, err["message"]) is not None
 
     def test_no_errors(self, capsys, mocker):
         # Both Django and flask are installed in a dev environment, so
@@ -112,12 +118,10 @@ class TestAgentValidate:
             return_value="3.5",
         )
 
-        self.check_errors(
-            capsys, 1, 1, r"Minimum Python version supported is \d\.\d, found"
-        )
+        self.check_errors(capsys, 1, 1, r"Minimum Python version supported is \d\.\d, found")
 
     def test_django_version(self, capsys, mocker):
-        m = mocker.patch(
+        mocker.patch(
             "appmap.command.appmap_agent_validate.version",
             side_effect=lambda d: "3.1" if d == "django" else version(d),
         )
@@ -125,7 +129,7 @@ class TestAgentValidate:
         self.check_errors(capsys, 1, 1, "django must have version >= 3.2, found 3.1")
 
     def test_flask_version(self, capsys, mocker):
-        m = mocker.patch(
+        mocker.patch(
             "appmap.command.appmap_agent_validate.version",
             side_effect=lambda d: "1.0" if d == "flask" else version(d),
         )

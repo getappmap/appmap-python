@@ -43,13 +43,9 @@ import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-
 def test_sql_capture(events):
     conn = django.db.connections["default"]
     conn.cursor().execute("SELECT 1").fetchall()
-    assert events[0].sql_query == DictIncluding(
-        {"sql": "SELECT 1", "database_type": "sqlite"}
-    )
+    assert events[0].sql_query == DictIncluding({"sql": "SELECT 1", "database_type": "sqlite"})
     assert events[0].sql_query["server_version"].startswith("3.")
-    assert Metadata()["frameworks"] == [
-        {"name": "Django", "version": django.get_version()}
-    ]
+    assert Metadata()["frameworks"] == [{"name": "Django", "version": django.get_version()}]
 
 
 # Recording is enabled as a side-effect of requesting the events fixture. There's probably a better
@@ -57,9 +53,7 @@ def test_sql_capture(events):
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
 def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     client.get("/")
-    assert Metadata()["frameworks"] == [
-        {"name": "Django", "version": django.get_version()}
-    ]
+    assert Metadata()["frameworks"] == [{"name": "Django", "version": django.get_version()}]
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
@@ -98,21 +92,15 @@ class ClientAdaptor(django.test.Client):
         json=None,
         **kwargs,
     ):
-        headers = {
-            "HTTP_" + k.replace("-", "_").upper(): v for k, v in (headers or {}).items()
-        }
+        headers = {"HTTP_" + k.replace("-", "_").upper(): v for k, v in (headers or {}).items()}
 
         if json:
             content_type = "application/json"
             data = self._encode_json(json, "application/json")
 
-        return super().generic(
-            method, path, data, content_type, secure, **headers, **kwargs
-        )
+        return super().generic(method, path, data, content_type, secure, **headers, **kwargs)
 
-    def post(
-        self, path, data=None, content_type=MULTIPART_CONTENT, secure=False, **extra
-    ):
+    def post(self, path, data=None, content_type=MULTIPART_CONTENT, secure=False, **extra):
         if content_type == "multipart/form-data":
             content_type = MULTIPART_CONTENT
         return super().post(path, data, content_type, secure, **extra)
@@ -154,9 +142,7 @@ def test_exception(client, events, monkeypatch):
     def raise_on_call(*args):
         raise RuntimeError("An error")
 
-    monkeypatch.setattr(
-        django.core.handlers.exception, "response_for_exception", raise_on_call
-    )
+    monkeypatch.setattr(django.core.handlers.exception, "response_for_exception", raise_on_call)
 
     with pytest.raises(RuntimeError):
         client.get("/exception")
@@ -199,9 +185,7 @@ class TestDjangoApp:
         result.assert_outcomes(passed=4, failed=0, errors=0)
         # Look for the http_server_request event in test_app's appmap. If
         # middleware reset is broken, it won't be there.
-        appmap_file = (
-            pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
-        )
+        appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
         events = json.loads(appmap_file.read_text())["events"]
         assert "http_server_request" in events[0]
 
@@ -225,8 +209,9 @@ export PYTHONPATH="$PWD"
 cd _appmap/test/data/django/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
-            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings} python manage.py runserver 127.0.0.1:"
-            + str(_TestRecordRequests.server_port)
+            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings}"
+            + " python manage.py runserver"
+            + f" 127.0.0.1:{_TestRecordRequests.server_port}"
         )
 
     def server_start(self, debug=True):
