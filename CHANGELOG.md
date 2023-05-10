@@ -1,3 +1,11 @@
+## [1.15.1](https://github.com/getappmap/appmap-python/compare/v1.15.0...v1.15.1) (2023-05-10)
+
+
+### Bug Fixes
+
+* pin urllib3 to v1 ([d1ed73c](https://github.com/getappmap/appmap-python/commit/d1ed73c23fb7d923c5c3a52586fc7474418337e2))
+* support Werkzeug v2.3 ([28b5461](https://github.com/getappmap/appmap-python/commit/28b54615fd62f3c1430f013f9fa79645823bc2cf))
+
 # [1.15.0](https://github.com/getappmap/appmap-python/compare/v1.14.2...v1.15.0) (2023-03-13)
 
 
