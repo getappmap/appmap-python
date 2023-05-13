@@ -10,7 +10,7 @@ import pytest
 import appmap
 from _appmap.event import Event
 from _appmap.recorder import Recorder, ThreadRecorder
-from appmap.wrapt import FunctionWrapper
+from _appmap.wrapt import FunctionWrapper
 
 from .normalize import normalize_appmap, remove_line_numbers
 

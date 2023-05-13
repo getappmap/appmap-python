@@ -1,6 +1,6 @@
 import pytest
 
-from appmap.wrapt import BoundFunctionWrapper, FunctionWrapper
+from _appmap.wrapt import BoundFunctionWrapper, FunctionWrapper
 
 
 @pytest.mark.appmap_enabled

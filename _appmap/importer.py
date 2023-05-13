@@ -7,7 +7,7 @@ from collections import namedtuple
 from collections.abc import MutableSequence
 from functools import reduce
 
-from appmap import wrapt
+from _appmap import wrapt
 
 from .env import Env
 from .utils import FnType

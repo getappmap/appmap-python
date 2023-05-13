@@ -1,10 +1,9 @@
 import unittest
 from contextlib import contextmanager
 
-from _appmap import testing_framework
+from _appmap import testing_framework, wrapt
 from _appmap.env import Env
 from _appmap.utils import get_function_location
-from appmap import wrapt
 
 logger = Env.current.getLogger(__name__)
 

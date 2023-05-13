@@ -25,7 +25,7 @@ include = ['appmap.pth']
 
 packages = [
     { include = "appmap"}, {include = "_appmap" },
-    { include = "appmap/wrapt/*.py", from="vendor/wrapt/src" }
+    { include = "wrapt/*.py", from="vendor/wrapt/src" }
 ]
 
 [tool.poetry.dependencies]
@@ -87,7 +87,7 @@ line-length = 100
 extend-exclude = '''
 /(
   | vendor
-  | appmap/wrapt
+  | _appmap/wrapt
 )/
 '''
 
@@ -95,6 +95,6 @@ extend-exclude = '''
 profile = "black"
 extend_skip = [
   "vendor",
-  "appmap/wrapt"
+  "_appmap/wrapt"
   ]
 
