@@ -165,9 +165,7 @@ class Importer:
 
         logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
-            cls.filter_chain = reduce(
-                lambda acc, e: e(acc), cls.filter_stack, NullFilter(None)
-            )
+            cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
 
         def instrument_functions(filterable, selected_functions=None):
             logger.debug("  looking for members of %s", filterable.obj)
@@ -264,12 +262,26 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
 
 
 def wrap_finder_find_spec(finder):
-    find_spec = getattr(finder, "find_spec", None)
-    if find_spec is None:
-        logger.debug("no find_spec for finder %r", finder)
-        return
+    # Prior to 3.11, it worked fine to just grab find_spec from the finder and wrap it. The
+    # implementation of builtin finders must have changed with 3.11, because we now need the same
+    # kind of workaround we use above for exec_module.
+    if sys.version_info[1] < 11:
+        find_spec = getattr(finder, "find_spec", None)
+        if find_spec is None:
+            logger.debug("no find_spec for finder %r", finder)
+            return
 
-    finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
+        finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
+    else:
+        find_spec = inspect.getattr_static(finder, "find_spec", None)
+        if find_spec is None:
+            logger.debug("no find_spec for finder %r", finder)
+            return
+
+        if isinstance(find_spec, (classmethod, staticmethod)):
+            finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
+        else:
+            finder.find_spec = wrap_finder_function(finder.find_spec, wrapped_find_spec)
 
 
 class MetapathObserver(MutableSequence):
