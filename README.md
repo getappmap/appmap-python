@@ -4,6 +4,7 @@
   - [Getting the code](#getting-the-code)
   - [Python version support](#python-version-support)
   - [Dependency management](#dependency-management)
+    - [wrapt](#wrapt)
   - [Linting](#linting)
   - [Testing](#testing)
     - [pytest](#pytest)
@@ -71,6 +72,14 @@ oldest version currently supported (see the
 % poetry install
 ```
 
+### wrapt
+The one dependency that is not managed using `poetry` is `wrapt`. Because it's possible that
+projects that use `appmap` may also need an unmodified version of `wrapt` (e.g. `pylint` depends on
+`astroid`, which in turn depends on `wrapt`), we use
+[vendoring](https://github.com/pradyunsg/vendoring) to vendor `wrapt`.
+
+To update `wrapt`, use `tox` (described below) to run the `vendoring` environment.
+
 ## Linting
 [pylint](https://www.pylint.org/) for linting:
 
@@ -83,9 +92,9 @@ Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
 
 ```
 
-[Note that the current configuration requires a 10.0 for the Travis build to pass. To make
-this easier to achieve, convention and refactoring checks have both been disabled. They
-should be reenabled as soon as possible.]
+[Note that the current configuration has a threshold set which must be met for the Travis build to
+pass. To make this easier to achieve, a number of checks have both been disabled. They should be
+reenabled as soon as possible.]
 
 
 ## Testing

@@ -22,10 +22,10 @@ classifiers = [
         'Topic :: Software Development :: Documentation'
 ]
 include = ['appmap.pth']
+exclude = ['_appmap/wrapt']
 
 packages = [
-    { include = "appmap"}, {include = "_appmap" },
-    { include = "wrapt/*.py", from="vendor/wrapt/src" }
+    { include = "appmap"}, {include = "_appmap" }, {include = "_appmap/wrapt", from = "vendor"}
 ]
 
 [tool.poetry.dependencies]
@@ -98,3 +98,15 @@ extend_skip = [
   "_appmap/wrapt"
   ]
 
+[tool.vendoring]
+destination = "vendor/_appmap/"
+requirements = "vendor/vendor.txt"
+namespace = ""
+
+protected-files = ["vendor.txt"]
+patches-dir = "vendor/patches"
+
+[tool.vendoring.transformations]
+drop = [
+    "**/*.so",
+]
