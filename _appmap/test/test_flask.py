@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring
 
 import importlib
+import os
 from threading import Thread
 
 import flask
@@ -145,6 +146,7 @@ class TestFlaskApp:
         appmap_file = (
             pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
         )
+        assert not os.path.exists(pytester.path / "tmp" / "appmap" / "requests")
         assert appmap_file.exists()
 
     def test_disabled(self, pytester, monkeypatch):

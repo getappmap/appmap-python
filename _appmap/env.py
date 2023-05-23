@@ -1,5 +1,6 @@
 """Initialize from the environment"""
 
+from contextlib import contextmanager
 import logging
 import logging.config
 import os
@@ -8,6 +9,10 @@ from pathlib import Path
 
 _cwd = Path.cwd()
 _bootenv = environ.copy()
+
+
+def _recording_method_key(recording_method):
+    return f"APPMAP_RECORD_{recording_method.upper()}"
 
 
 class _EnvMeta(type):
@@ -85,8 +90,20 @@ class Env(metaclass=_EnvMeta):
         if not self.enabled:
             return False
 
-        v = self.get(f"APPMAP_RECORD_{recording_method.upper()}", default).lower()
+        v = self.get(_recording_method_key(recording_method), default).lower()
         return v != "false"
+
+    @contextmanager
+    def disabled(self, recording_method: str):
+        key = _recording_method_key(recording_method)
+        value = self.get(key)
+        self.set(key, "false")
+        try:
+            yield
+        finally:
+            self.delete(key)
+            if value:
+                self.set(key, value)
 
     @property
     def is_appmap_repo(self):

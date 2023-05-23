@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
 import json
+import os
 import sys
 from pathlib import Path
 from threading import Thread
@@ -186,6 +187,8 @@ class TestDjangoApp:
         # Look for the http_server_request event in test_app's appmap. If
         # middleware reset is broken, it won't be there.
         appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
+        assert not os.path.exists(pytester.path / "tmp" / "appmap" / "requests")
+
         events = json.loads(appmap_file.read_text())["events"]
         assert "http_server_request" in events[0]
 

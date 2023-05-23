@@ -116,11 +116,12 @@ class session:
         )
 
         rec = Recording()
+        environ = env.Env.current
         try:
-            with rec:
+            with rec, environ.disabled("requests"):
                 yield metadata
         finally:
-            basedir = env.Env.current.output_dir / self.name
+            basedir = environ.output_dir / self.name
             web_framework.write_appmap(
                 basedir, item.filename, generation.dump(rec, metadata)
             )
