@@ -1,3 +1,10 @@
+## [1.15.2](https://github.com/getappmap/appmap-python/compare/v1.15.1...v1.15.2) (2023-05-23)
+
+
+### Bug Fixes
+
+* Don't record requests in test cases ([114038c](https://github.com/getappmap/appmap-python/commit/114038c704fed31a72d58edfa959bf2f0c10eef3)), closes [#234](https://github.com/getappmap/appmap-python/issues/234)
+
 ## [1.15.1](https://github.com/getappmap/appmap-python/compare/v1.15.0...v1.15.1) (2023-05-10)
 
 
