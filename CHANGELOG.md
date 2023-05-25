@@ -1,3 +1,17 @@
+# [1.16.0](https://github.com/getappmap/appmap-python/compare/v1.15.2...v1.16.0) (2023-05-25)
+
+
+### Bug Fixes
+
+* handle 3.11 find_spec implementation ([c62e64e](https://github.com/getappmap/appmap-python/commit/c62e64e04d3911e37e17a7254ed44f4975b4dd11))
+* relax restriction on packaging to >=19.0 ([affdbda](https://github.com/getappmap/appmap-python/commit/affdbda3e3e492eeaadc9abe4803e0728a663f2b))
+* update unittest integration for python 3.11 ([bd9598b](https://github.com/getappmap/appmap-python/commit/bd9598bea8576641b923d157690937bc2e07d3df))
+
+
+### Features
+
+* support python 3.11 ([15b0ddc](https://github.com/getappmap/appmap-python/commit/15b0ddc94397b78912bca2ad5a1bc68d4f3f2942))
+
 ## [1.15.2](https://github.com/getappmap/appmap-python/compare/v1.15.1...v1.15.2) (2023-05-23)
 
 
