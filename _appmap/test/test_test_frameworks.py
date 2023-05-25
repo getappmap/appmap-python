@@ -136,6 +136,12 @@ def test_write_appmap(tmp_path):
 
 @pytest.fixture(name="testdir")
 def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
+    # We need to set environment variables to control how tests are run. This will only work
+    # properly if pytester runs pytest in a subprocess.
+    assert (
+        pytester._method == "subprocess"  # pylint:disable=protected-access
+    ), "must run pytest in a subprocess"
+
     # The init subdirectory contains a sitecustomize.py file that
     # imports the appmap module. This simulates the way a real
     # installation works, performing the same function as the the

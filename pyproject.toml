@@ -22,10 +22,10 @@ classifiers = [
         'Topic :: Software Development :: Documentation'
 ]
 include = ['appmap.pth']
+exclude = ['_appmap/wrapt']
 
 packages = [
-    { include = "appmap"}, {include = "_appmap" },
-    { include = "appmap/wrapt/*.py", from="vendor/wrapt/src" }
+    { include = "appmap"}, {include = "_appmap" }, {include = "_appmap/wrapt", from = "vendor"}
 ]
 
 [tool.poetry.dependencies]
@@ -36,7 +36,7 @@ PyYAML = ">=5.3.0"
 inflection = ">=0.3.0"
 importlib-metadata = ">=0.8"
 importlib-resources = "^5.4.0"
-packaging = ">=21.3"
+packaging = ">=19.0"
 # If you include "Django" as an optional dependency here, you'll be able to use poetry to install it
 # in your dev environment. However, doing so causes poetry v1.2.0 to remove it from the virtualenv
 # *created and managed by tox*, i.e. not your dev environment. 
@@ -87,7 +87,7 @@ line-length = 100
 extend-exclude = '''
 /(
   | vendor
-  | appmap/wrapt
+  | _appmap/wrapt
 )/
 '''
 
@@ -95,6 +95,18 @@ extend-exclude = '''
 profile = "black"
 extend_skip = [
   "vendor",
-  "appmap/wrapt"
+  "_appmap/wrapt"
   ]
 
+[tool.vendoring]
+destination = "vendor/_appmap/"
+requirements = "vendor/vendor.txt"
+namespace = ""
+
+protected-files = ["vendor.txt"]
+patches-dir = "vendor/patches"
+
+[tool.vendoring.transformations]
+drop = [
+    "**/*.so",
+]

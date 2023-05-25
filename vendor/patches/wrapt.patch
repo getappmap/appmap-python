@@ -1,0 +1,297 @@
+From 03c559f90ee502dc6425d41be75f561e8ac7e85b Mon Sep 17 00:00:00 2001
+From: Alan Potter <alanjpotter@gmail.com>
+Date: Tue, 13 Apr 2021 06:43:00 -0400
+Subject: [PATCH 1/4] Add ObjectProxy.__getattribute__
+
+This allows access to attributes set on ObjectProxy itself, rather than
+always return the attribute of the proxied object.
+---
+ wrapt/wrappers.py | 50 +++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 44 insertions(+), 6 deletions(-)
+
+diff --git a/vendor/_appmap/wrapt/wrappers.py b/vendor/_appmap/wrapt/wrappers.py
+index 48f334e..ffafedf 100644
+--- a/vendor/_appmap/wrapt/wrappers.py
++++ b/vendor/_appmap/wrapt/wrappers.py
+@@ -4,6 +4,8 @@ import functools
+ import operator
+ import weakref
+ import inspect
++from itertools import chain
++import types
+ 
+ PY2 = sys.version_info[0] == 2
+ 
+@@ -16,6 +18,10 @@ def with_metaclass(meta, *bases):
+     """Create a base class with a metaclass."""
+     return meta("NewBase", bases, {})
+ 
++def slots(obj):
++    return chain.from_iterable(getattr(cls, '__slots__', [])
++                               for cls in type(obj).__mro__)
++
+ class _ObjectProxyMethods(object):
+ 
+     # We use properties to override the values of __module__ and
+@@ -72,7 +78,7 @@ class _ObjectProxyMetaType(type):
+ 
+ class ObjectProxy(with_metaclass(_ObjectProxyMetaType)):
+ 
+-    __slots__ = '__wrapped__'
++    __slots__ = ('__wrapped__',)
+ 
+     def __init__(self, wrapped):
+         object.__setattr__(self, '__wrapped__', wrapped)
+@@ -201,13 +207,25 @@ class ObjectProxy(with_metaclass(_ObjectProxyMetaType)):
+         else:
+             setattr(self.__wrapped__, name, value)
+ 
++    def __getattribute__(self, name):
++        try:
++            if name in slots(self):
++                return super().__getattribute__(name)
++        except AttributeError:
++            pass
++
++        return self.__wrapped__.__getattribute__(name)
++
+     def __getattr__(self, name):
+-        # If we are being to lookup '__wrapped__' then the
++        # If we are being asked to lookup '__wrapped__' then the
+         # '__init__()' method cannot have been called.
+ 
+         if name == '__wrapped__':
+             raise ValueError('wrapper has not been initialised')
+ 
++        if name in slots(self):
++            return super().__getattr__(name)
++
+         return getattr(self.__wrapped__, name)
+ 
+     def __delattr__(self, name):
+@@ -454,6 +472,7 @@ class CallableObjectProxy(ObjectProxy):
+         return self.__wrapped__(*args, **kwargs)
+ 
+ class PartialCallableObjectProxy(ObjectProxy):
++    __slots__ = ('_self_args', '_self_kwargs')
+ 
+     def __init__(*args, **kwargs):
+         def _unpack_self(self, *args):
+@@ -471,8 +490,8 @@ class PartialCallableObjectProxy(ObjectProxy):
+ 
+         super(PartialCallableObjectProxy, self).__init__(wrapped)
+ 
+-        self._self_args = args
+-        self._self_kwargs = kwargs
++        object.__setattr__(self, '_self_args', args)
++        object.__setattr__(self, '_self_kwargs', kwargs)
+ 
+     def __call__(*args, **kwargs):
+         def _unpack_self(self, *args):
+@@ -533,7 +552,7 @@ class _FunctionWrapperBase(ObjectProxy):
+             if not inspect.isclass(self.__wrapped__):
+                 descriptor = self.__wrapped__.__get__(instance, owner)
+ 
+-                return self.__bound_function_wrapper__(descriptor, instance,
++                return BoundFunctionWrapper(descriptor, instance,
+                         self._self_wrapper, self._self_enabled,
+                         self._self_binding, self)
+ 
+@@ -552,7 +571,7 @@ class _FunctionWrapperBase(ObjectProxy):
+             descriptor = self._self_parent.__wrapped__.__get__(
+                     instance, owner)
+ 
+-            return self._self_parent.__bound_function_wrapper__(
++            return BoundFunctionWrapper(
+                     descriptor, instance, self._self_wrapper,
+                     self._self_enabled, self._self_binding,
+                     self._self_parent)
+@@ -627,6 +646,25 @@ class _FunctionWrapperBase(ObjectProxy):
+ 
+ class BoundFunctionWrapper(_FunctionWrapperBase):
+ 
++    def __new__(cls, *args, **kwargs):
++        # In addition to constructing a BoundFoundWrapper internally,
++        # we need to be able to handle being created as if we were an
++        # instance of types.BoundMethod. Creating and using a weakref
++        # to a bound function relies on being able to do this. Since a
++        # BFW stands in for just such a function, it must support it.
++        #
++        # Maybe there's a better way of distinguishing these two
++        # cases, but for now, use the number of arguments. When we're
++        # constructed with 2, return a types.BoundMethod. When we're
++        # constructed with more than 2, return an instance of
++        # BoundFunctionWrapper.
++        if len(args) == 2:
++            func = args[0]      # the function
++            obj = args[1]       # the object it's bound to
++            return types.MethodType(func, obj)
++
++        return super(BoundFunctionWrapper, cls).__new__(cls)
++
+     def __call__(*args, **kwargs):
+         def _unpack_self(self, *args):
+             return self, args
+-- 
+2.40.0
+
+
+From 5d888631313636563889572aa44c7ff033b52452 Mon Sep 17 00:00:00 2001
+From: Alan Potter <alanjpotter@gmail.com>
+Date: Thu, 29 Apr 2021 07:26:14 -0400
+Subject: [PATCH 2/4] Keep a reference to new BoundFunctionWrappers
+
+Keep a reference to any new BoundFunctionWrappers created by
+_FunctionWrapperBase. This keeps them from being immediately eligible
+for collection.
+---
+ wrapt/wrappers.py | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/vendor/_appmap/wrapt/wrappers.py b/vendor/_appmap/wrapt/wrappers.py
+index ffafedf..b4152e6 100644
+--- a/vendor/_appmap/wrapt/wrappers.py
++++ b/vendor/_appmap/wrapt/wrappers.py
+@@ -509,7 +509,7 @@ class PartialCallableObjectProxy(ObjectProxy):
+ class _FunctionWrapperBase(ObjectProxy):
+ 
+     __slots__ = ('_self_instance', '_self_wrapper', '_self_enabled',
+-            '_self_binding', '_self_parent')
++                 '_self_binding', '_self_parent', '_bfws')
+ 
+     def __init__(self, wrapped, instance, wrapper, enabled=None,
+             binding='function', parent=None):
+@@ -521,6 +521,7 @@ class _FunctionWrapperBase(ObjectProxy):
+         object.__setattr__(self, '_self_enabled', enabled)
+         object.__setattr__(self, '_self_binding', binding)
+         object.__setattr__(self, '_self_parent', parent)
++        object.__setattr__(self, '_bfws', list())
+ 
+     def __get__(self, instance, owner):
+         # This method is actually doing double duty for both unbound and
+@@ -551,10 +552,12 @@ class _FunctionWrapperBase(ObjectProxy):
+         if self._self_parent is None:
+             if not inspect.isclass(self.__wrapped__):
+                 descriptor = self.__wrapped__.__get__(instance, owner)
+-
+-                return BoundFunctionWrapper(descriptor, instance,
+-                        self._self_wrapper, self._self_enabled,
+-                        self._self_binding, self)
++                ret = BoundFunctionWrapper(
++                    descriptor, instance,
++                    self._self_wrapper, self._self_enabled,
++                    self._self_binding, self)
++                self._bfws.append(ret)
++                return ret
+ 
+             return self
+ 
+@@ -571,10 +574,12 @@ class _FunctionWrapperBase(ObjectProxy):
+             descriptor = self._self_parent.__wrapped__.__get__(
+                     instance, owner)
+ 
+-            return BoundFunctionWrapper(
+-                    descriptor, instance, self._self_wrapper,
+-                    self._self_enabled, self._self_binding,
+-                    self._self_parent)
++            ret = BoundFunctionWrapper(
++                descriptor, instance, self._self_wrapper,
++                self._self_enabled, self._self_binding,
++                self._self_parent)
++            self._bfws.append(ret)
++            return ret
+ 
+         return self
+ 
+-- 
+2.40.0
+
+
+From 0b98ff82a051e886daf2d018bc6f657522a5b5b8 Mon Sep 17 00:00:00 2001
+From: Alan Potter <alanjpotter@gmail.com>
+Date: Thu, 22 Sep 2022 04:55:25 -0400
+Subject: [PATCH 3/4] Add FunctionWrapper.__reduce_ex__
+
+Implement __reduce_ex__ in FunctionWrapper. Ensure that it will be
+called, rather than forwarded to the wrapped function. This allows a
+function that has been wrapped to be deepcopy'ed.
+---
+ wrapt/wrappers.py | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/vendor/_appmap/wrapt/wrappers.py b/vendor/_appmap/wrapt/wrappers.py
+index b4152e6..137220b 100644
+--- a/vendor/_appmap/wrapt/wrappers.py
++++ b/vendor/_appmap/wrapt/wrappers.py
+@@ -209,7 +209,7 @@ class ObjectProxy(with_metaclass(_ObjectProxyMetaType)):
+ 
+     def __getattribute__(self, name):
+         try:
+-            if name in slots(self):
++            if name in chain(slots(self), ["__reduce__", "__reduce_ex__"]):
+                 return super().__getattribute__(name)
+         except AttributeError:
+             pass
+@@ -735,6 +735,13 @@ class FunctionWrapper(_FunctionWrapperBase):
+ 
+     __bound_function_wrapper__ = BoundFunctionWrapper
+ 
++    # The code here is pretty complicated (see the comment below), and it's not completely clear to
++    # me whether it actually keeps any state. If it does, __reduce_ex__ needs to return a tuple so a
++    # new FunctionWrapper will be created. If it doesn't, then __reduce_ex__ could simply return a
++    # string, which would cause deepcopy to return the original FunctionWrapper.
++    def __reduce_ex__(self, protocol):
++        return FunctionWrapper, (self.__wrapped__, self._self_wrapper, self._self_enabled)
++
+     def __init__(self, wrapped, wrapper, enabled=None):
+         # What it is we are wrapping here could be anything. We need to
+         # try and detect specific cases though. In particular, we need
+-- 
+2.40.0
+
+
+From dd1c07569dea572e3fee6afade0b9649cf31335b Mon Sep 17 00:00:00 2001
+From: Alan Potter <alanjpotter@gmail.com>
+Date: Tue, 6 Dec 2022 18:48:13 -0500
+Subject: [PATCH 4/4] fix: have __reduce_ex__ return qualname
+
+Have FunctionWrapper.__reduce_ex__ return the wrapped function's
+qualname, instead of return a tuple (to create a new FunctionWrapper).
+
+This is fine for the purposes of creating AppMaps, and may even be
+correct in general.
+---
+ wrapt/wrappers.py | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/vendor/_appmap/wrapt/wrappers.py b/vendor/_appmap/wrapt/wrappers.py
+index 137220b..a7e9a3d 100644
+--- a/vendor/_appmap/wrapt/wrappers.py
++++ b/vendor/_appmap/wrapt/wrappers.py
+@@ -737,10 +737,21 @@ class FunctionWrapper(_FunctionWrapperBase):
+ 
+     # The code here is pretty complicated (see the comment below), and it's not completely clear to
+     # me whether it actually keeps any state. If it does, __reduce_ex__ needs to return a tuple so a
+-    # new FunctionWrapper will be created. If it doesn't, then __reduce_ex__ could simply return a
++    # new FunctionWrapper will be created. If it doesn't, then __reduce_ex__ can simply return a
+     # string, which would cause deepcopy to return the original FunctionWrapper.
++    #
++    # Update: We'll return the qualname of the wrapped function instead of a tuple allows a
++    # FunctionWrapper to be pickled (as the function it wraps). This seems to be adequate for
++    # generating AppMaps, so go with that.
++
+     def __reduce_ex__(self, protocol):
+-        return FunctionWrapper, (self.__wrapped__, self._self_wrapper, self._self_enabled)
++         return self.__wrapped__.__qualname__
++ 
++         # return FunctionWrapper, (
++         #     self.__wrapped__,
++         #     self._self_wrapper,
++         #     self._self_enabled,
++         # )
+ 
+     def __init__(self, wrapped, wrapper, enabled=None):
+         # What it is we are wrapping here could be anything. We need to
+-- 
+2.40.0
+

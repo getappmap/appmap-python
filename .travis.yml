@@ -2,6 +2,7 @@ os: linux
 dist: jammy
 language: python
 python:
+- "3.11"
 - "3.10"
 - "3.9.14"
 - "3.8"

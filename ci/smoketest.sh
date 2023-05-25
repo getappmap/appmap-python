@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 pip install -U pip pytest "flask<2" python-decouple
 pip install /dist/appmap-*-py3-none-any.whl
 

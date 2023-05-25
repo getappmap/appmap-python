@@ -7,7 +7,6 @@ import simple
 # finders correctly.
 from decouple import config
 
-import appmap.unittest
 
 
 class UnitTestTest(unittest.TestCase):

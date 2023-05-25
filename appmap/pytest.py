@@ -1,8 +1,7 @@
 import pytest
 
-from _appmap import testing_framework
+from _appmap import testing_framework, wrapt
 from _appmap.env import Env
-from appmap import wrapt
 
 logger = Env.current.getLogger(__name__)
 

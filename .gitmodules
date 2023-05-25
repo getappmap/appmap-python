@@ -1,3 +1,0 @@
-[submodule "extern/wrapt"]
-	path = vendor/wrapt
-	url = https://github.com/applandinc/wrapt.git
