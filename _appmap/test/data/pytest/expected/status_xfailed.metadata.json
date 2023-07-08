@@ -1,1 +1,11 @@
-status_failed.metadata.json
+{
+  "test_status": "failed",
+  "test_failure": {
+    "message": "AssertionError: assert False",
+    "location": "test_simple.py:19"
+  },
+  "exception": {
+    "class": "AssertionError",
+    "message": "assert False"
+  }
+}

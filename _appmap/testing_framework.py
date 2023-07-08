@@ -1,15 +1,17 @@
 """Shared infrastructure for testing framework integration."""
 
 import os
+from pathlib import PurePath
 import re
 from contextlib import contextmanager
+import traceback
 
 import inflection
 
 from _appmap import configuration, env, generation, web_framework
 from _appmap.env import Env
 from _appmap.recording import Recording
-from _appmap.utils import fqname
+from _appmap.utils import fqname, root_relative_path
 
 from .metadata import Metadata
 
@@ -122,9 +124,7 @@ class session:
                 yield metadata
         finally:
             basedir = environ.output_dir / self.name
-            web_framework.write_appmap(
-                basedir, item.filename, generation.dump(rec, metadata)
-            )
+            web_framework.write_appmap(basedir, item.filename, generation.dump(rec, metadata))
 
 
 @contextmanager
@@ -137,6 +137,7 @@ def collect_result_metadata(metadata):
         yield
         metadata["test_status"] = "succeeded"
     except Exception as exn:
+        metadata["test_failure"] = {"message": failure_message(exn), "location": failure_location(exn)}
         metadata["test_status"] = "failed"
         metadata["exception"] = {"class": exn.__class__.__name__, "message": str(exn)}
         raise
@@ -147,3 +148,16 @@ def file_delete(filename):
         os.remove(filename)
     except FileNotFoundError:
         pass
+
+
+def failure_message(exn: Exception) -> str:
+    return f'{exn.__class__.__name__}: {exn}'
+
+
+def failure_location(exn: Exception) -> str:
+    # Exception could have been raised inside the test framework,
+    # but we want the location in the user code that caused it.
+    for frame in traceback.extract_tb(exn.__traceback__):
+        path = root_relative_path(frame.filename)
+        if not PurePath(path).is_absolute():
+            return f"{path}:{frame.lineno}"

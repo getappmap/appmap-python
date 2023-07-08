@@ -1,5 +1,9 @@
 {
   "test_status": "failed",
+  "test_failure": {
+    "message": "RuntimeError: test error",
+    "location": "simple/test_simple.py:34"
+  },
   "exception": {
     "class": "RuntimeError",
     "message": "test error"

@@ -1,5 +1,9 @@
 {
   "test_status": "failed",
+  "test_failure": {
+    "message": "AssertionError: False is not true",
+    "location": "simple/test_simple.py:22"
+  },
   "exception": {
     "class": "AssertionError",
     "message": "False is not true"

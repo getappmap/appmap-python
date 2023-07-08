@@ -1,1 +1,11 @@
-../../unittest/expected/status_errored.metadata.json
+{
+  "test_status": "failed",
+  "test_failure": {
+    "message": "RuntimeError: test error",
+    "location": "test_simple.py:28"
+  },
+  "exception": {
+    "class": "RuntimeError",
+    "message": "test error"
+  }
+}
