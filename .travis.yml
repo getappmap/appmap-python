@@ -11,7 +11,10 @@ python:
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
 if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
-before_install: pip install --upgrade pip 'setuptools==65.6.2' 'poetry>=1.2.0'
+before_install: |
+  curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
+  source "$HOME/.cargo/env"
+  pip install --upgrade pip 'setuptools==65.6.2' 'poetry>=1.2.0'
 
 install: pip install --upgrade "tox < 4" tox-travis
 script: tox
