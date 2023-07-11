@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/getappmap/appmap-python/compare/v1.16.0...v1.17.0) (2023-07-11)
+
+
+### Features
+
+* Report test_failure when a test fails ([d5757f4](https://github.com/getappmap/appmap-python/commit/d5757f44500f954e84a1ff8965e4da888bcb33ae)), closes [#248](https://github.com/getappmap/appmap-python/issues/248)
+
 # [1.16.0](https://github.com/getappmap/appmap-python/compare/v1.15.2...v1.16.0) (2023-05-25)
 
 
