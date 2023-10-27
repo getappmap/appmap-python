@@ -1,4 +1,5 @@
 import importlib
+import sys
 from distutils.dir_util import copy_tree
 from functools import partialmethod
 
@@ -65,6 +66,10 @@ def pytest_runtest_setup(item):
     # Reload it to make sure it's instrumented, or not, as set in appmap.yml.
     importlib.reload(yaml)
 
+    # Remove the example_class module, so it will get reinstrumented the next time it's needed. We
+    # should find a way to do this more generically, i.e. for any modules loaded by a test case.
+    sys.modules.pop("example_class", None)
+
 
 @pytest.fixture(scope="session", name="git_directory")
 def git_directory_fixture(tmp_path_factory):
@@ -100,6 +105,7 @@ def _dj_autoclear_mailbox() -> None:
 
 @pytest.fixture(name="verify_example_appmap")
 def fixture_verify_appmap(monkeypatch):
+
     def _generate(check_fn, method_name):
         monkeypatch.setattr(
             generation.FuncEntry,
@@ -110,7 +116,9 @@ def fixture_verify_appmap(monkeypatch):
         rec = appmap.Recording()
         with rec:
             # pylint: disable=import-outside-toplevel, import-error
-            from example_class import ExampleClass
+            from example_class import (  # pyright: ignore[reportMissingImports]
+                ExampleClass,
+            )
 
             # pylint: enable=import-outside-toplevel, import-error
 
