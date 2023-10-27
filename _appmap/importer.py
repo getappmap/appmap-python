@@ -173,12 +173,16 @@ class Importer:
             logger.debug("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                if selected_functions and fn_name not in selected_functions:
-                    continue
 
-                new_fn = cls.filter_chain.wrap(FilterableFn(filterable, fn, static_fn))
-                if fn != new_fn:
-                    wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+                # Only instrument the function if it was specifically called out for the package
+                # (e.g. because it should be labeled), or it's included by the filters
+                filterableFn = FilterableFn(filterable, fn, static_fn)
+                matched = cls.filter_chain.filter(filterableFn)
+                selected = selected_functions and fn_name in selected_functions
+                if selected or matched:
+                    new_fn = cls.filter_chain.wrap(filterableFn)
+                    if fn != new_fn:
+                        wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel

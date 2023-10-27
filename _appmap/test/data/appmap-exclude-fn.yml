@@ -1,0 +1,7 @@
+
+name: TestApp
+packages:
+- path: example_class
+  exclude:
+  - ExampleClass.another_method
+- path: package1.package2.Mod1Class
