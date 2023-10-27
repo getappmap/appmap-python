@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/getappmap/appmap-python/compare/v1.17.0...v1.17.1) (2023-10-27)
+
+
+### Bug Fixes
+
+* make sure functions can be excluded ([d7518ee](https://github.com/getappmap/appmap-python/commit/d7518ee361dc4912b94ef4a1b87eb2d1b3a8be2b))
+
 # [1.17.0](https://github.com/getappmap/appmap-python/compare/v1.16.0...v1.17.0) (2023-07-11)
 
 
