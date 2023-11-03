@@ -86,9 +86,7 @@ class FuncItem:
                 "method_id": self.method_id,
             }
         if self.location:
-            ret.setdefault("recording", {}).update(
-                {"source_location": "%s:%d" % self.location[0:2]}
-            )
+            ret.update({"source_location": "%s:%d" % self.location[0:2]})
         ret.update({"name": self.scenario_name, "feature": self.feature})
         return ret
 

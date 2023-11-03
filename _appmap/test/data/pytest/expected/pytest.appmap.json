@@ -13,9 +13,7 @@
       "name": "pytest",
       "type": "tests"
     },
-    "recording": {
-      "source_location": "test_simple.py:5"
-    },
+    "source_location": "test_simple.py:5",
     "name": "hello world",
     "feature": "Hello world",
     "test_status": "succeeded"
