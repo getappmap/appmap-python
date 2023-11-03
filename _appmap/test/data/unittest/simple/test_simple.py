@@ -7,6 +7,7 @@ import simple
 # finders correctly.
 from decouple import config
 
+import appmap
 
 
 class UnitTestTest(unittest.TestCase):
@@ -42,3 +43,7 @@ class UnitTestTest(unittest.TestCase):
     def test_with_subtest(self):
         with self.subTest("subtest"):
             self.assertEqual(simple.Simple().hello_world("!"), "Hello world!")
+
+    @appmap.noappmap
+    def test_unrecorded(self):
+        print(simple.Simple().hello_world("!"))
