@@ -66,7 +66,7 @@ class TestPytestRunnerUnittest(_TestTestRunner):
     def run_tests(self, testdir):
         testdir.test_type = "pytest"
         result = testdir.runpytest("-svv")
-        result.assert_outcomes(passed=3, failed=3, xfailed=1)
+        result.assert_outcomes(passed=5, failed=3, xfailed=1)
 
     def test_enabled(self, testdir):
         self.run_tests(testdir)
@@ -86,11 +86,11 @@ class TestPytestRunnerPytest(_TestTestRunner):
 
     def run_tests(self, testdir):
         result = testdir.runpytest("-vv")
-        result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
+        result.assert_outcomes(passed=4, failed=2, xpassed=1, xfailed=1)
 
     def test_enabled(self, testdir):
         self.run_tests(testdir)
-        assert len(list(testdir.output().iterdir())) == 5
+        assert len(list(testdir.output().iterdir())) == 6
         verify_expected_appmap(testdir)
         verify_expected_metadata(testdir)
 

@@ -2,7 +2,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 
-from _appmap import testing_framework, wrapt
+from _appmap import noappmap, testing_framework, wrapt
 from _appmap.utils import get_function_location
 
 _session = testing_framework.session("unittest", "tests")
@@ -57,7 +57,8 @@ else:
     @wrapt.patch_function_wrapper("unittest.case", "TestCase._callTestMethod")
     def callTestMethod(wrapped, test_case, args, kwargs):
         already_recording = getattr(test_case, "_appmap_pytest_recording", None)
-        if already_recording:
+        test_method = getattr(test_case, test_case._testMethodName)
+        if already_recording or noappmap.disables(test_method, test_case.__class__):
             wrapped(*args, **kwargs)
             return
 

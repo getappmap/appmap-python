@@ -1,6 +1,8 @@
+import sys
+
 import pytest
 
-from _appmap import testing_framework, wrapt
+from _appmap import noappmap, testing_framework, wrapt
 from _appmap.env import Env
 
 logger = Env.current.getLogger(__name__)
@@ -55,13 +57,18 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
                 "_appmap_pytest_recording",
                 True,
             )
-            item.obj = recorded_testcase(item)(item.obj)
+            if not noappmap.disables(item.obj, item.cls):
+                item.obj = recorded_testcase(item)(item.obj)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
         # There definitely shouldn't be a `_testcase` attribute on a
         # pytest test.
         assert not hasattr(pyfuncitem, "_testcase")
+
+        if noappmap.disables(pyfuncitem.function, pyfuncitem.cls):
+            yield
+            return
 
         with pyfuncitem.session.appmap.record(
             pyfuncitem.cls,
