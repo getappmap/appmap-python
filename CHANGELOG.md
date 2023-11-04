@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/getappmap/appmap-python/compare/v1.17.1...v1.18.0) (2023-11-04)
+
+
+### Features
+
+* add noappmap decorator ([d8aa5d9](https://github.com/getappmap/appmap-python/commit/d8aa5d92535363b800fb26ac38686c4c51afa0ee))
+
 ## [1.17.1](https://github.com/getappmap/appmap-python/compare/v1.17.0...v1.17.1) (2023-10-27)
 
 
