@@ -1,3 +1,10 @@
+## [1.18.1](https://github.com/getappmap/appmap-python/compare/v1.18.0...v1.18.1) (2023-11-05)
+
+
+### Bug Fixes
+
+* move source_location property to metadata ([7ac2aa0](https://github.com/getappmap/appmap-python/commit/7ac2aa042ce89bff30dd0bd71ca3d6220d1c8ba4))
+
 # [1.18.0](https://github.com/getappmap/appmap-python/compare/v1.17.1...v1.18.0) (2023-11-04)
 
 
