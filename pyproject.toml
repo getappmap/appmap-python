@@ -24,7 +24,7 @@ classifiers = [
 include = ['appmap.pth']
 exclude = [
     '_appmap/wrapt',
-    '_appmap/test/data/*/appmap.yml'
+    '_appmap/test/data/**/appmap.yml'
 ]
 
 packages = [
