@@ -21,14 +21,18 @@ classifiers = [
         'Topic :: Software Development :: Debuggers',
         'Topic :: Software Development :: Documentation'
 ]
-include = ['appmap.pth']
-exclude = [
-    '_appmap/wrapt',
-    '_appmap/test/data/**/appmap.yml'
+
+include = [
+    'appmap.pth',
+    { path = '_appmap/test/**/*', format = 'sdist' }
 ]
 
+exclude = ['_appmap/wrapt']
+
 packages = [
-    { include = "appmap"}, {include = "_appmap" }, {include = "_appmap/wrapt", from = "vendor"}
+    { include = "appmap" },
+    { include = "_appmap/*.py" },
+    { include = "_appmap/wrapt/**/*", from = "vendor" }
 ]
 
 [tool.poetry.dependencies]
