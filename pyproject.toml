@@ -21,11 +21,18 @@ classifiers = [
         'Topic :: Software Development :: Debuggers',
         'Topic :: Software Development :: Documentation'
 ]
-include = ['appmap.pth']
+
+include = [
+    'appmap.pth',
+    { path = '_appmap/test/**/*', format = 'sdist' }
+]
+
 exclude = ['_appmap/wrapt']
 
 packages = [
-    { include = "appmap"}, {include = "_appmap" }, {include = "_appmap/wrapt", from = "vendor"}
+    { include = "appmap" },
+    { include = "_appmap/*.py" },
+    { include = "_appmap/wrapt/**/*", from = "vendor" }
 ]
 
 [tool.poetry.dependencies]
@@ -49,6 +56,7 @@ httpretty = "^1.0.5"
 pytest = "^6.1.2"
 pytest-randomly = "^3.5.0"
 pylint = "^2.6.0"
+pytest-django = "~ 4.5.2"
 flake8 = "^3.8.4"
 pyfakefs = "^4.3.2"
 pprintpp = ">=0.4.0"
