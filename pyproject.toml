@@ -22,7 +22,10 @@ classifiers = [
         'Topic :: Software Development :: Documentation'
 ]
 include = ['appmap.pth']
-exclude = ['_appmap/wrapt']
+exclude = [
+    '_appmap/wrapt',
+    '_appmap/test/data/*/appmap.yml'
+]
 
 packages = [
     { include = "appmap"}, {include = "_appmap" }, {include = "_appmap/wrapt", from = "vendor"}
