@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/getappmap/appmap-python/compare/v1.18.1...v1.18.2) (2024-01-22)
+
+
+### Bug Fixes
+
+* Exclude the appmap test files ([#271](https://github.com/getappmap/appmap-python/issues/271)) ([9ff91b8](https://github.com/getappmap/appmap-python/commit/9ff91b8ed73e8e7b7e01c1e28a829eecdf1e8581))
+
 ## [1.18.1](https://github.com/getappmap/appmap-python/compare/v1.18.0...v1.18.1) (2023-11-05)
 
 
