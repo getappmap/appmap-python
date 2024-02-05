@@ -1,7 +1,5 @@
 #requirements-dev.txt
-pip
-poetry
 tox
 django
 flask
-pytest-django
+pytest-django<4.8

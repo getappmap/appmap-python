@@ -89,7 +89,11 @@ def is_class(c):
     # bound to __class__. (For example, celery.local.Proxy uses this
     # mechanism to return the class of the proxied object.)
     #
-    return inspect._is_type(c)  # pylint: disable=protected-access
+    try:
+        inspect._static_getmro(c)  # pylint: disable=protected-access
+    except TypeError:
+        return False
+    return True
 
 
 def get_classes(module):
@@ -173,7 +177,6 @@ class Importer:
             logger.debug("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-
                 # Only instrument the function if it was specifically called out for the package
                 # (e.g. because it should be labeled), or it's included by the filters
                 filterableFn = FilterableFn(filterable, fn, static_fn)
