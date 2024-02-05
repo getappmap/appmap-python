@@ -72,10 +72,10 @@ class Metadata(dict):
     @lru_cache()
     def _git_available(root_dir):
         try:
-            ret = utils.subprocess_run(["git", "status"], cwd=root_dir)
+            ret = utils.subprocess_run(["git", "rev-parse", "HEAD"], cwd=root_dir)
             if not ret.returncode:
                 return True
-            logger.warning("Failed running 'git status', %s", ret.stderr)
+            logger.warning("Failed running 'git rev-parse HEAD', %s", ret.stderr)
         except FileNotFoundError as exc:
             msg = """
     Couldn't find git executable, repository information
@@ -97,34 +97,12 @@ class Metadata(dict):
         repository = git("config --get remote.origin.url")
         branch = git("rev-parse --abbrev-ref HEAD")
         commit = git("rev-parse HEAD")
-        status = _lines(git("status -s"))
-        annotated_tag = git("describe --abbrev=0") or None
-        tag = git("describe --abbrev=0 --tags") or None
-
-        pattern = re.compile(r".*-(\d+)-\w+$")
-
-        commits_since_annotated_tag = None
-        if annotated_tag:
-            result = pattern.search(git("describe"))
-            if result:
-                commits_since_annotated_tag = int(result.group(1))
-
-        commits_since_tag = None
-        if tag:
-            result = pattern.search(git("describe --tags"))
-            if result:
-                commits_since_tag = int(result.group(1))
 
         return compact_dict(
             {
                 "repository": repository,
                 "branch": branch,
                 "commit": commit,
-                "status": status,
-                "tag": tag,
-                "annotated_tag": annotated_tag,
-                "commits_since_tag": commits_since_tag,
-                "commits_since_annotated_tag": commits_since_annotated_tag,
             }
         )
 

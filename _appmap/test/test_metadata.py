@@ -1,4 +1,5 @@
 """Test Metadata"""
+
 # pylint: disable=protected-access, missing-function-docstring
 
 from _appmap.metadata import Metadata
@@ -23,28 +24,13 @@ def test_git_metadata(git):
         {
             "repository": "https://www.example.test/repo.git",
             "branch": "main",
-            "status": ["?? new_file"],
         }
     )
-    for key in (
-        "tag",
-        "annotated_tag",
-        "commits_since_tag",
-        "commits_since_annotated_tag",
-    ):
-        assert key not in git_md
 
 
 def test_tags(git):
-    atag = "new_annotated_tag"
-    git(f'tag -a "{atag}" -m "add annotated tag"')
-
     git("add new_file")
     git('commit -m "added new file"')
-
-    tag = "new_tag"
-    git(f"tag {tag}")
-
     git("rm README.metadata")
     git('commit -m "Removed readme"')
 
@@ -55,10 +41,6 @@ def test_tags(git):
         {
             "repository": "https://www.example.test/repo.git",
             "branch": "main",
-            "tag": tag,
-            "annotated_tag": atag,
-            "commits_since_tag": 1,
-            "commits_since_annotated_tag": 2,
         }
     )
 
