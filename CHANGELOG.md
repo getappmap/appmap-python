@@ -1,3 +1,10 @@
+## [1.18.3](https://github.com/getappmap/appmap-python/compare/v1.18.2...v1.18.3) (2024-02-05)
+
+
+### Bug Fixes
+
+* support python 3.12 ([136b47b](https://github.com/getappmap/appmap-python/commit/136b47b14d390768fe8448f4649cdab838b70a92))
+
 ## [1.18.2](https://github.com/getappmap/appmap-python/compare/v1.18.1...v1.18.2) (2024-01-22)
 
 
