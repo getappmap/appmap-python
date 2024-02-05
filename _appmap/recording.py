@@ -1,3 +1,11 @@
+import atexit
+import datetime
+import os
+from tempfile import NamedTemporaryFile
+
+from _appmap import generation
+from _appmap.web_framework import APPMAP_SUFFIX, HASH_LEN, NAME_MAX, name_hash
+
 from .env import Env
 from .recorder import Recorder
 
@@ -68,3 +76,25 @@ def write_appmap(
     appmap_file = basedir / filename
     logger.info("info, writing %s", appmap_file)
     os.replace(tmp.name, appmap_file)
+
+
+def initialize():
+    if Env.current.enables("process", "false"):
+        r = Recording()
+        r.start()
+
+        def save_at_exit():
+            nonlocal r
+            r.stop()
+            appmap_name = datetime.utcnow().isoformat(timespec='seconds') + "Z"
+            recorder_type = "process"
+            metadata = {
+                "name": appmap_name,
+                "recorder": {
+                    "name": "process",
+                    "type": recorder_type,
+                }
+            }
+            write_appmap(r, appmap_name, recorder_type, metadata)
+
+        atexit.register(save_at_exit)
