@@ -53,12 +53,15 @@ packaging = ">=19.0"
 
 [tool.poetry.dev-dependencies]
 httpretty = "^1.0.5"
-pytest = "^6.1.2"
+pytest = "^7.3.2"
 pytest-randomly = "^3.5.0"
 pylint = "^2.6.0"
-pytest-django = "~ 4.5.2"
+pytest-django = [
+  { version = "~4.7", python = ">=3.8" },
+  { version = "<4.7", python = "3.7" }
+]
 flake8 = "^3.8.4"
-pyfakefs = "^4.3.2"
+pyfakefs = "^5.3.5"
 pprintpp = ">=0.4.0"
 coverage = "^5.3"
 pytest-mock = "^3.5.1"
