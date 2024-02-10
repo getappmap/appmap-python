@@ -1,5 +1,5 @@
 import atexit
-import datetime
+from datetime import datetime, timezone
 import os
 from tempfile import NamedTemporaryFile
 
@@ -74,7 +74,7 @@ def write_appmap(
     with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
         tmp.write(generation.dump(appmap, metadata))
     appmap_file = basedir / filename
-    logger.info("info, writing %s", appmap_file)
+    logger.info("writing %s", appmap_file)
     os.replace(tmp.name, appmap_file)
 
 
@@ -86,14 +86,15 @@ def initialize():
         def save_at_exit():
             nonlocal r
             r.stop()
-            appmap_name = datetime.utcnow().isoformat(timespec='seconds') + "Z"
+            now = datetime.now(timezone.utc)
+            appmap_name = now.isoformat(timespec="seconds").replace("+00:00", "Z")
             recorder_type = "process"
             metadata = {
                 "name": appmap_name,
                 "recorder": {
                     "name": "process",
                     "type": recorder_type,
-                }
+                },
             }
             write_appmap(r, appmap_name, recorder_type, metadata)
 

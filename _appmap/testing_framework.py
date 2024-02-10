@@ -8,8 +8,7 @@ from pathlib import PurePath
 
 import inflection
 
-from _appmap import configuration, env, generation, recording
-from _appmap.env import Env
+from _appmap import configuration, env, recording
 from _appmap.recording import Recording
 from _appmap.utils import fqname, root_relative_path
 
@@ -91,7 +90,7 @@ class FuncItem:
         return ret
 
 
-class session:
+class session:  # pylint: disable=too-few-public-methods
     def __init__(self, name, recorder_type, version=None):
         self.name = name
         self.recorder_type = recorder_type
@@ -154,10 +153,24 @@ def failure_message(exn: Exception) -> str:
     return f"{exn.__class__.__name__}: {exn}"
 
 
+def _extract_path(frame):
+    path = root_relative_path(frame.filename)
+    relative = not PurePath(path).is_absolute()
+    return (relative, f"{path}:{frame.lineno}")
+
+
 def failure_location(exn: Exception) -> str:
-    # Exception could have been raised inside the test framework,
-    # but we want the location in the user code that caused it.
-    for frame in traceback.extract_tb(exn.__traceback__):
-        path = root_relative_path(frame.filename)
-        if not PurePath(path).is_absolute():
-            return f"{path}:{frame.lineno}"
+    # Exception could have been raised inside the test framework, but we want
+    # the location in the user code that caused it. If we can't find one,
+    # though, just return the path from the first frame.
+    tb = list(traceback.extract_tb(exn.__traceback__))
+    frame = tb[0]
+    relative, loc = _extract_path(frame)
+    if relative:
+        return loc
+
+    for frame in tb[1:]:
+        relative, loc = _extract_path(frame)
+        if relative:
+            break
+    return loc

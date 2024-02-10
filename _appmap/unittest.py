@@ -57,7 +57,9 @@ else:
     @wrapt.patch_function_wrapper("unittest.case", "TestCase._callTestMethod")
     def callTestMethod(wrapped, test_case, args, kwargs):
         already_recording = getattr(test_case, "_appmap_pytest_recording", None)
-        test_method = getattr(test_case, test_case._testMethodName)
+
+        test_method_name = test_case._testMethodName  # pylint: disable=protected-access
+        test_method = getattr(test_case, test_method_name)
         if already_recording or noappmap.disables(test_method, test_case.__class__):
             wrapped(*args, **kwargs)
             return

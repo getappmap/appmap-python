@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from . import remote_recording
 
 
-class RemoteRecording:  # pylint: disable=missing-class-docstring
+class RemoteRecording:  # pylint: disable=missing-class-docstring,too-few-public-methods
     def __init__(self, get_response):
         super().__init__()
         self.get_response = get_response

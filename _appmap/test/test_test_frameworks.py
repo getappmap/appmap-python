@@ -125,8 +125,8 @@ EMPTY_APPMAP = types.SimpleNamespace(events=[])
 RECORDER_TYPE = "test"
 
 
-@pytest.fixture
-def recorder_outdir(tmp_path) -> Path:
+@pytest.fixture(name="recorder_outdir")
+def _recorder_outdir(tmp_path) -> Path:
     ret = tmp_path / RECORDER_TYPE
     ret.mkdir(parents=True)
     return ret
