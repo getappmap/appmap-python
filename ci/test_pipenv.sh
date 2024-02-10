@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-pip install pipenv
+pip -q install pipenv
 
 mkdir /pipenv || true
 cd /pipenv
