@@ -165,4 +165,5 @@ class Env(metaclass=_EnvMeta):
 
 def initialize(**kwargs):
     Env.reset(**kwargs)
-    logging.info("appmap enabled: %s", Env.current.enabled)
+    logger = logging.getLogger(__name__)
+    logger.info("appmap enabled: %s", Env.current.enabled)
