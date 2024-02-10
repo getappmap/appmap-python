@@ -1,3 +1,10 @@
+## [1.18.4](https://github.com/getappmap/appmap-python/compare/v1.18.3...v1.18.4) (2024-02-10)
+
+
+### Bug Fixes
+
+* replace logging.info with logger in env.py ([68b6bca](https://github.com/getappmap/appmap-python/commit/68b6bca98d64bc55c7b5d0e67900791469fb5d2d))
+
 ## [1.18.3](https://github.com/getappmap/appmap-python/compare/v1.18.2...v1.18.3) (2024-02-05)
 
 
