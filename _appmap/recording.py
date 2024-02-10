@@ -44,3 +44,27 @@ class Recording:
         if self.exit_hook is not None:
             self.exit_hook(self)
         return False
+
+
+def write_appmap(
+    appmap, appmap_fname, recorder_type, metadata=None, basedir=Env.current.output_dir
+):
+    """Write an appmap file into basedir.
+
+    Adds APPMAP_SUFFIX to basename; shortens the name if necessary.
+    Atomically replaces existing files. Creates the basedir if required.
+    """
+
+    if len(appmap_fname) > NAME_MAX - len(APPMAP_SUFFIX):
+        part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
+        appmap_fname = appmap_fname[:part] + "-" + name_hash(appmap_fname[part:])[:HASH_LEN]
+    filename = appmap_fname + APPMAP_SUFFIX
+
+    basedir = basedir / recorder_type
+    basedir.mkdir(parents=True, exist_ok=True)
+
+    with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
+        tmp.write(generation.dump(appmap, metadata))
+    appmap_file = basedir / filename
+    logger.info("info, writing %s", appmap_file)
+    os.replace(tmp.name, appmap_file)

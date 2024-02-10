@@ -11,7 +11,8 @@ from abc import ABC, abstractmethod
 from contextvars import ContextVar
 from hashlib import sha256
 from json.decoder import JSONDecodeError
-from tempfile import NamedTemporaryFile
+
+from _appmap import recording
 
 from . import generation, remote_recording
 from .env import Env
@@ -87,26 +88,6 @@ def name_hash(namepart):
     return sha256(os.fsencode(namepart)).hexdigest()
 
 
-def write_appmap(basedir, basename, contents):
-    """Write an appmap file into basedir.
-
-    Adds APPMAP_SUFFIX to basename; shortens the name if necessary.
-    Atomically replaces existing files. Creates the basedir if required.
-    """
-
-    if len(basename) > NAME_MAX - len(APPMAP_SUFFIX):
-        part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
-        basename = basename[:part] + "-" + name_hash(basename[part:])[:HASH_LEN]
-    filename = basename + APPMAP_SUFFIX
-
-    if not basedir.exists():
-        basedir.mkdir(parents=True, exist_ok=True)
-
-    with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
-        tmp.write(contents)
-    os.replace(tmp.name, basedir / filename)
-
-
 def create_appmap_file(
     output_dir,
     request_method,
@@ -126,16 +107,16 @@ def create_appmap_file(
         + ") - "
         + start_time.strftime("%T.%f")[:-3]
     )
-    appmap_basename = scenario_filename(
-        "_".join([str(start_time.timestamp()), request_full_path])
-    )
+    appmap_basename = scenario_filename("_".join([str(start_time.timestamp()), request_full_path]))
     appmap_file_path = os.path.join(output_dir, appmap_basename)
+
+    recorder_type = "requests"
     metadata = {
         "name": appmap_name,
         "timestamp": start_time.timestamp(),
-        "recorder": {"name": "record_requests"},
+        "recorder": {"name": "record_requests", "type": recorder_type},
     }
-    write_appmap(output_dir, appmap_basename, generation.dump(rec, metadata))
+    recording.write_appmap(rec, appmap_basename, recorder_type, metadata)
     headers["AppMap-Name"] = os.path.abspath(appmap_name)
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
 
