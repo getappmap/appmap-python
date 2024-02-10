@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
-pip install poetry
+pip -q install poetry
 
 mkdir /poetry || true
 cd /poetry
