@@ -24,16 +24,15 @@ of code and key data flows.
 
 Visit the [AppMap for Python](https://appland.com/docs/reference/appmap-python.html) reference page on AppLand.com for a complete reference guide.
 
-# Development 
+# Development
 
 [![Build Status](https://travis-ci.com/getappmap/appmap-python.svg?branch=master)](https://travis-ci.com/getappmap/appmap-python)
 
 ## Getting the code
-Clone the repo to begin development. Note that vendored dependencies are included as
-submodules.
+Clone the repo to begin development.
 
 ```shell
-% git clone --recurse-submodules https://github.com/applandinc/appmap-python.git
+% git clone https://github.com/applandinc/appmap-python.git
 Cloning into 'appmap-python'...
 remote: Enumerating objects: 167, done.
 remote: Counting objects: 100% (167/167), done.
@@ -41,19 +40,6 @@ remote: Compressing objects: 100% (100/100), done.
 remote: Total 962 (delta 95), reused 116 (delta 61), pack-reused 795
 Receiving objects: 100% (962/962), 217.31 KiB | 4.62 MiB/s, done.
 Resolving deltas: 100% (653/653), done.
-Submodule 'extern/wrapt' (https://github.com/applandinc/wrapt.git) registered for path 'vendor/wrapt'
-Cloning into '/private/tmp/appmap-python/vendor/wrapt'...
-remote: Enumerating objects: 46, done.
-remote: Counting objects: 100% (46/46), done.
-remote: Compressing objects: 100% (39/39), done.
-remote: Total 2537 (delta 9), reused 19 (delta 4), pack-reused 2491
-Receiving objects: 100% (2537/2537), 755.94 KiB | 7.48 MiB/s, done.
-Resolving deltas: 100% (1643/1643), done.
-Submodule path 'vendor/wrapt': checked out '9bdfbe54b88a64069cba1f3c36e77edc3c1339c9'
-
-% ls appmap-python/vendor/wrapt
-LICENSE		Makefile	appveyor.yml	docs		src		tests
-MANIFEST.in	README.rst	blog		setup.py	tddium.yml	tox.ini
 ```
 
 ## Python version support
@@ -114,7 +100,7 @@ Note that you must install the dependencies contained in
 
 ### tox
 Additionally, the `tox` configuration provides the ability to run the tests for all
-supported versions of Python and djanggo. 
+supported versions of Python and Django.
 
 `tox` requires that all the correct versions of Python to be available to create
 the test environments. [pyenv](https://github.com/pyenv/pyenv) is an easy way to manage
