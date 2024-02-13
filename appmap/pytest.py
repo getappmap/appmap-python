@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 
 from _appmap import noappmap, testing_framework, wrapt

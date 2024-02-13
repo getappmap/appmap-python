@@ -62,7 +62,7 @@ class FilterableFn(
         return self.scope.classify_fn(self.static_fn)
 
 
-class Filter(ABC):
+class Filter(ABC):  # pylint: disable=too-few-public-methods
     def __init__(self, next_filter):
         self.next_filter = next_filter
 
@@ -75,7 +75,7 @@ class Filter(ABC):
         """
 
 
-class NullFilter(Filter):
+class NullFilter(Filter):  # pylint: disable=too-few-public-methods
     def __init__(self, next_filter=None):
         super().__init__(next_filter)
 

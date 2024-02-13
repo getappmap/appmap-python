@@ -1,5 +1,3 @@
-import sys
-
 _appmap_noappmap = "_appmap_noappmap"
 
 

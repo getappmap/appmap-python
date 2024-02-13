@@ -1,14 +1,17 @@
 """Test cases dealing with various test framework runners and cases."""
+
 # pylint: disable=missing-function-docstring
 
 import json
 import re
 import sys
+import types
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import pytest
 
-from _appmap import web_framework
+from _appmap import recording
 
 from ..test.helpers import DictIncluding
 from .normalize import normalize_appmap
@@ -117,21 +120,33 @@ class TestPytestRunnerTrial(_TestTestRunner):
         verify_expected_appmap(testdir)
 
 
-def test_overwrites_existing(tmp_path):
-    foo_file = tmp_path / "foo.appmap.json"
+EMPTY_APPMAP = types.SimpleNamespace(events=[])
+
+RECORDER_TYPE = "test"
+
+
+@pytest.fixture(name="recorder_outdir")
+def _recorder_outdir(tmp_path) -> Path:
+    ret = tmp_path / RECORDER_TYPE
+    ret.mkdir(parents=True)
+    return ret
+
+
+def test_overwrites_existing(recorder_outdir):
+    foo_file = recorder_outdir / "foo.appmap.json"
     foo_file.write_text("existing")
-    web_framework.write_appmap(tmp_path, "foo", "replacement")
-    assert foo_file.read_text() == "replacement"
+    recording.write_appmap(EMPTY_APPMAP, "foo", RECORDER_TYPE, None, recorder_outdir.parent)
+    assert foo_file.read_text().startswith('{"version"')
 
 
-def test_write_appmap(tmp_path):
-    web_framework.write_appmap(tmp_path, "foo", "bar")
-    assert (tmp_path / "foo.appmap.json").read_text() == "bar"
+def test_write_appmap(recorder_outdir):
+    recording.write_appmap(EMPTY_APPMAP, "foo", RECORDER_TYPE, None, recorder_outdir.parent)
+    assert (recorder_outdir / "foo.appmap.json").read_text().startswith('{"version"')
 
     longname = "-".join(["testing"] * 42)
-    web_framework.write_appmap(tmp_path, longname, "bar")
+    recording.write_appmap(EMPTY_APPMAP, longname, RECORDER_TYPE, None, recorder_outdir.parent)
     expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
-    assert (tmp_path / expected_shortname).read_text() == "bar"
+    assert (recorder_outdir / expected_shortname).read_text().startswith('{"version"')
 
 
 @pytest.fixture(name="testdir")

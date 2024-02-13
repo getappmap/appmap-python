@@ -356,7 +356,7 @@ class _TestRecordRequests:
         # barrage of requests. A tiny bit of delay still causes many, many concurrent requests, but
         # eliminates the failures.
         time.sleep(SR.uniform(0, 0.1))
-        return requests.get(_TestRecordRequests.server_url() + "/test")
+        return requests.get(_TestRecordRequests.server_url() + "/test", timeout=30)
 
     @staticmethod
     @pytest.mark.appmap_enabled
@@ -366,7 +366,7 @@ class _TestRecordRequests:
             # verifies the global recorder doesn't save duplicate
             # events when per-request recording is enabled
             response = requests.post(
-                _TestRecordRequests.server_url() + "/_appmap/record"
+                _TestRecordRequests.server_url() + "/_appmap/record", timeout=30
             )
             assert response.status_code == 200
 
@@ -440,7 +440,7 @@ class _TestRecordRequests:
     def test_remote_disabled_in_prod(self):
         self.server_stop()
         self.server_start(debug=False)
-        response = requests.get(self.server_url() + "/_appmap/record")
+        response = requests.get(self.server_url() + "/_appmap/record", timeout=30)
         assert response.status_code == 404
         self.server_stop()
 
@@ -448,6 +448,6 @@ class _TestRecordRequests:
         self.server_stop()
         monkeypatch.setenv("APPMAP_RECORD_REMOTE", "true")
         self.server_start(debug=False)
-        response = requests.get(self.server_url() + "/_appmap/record")
+        response = requests.get(self.server_url() + "/_appmap/record", timeout=30)
         assert response.status_code == 200
         self.server_stop()

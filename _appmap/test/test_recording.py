@@ -3,6 +3,8 @@
 
 import json
 import os
+from distutils.dir_util import copy_tree
+from distutils.file_util import copy_file
 from threading import Thread
 
 import pytest
@@ -168,9 +170,7 @@ class TestRecordingPerThread:
             r.add_event(Event({"name": name}))
             recorders[name] = r
 
-        threads = [
-            Thread(target=add_event, args=(f"thread{i}",)) for i in range(thread_count)
-        ]
+        threads = [Thread(target=add_event, args=(f"thread{i}",)) for i in range(thread_count)]
         for _, t in enumerate(threads):
             t.start()
         for _, t in enumerate(threads):
@@ -188,3 +188,27 @@ class TestRecordingPerThread:
             events = recorders[f"thread{n}"].events
             assert len(events) == 1
             assert events[0].event["name"] == f"thread{n}"
+
+
+def test_process_recording(data_dir, shell, tmp_path):
+    fixture = data_dir / "package1"
+    tmp = tmp_path / "process"
+    copy_tree(fixture, str(tmp / "package1"))
+    copy_file(data_dir / "appmap.yml", str(tmp))
+    copy_tree(data_dir / "flask" / "init", str(tmp / "init"))
+
+    ret = shell.run(
+        "python",
+        "-m",
+        "package1.package2",
+        env={"PYTHONPATH": "init", "APPMAP_RECORD_PROCESS": "true"},
+        cwd=tmp,
+    )
+    assert ret.returncode == 0
+
+    appmap_dir = tmp / "tmp" / "appmap" / "process"
+    appmap_files = list(appmap_dir.glob("*.appmap.json"))
+    assert len(appmap_files) == 1
+    actual = json.loads(appmap_files[0].read_text())
+    assert len(actual["events"]) > 0
+    assert len(actual["classMap"]) > 0

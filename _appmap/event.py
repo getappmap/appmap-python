@@ -329,7 +329,7 @@ class CallEvent(Event):
         return ret
 
 
-class SqlEvent(Event):
+class SqlEvent(Event):  # pylint: disable=too-few-public-methods
     __slots__ = ["sql_query"]
 
     def __init__(self, sql, vendor=None, version=None):
@@ -345,7 +345,7 @@ class SqlEvent(Event):
         )
 
 
-class MessageEvent(Event):
+class MessageEvent(Event):  # pylint: disable=too-few-public-methods
     __slots__ = ["message"]
 
     def __init__(self, message_parameters):
