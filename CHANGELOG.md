@@ -1,3 +1,15 @@
+# [1.19.0](https://github.com/getappmap/appmap-python/compare/v1.18.4...v1.19.0) (2024-02-13)
+
+
+### Bug Fixes
+
+* get rid of unused metadata fields ([87efc91](https://github.com/getappmap/appmap-python/commit/87efc91b262c607b38f5f38eeb5c3c9942074147))
+
+
+### Features
+
+* add process recording ([81e5226](https://github.com/getappmap/appmap-python/commit/81e52268ba87905b2f973a120020aec74d09bece))
+
 ## [1.18.4](https://github.com/getappmap/appmap-python/compare/v1.18.3...v1.18.4) (2024-02-10)
 
 
