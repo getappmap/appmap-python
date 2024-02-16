@@ -119,7 +119,7 @@ def wrapped_execute(self, sql, params=None):
     return original_execute(self, sql, params)
 
 
-CursorDebugWrapper.execute = wrapped_execute
+CursorDebugWrapper.execute = wrapped_execute  # type: ignore[method-assign]
 
 
 @receiver(connection_created)
@@ -226,6 +226,8 @@ class Middleware(AppmapMiddleware):
             return self.get_response(request)
 
         rec, start, call_event_id = self.before_request_hook(request, request.path_info)
+        if rec is None:
+            return self.get_response(request)
 
         try:
             response = self.get_response(request)
@@ -338,7 +340,7 @@ def load_middleware(*args, **kwargs):
     return original_load_middleware(*args, **kwargs)
 
 
-BaseHandler.load_middleware = load_middleware
+BaseHandler.load_middleware = load_middleware  # type: ignore[method-assign]
 
 
 @patch_class(Template)

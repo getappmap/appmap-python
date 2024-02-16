@@ -189,6 +189,5 @@ if Env.current.enabled:
     # ScriptInfo.load_app is the function that's used by the Flask cli to load an app, no matter how
     # the app's module is specified (e.g. with the FLASK_APP env var, the `--app` flag, etc). Hook
     # it so it installs our extension on the app.
-    ScriptInfo.load_app = wrapt.wrap_function_wrapper(
-        "flask.cli", "ScriptInfo.load_app", install_extension
-    )
+    load_app = wrapt.wrap_function_wrapper("flask.cli", "ScriptInfo.load_app", install_extension)
+    ScriptInfo.load_app = load_app  # type: ignore[method-assign]
