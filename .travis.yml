@@ -7,7 +7,6 @@ python:
 - "3.10"
 - "3.9.14"
 - "3.8"
-- "3.7"
 
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
 if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
