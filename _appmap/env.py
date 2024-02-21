@@ -7,6 +7,8 @@ import os
 from os import environ
 from pathlib import Path
 
+from . import trace_logger
+
 _cwd = Path.cwd()
 _bootenv = environ.copy()
 
@@ -115,10 +117,12 @@ class Env(metaclass=_EnvMeta):
     def display_params(self):
         return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
 
-    def getLogger(self, name):
-        return logging.getLogger(name)
+    def getLogger(self, name) -> trace_logger.TraceLogger:
+        return cast(trace_logger.TraceLogger, logging.getLogger(name))
 
     def _configure_logging(self):
+        trace_logger.install()
+
         log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
 
         log_config = self.get("APPMAP_LOG_CONFIG")

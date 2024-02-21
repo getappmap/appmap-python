@@ -1,3 +1,4 @@
+from contextvars import ContextVar
 import inspect
 import os
 import re
@@ -61,11 +62,15 @@ class ThreadLocalDict(threading.local, MutableMapping):
         return len(self.values)
 
 
-_appmap_tls = ThreadLocalDict()
+_appmap_tls = ContextVar("tls")
 
 
 def appmap_tls():
-    return _appmap_tls
+    try:
+        return _appmap_tls.get()
+    except LookupError:
+        _appmap_tls.set({})
+        return _appmap_tls.get()
 
 
 def fqname(cls):

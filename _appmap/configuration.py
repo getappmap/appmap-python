@@ -96,15 +96,15 @@ def find_top_packages(rootdir):
     def excluded(d):
         excluded = d == "node_modules" or d[0] == "."
         if excluded:
-            logger.debug("excluding dir %s", d)
+            logger.trace("excluding dir %s", d)
         return excluded
 
     sys_prefix = _get_sys_prefix()
 
     for d, dirs, files in os.walk(rootdir):
-        logger.debug("dir %s dirs %s", d, dirs)
+        logger.trace("dir %s dirs %s", d, dirs)
         if realpath(d) == sys_prefix:
-            logger.debug("skipping sys.prefix %s", sys_prefix)
+            logger.trace("skipping sys.prefix %s", sys_prefix)
             dirs.clear()
             continue
 
@@ -124,7 +124,7 @@ class Config:
 
     def __new__(cls):
         if cls._instance is None:
-            logger.debug("Creating the Config object")
+            logger.trace("Creating the Config object")
             cls._instance = super(Config, cls).__new__(cls)
 
             cls._instance._initialized = False
@@ -143,7 +143,7 @@ class Config:
         self._load_config()
         self._load_functions()
         logger.info("config: %s", self._config)
-        logger.info("package_functions: %s", self.package_functions)
+        logger.debug("package_functions: %s", self.package_functions)
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
@@ -299,7 +299,7 @@ class PathMatcher:
                 logger.info("%r excluded", fqname)
         else:
             result = False
-        logger.debug("%r.matches(%r) -> %r", self, fqname, result)
+        logger.trace("%r.matches(%r) -> %r", self, fqname, result)
         return result
 
     def __repr__(self):
@@ -319,9 +319,7 @@ class DistMatcher(PathMatcher):
     def matches(self, filterable):
         try:
             obj = filterable.obj
-            logger.debug(
-                "%r.matches(%r): %s in %r", self, obj, inspect.getfile(obj), self.files
-            )
+            logger.trace("%r.matches(%r): %s in %r", self, obj, inspect.getfile(obj), self.files)
             if inspect.getfile(obj) not in self.files:
                 return False
         except TypeError:
@@ -347,7 +345,7 @@ class MatcherFilter(Filter):
         result = any(
             m.matches(filterable) for m in self.matchers
         ) or self.next_filter.filter(filterable)
-        logger.debug("ConfigFilter.filter(%r) -> %r", filterable.fqname, result)
+        logger.trace("ConfigFilter.filter(%r) -> %r", filterable.fqname, result)
         return result
 
     def wrap(self, filterable):
@@ -364,13 +362,13 @@ class MatcherFilter(Filter):
         rule = self.match(filterable)
         wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
         if wrapped is None:
-            logger.debug("  wrapping %s", filterable.fqname)
+            logger.trace("  wrapping %s", filterable.fqname)
             Config().labels.apply(filterable)
             ret = instrument(filterable)
             if rule and rule.shallow:
                 setattr(ret, "_appmap_shallow", rule)
         else:
-            logger.debug("  already wrapped %s", filterable.fqname)
+            logger.trace("  already wrapped %s", filterable.fqname)
             ret = filterable.obj
         return ret
 
