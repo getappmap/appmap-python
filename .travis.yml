@@ -20,6 +20,7 @@ install: pip -q install --upgrade "tox < 4" tox-travis
 script: tox
 
 cache:
+  cargo: true
   pip: true
   directories:
   - $TRAVIS_BUILD_DIR/.tox/
