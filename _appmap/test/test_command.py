@@ -134,4 +134,4 @@ class TestAgentValidate:
             side_effect=lambda d: "1.0" if d == "flask" else version(d),
         )
 
-        self.check_errors(capsys, 1, 1, "flask must have version >= 1.1, found 1.0")
+        self.check_errors(capsys, 1, 1, "flask must have version >= 2.0, found 1.0")
