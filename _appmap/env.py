@@ -1,11 +1,12 @@
 """Initialize from the environment"""
 
-from contextlib import contextmanager
 import logging
 import logging.config
 import os
+from contextlib import contextmanager
 from os import environ
 from pathlib import Path
+from typing import cast
 
 from . import trace_logger
 

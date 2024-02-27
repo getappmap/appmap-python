@@ -45,3 +45,8 @@ def show_user_post(username, post_id):
 @app.route("/<int:org>/posts/<username>")
 def show_org_user_posts(org, username):
     return f"org {org} username {username}"
+
+
+@app.route("/exception")
+def raise_exception():
+    raise Exception("An exception")
