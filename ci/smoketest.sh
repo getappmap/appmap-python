@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -ex
-pip -q install -U pip pytest "flask<2" python-decouple
+pip -q install -U pip pytest "flask>=2,<3" python-decouple
 pip -q install /dist/appmap-*-py3-none-any.whl
 
 cp -R /_appmap/test/data/unittest/simple ./.

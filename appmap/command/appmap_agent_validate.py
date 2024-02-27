@@ -35,9 +35,7 @@ def _check_version(dist, v):
         actual = parse(dist_version)
 
         if actual < required:
-            raise ValidationFailure(
-                f"{dist} must have version >= {required}, found {actual}"
-            )
+            raise ValidationFailure(f"{dist} must have version >= {required}, found {actual}")
     except PackageNotFoundError:
         pass
 
@@ -51,7 +49,7 @@ def check_django_version():
 
 
 def check_flask_version():
-    return _check_version("flask", "1.1")
+    return _check_version("flask", "2.0")
 
 
 def check_pytest_version():
@@ -65,9 +63,7 @@ def _run():
         django_version = check_django_version()
         flask_version = check_flask_version()
         if not (django_version or flask_version):
-            raise ValidationFailure(
-                "No web framework found. Expected one of: Django, Flask"
-            )
+            raise ValidationFailure("No web framework found. Expected one of: Django, Flask")
 
         check_pytest_version()
         errors = []
