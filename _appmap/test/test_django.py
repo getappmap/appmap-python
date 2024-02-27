@@ -152,6 +152,7 @@ def test_exception(client, events, monkeypatch):
         {"request_method": "GET", "path_info": "/exception", "protocol": "HTTP/1.1"}
     )
 
+    assert events[1].event == "return"
     assert events[1].parent_id == events[0].id
     assert events[1].exceptions == [
         DictIncluding({"class": "builtins.RuntimeError", "message": "An error"})

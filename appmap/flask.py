@@ -4,14 +4,14 @@ import time
 import flask
 import flask.cli
 import jinja2
-from flask import g, request
+from flask import g, got_request_exception, request, request_finished, request_started
 from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from _appmap import wrapt
 from _appmap.env import Env
-from _appmap.event import HttpServerRequestEvent, HttpServerResponseEvent
+from _appmap.event import HttpServerRequestEvent
 from _appmap.flask import app as remote_recording_app
 from _appmap.metadata import Metadata
 from _appmap.utils import patch_class, values_dict
@@ -82,20 +82,18 @@ class AppmapFlask(AppmapMiddleware):
         remote_enabled = Env.current.enables("remote", enable_by_default)
         if remote_enabled:
             logger.debug("Remote recording is enabled (Flask)")
-            app.wsgi_app = DispatcherMiddleware(
-                app.wsgi_app, {"/_appmap": remote_recording_app}
-            )
+            app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/_appmap": remote_recording_app})
         setattr(app, _REMOTE_ENABLED_ATTR, remote_enabled)
 
-        app.before_request(self.before_request)
-        app.after_request(self.after_request)
+        request_started.connect(self.request_started, app, weak=False)
+        request_finished.connect(self.request_finished, app, weak=False)
+        got_request_exception.connect(self.got_request_exception, app, weak=False)
+
         setattr(app, _REQUEST_ENABLED_ATTR, True)
 
-    def before_request(self):
-        if not self.should_record:
-            return
-
-        self.before_request_hook(request, request.path)
+    def request_started(self, _, **__):
+        # request context is bound, we can use flask.request now:
+        self.before_request_hook(request)
 
     def before_request_main(self, rec, req):
         Metadata.add_framework("flask", flask.__version__)
@@ -123,37 +121,38 @@ class AppmapFlask(AppmapMiddleware):
         )
         rec.add_event(call_event)
 
-        # Flask 2 removed the suggestion to use _app_ctx_stack.top, and instead says extensions
-        # should use g with a private property.
+        # Save the current recorder in flask.g, so it will be available in
+        # the got_request_exception signal handler. Flask seems to be resetting the
+        # current Context before signaling, which removes our ContextVar.
+        # TODO: enhance AppmapMiddleware so it allows subclasses to specify how
+        #       the request recording should be stored.
+        g._appmap_recorder = rec  # pylint: disable=protected-access
         g._appmap_request_event = call_event  # pylint: disable=protected-access
         g._appmap_request_start = time.monotonic()  # pylint: disable=protected-access
         return None, None
 
-    def after_request(self, response):
+    def request_finished(self, _, response, **__):
         if not self.should_record:
             return response
 
-        return self.after_request_hook(
+        self.after_request_hook(
             request.path,
             request.method,
             request.base_url,
-            response,
+            response.status_code,
             response.headers,
-            None,
-            None,
+            g._appmap_request_start,  # pylint: disable=protected-access
+            g._appmap_request_event.id,  # pylint: disable=protected-access
         )
+        return response
 
-    def after_request_main(self, rec, response, start, _):
-        parent_id = g._appmap_request_event.id  # pylint: disable=protected-access
-        start = g._appmap_request_start  # pylint: disable=protected-access
-        duration = time.monotonic() - start
-        return_event = HttpServerResponseEvent(
-            parent_id=parent_id,
-            elapsed=duration,
-            status_code=response.status_code,
-            headers=response.headers,
+    def got_request_exception(self, _, exception):
+        self.on_exception(
+            g._appmap_recorder,  # pylint: disable=protected-access
+            g._appmap_request_start,  # pylint: disable=protected-access
+            g._appmap_request_event.id,  # pylint: disable=protected-access
+            (type(exception), exception, None),
         )
-        rec.add_event(return_event)
 
 
 @patch_class(jinja2.Template)

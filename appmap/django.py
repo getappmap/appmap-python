@@ -19,13 +19,7 @@ from django.urls import get_resolver, resolve
 from django.urls.exceptions import Resolver404
 
 from _appmap.env import Env
-from _appmap.event import (
-    ExceptionEvent,
-    HttpServerRequestEvent,
-    HttpServerResponseEvent,
-    ReturnEvent,
-    SqlEvent,
-)
+from _appmap.event import HttpServerRequestEvent, ReturnEvent, SqlEvent
 from _appmap.instrument import is_instrumentation_disabled
 from _appmap.metadata import Metadata
 from _appmap.recorder import Recorder
@@ -65,9 +59,7 @@ class ExecuteWrapper:  # pylint: disable=too-few-public-methods
         self.recorder = Recorder.get_current()
 
     # This signature is correct, the implementation confuses pylint:
-    def __call__(
-        self, execute, sql, params, many, context
-    ):  # pylint: disable=too-many-arguments
+    def __call__(self, execute, sql, params, many, context):  # pylint: disable=too-many-arguments
         start = time.monotonic()
         try:
             return execute(sql, params, many, context)
@@ -93,9 +85,7 @@ class ExecuteWrapper:  # pylint: disable=too-few-public-methods
                 else:
                     cursor = context["cursor"]
                     sql = conn.ops.last_executed_query(cursor, sql, params)
-                call_event = SqlEvent(
-                    sql, vendor=conn.vendor, version=database_version(conn)
-                )
+                call_event = SqlEvent(sql, vendor=conn.vendor, version=database_version(conn))
                 Recorder.add_event(call_event)
                 return_event = ReturnEvent(parent_id=call_event.id, elapsed=duration)
                 Recorder.add_event(return_event)
@@ -171,8 +161,7 @@ def get_resolved_match(path_info, resolver):
     match = re.match(regex, path_info[1:])
     if not match:
         raise RuntimeError(
-            "No match for %s found with resolver %r, regex %s"
-            % (path_info, resolver, regex)
+            "No match for %s found with resolver %r, regex %s" % (path_info, resolver, regex)
         )
 
     return (regex, match)
@@ -225,28 +214,21 @@ class Middleware(AppmapMiddleware):
         if not self.should_record:
             return self.get_response(request)
 
-        rec, start, call_event_id = self.before_request_hook(request, request.path_info)
+        rec, start, call_event_id = self.before_request_hook(request)
         if rec is None:
             return self.get_response(request)
 
         try:
             response = self.get_response(request)
         except:
-            if rec.get_enabled():
-                duration = time.monotonic() - start
-                exception_event = ExceptionEvent(
-                    parent_id=call_event_id,
-                    elapsed=duration,
-                    exc_info=sys.exc_info(),
-                )
-                rec.add_event(exception_event)
+            self.on_exception(rec, start, call_event_id, sys.exc_info())
             raise
 
         self.after_request_hook(
             request.path_info,
             request.method,
             request.build_absolute_uri(),
-            response,
+            response.status_code,
             response,
             start,
             call_event_id,
@@ -278,16 +260,6 @@ class Middleware(AppmapMiddleware):
         rec.add_event(call_event)
 
         return start, call_event.id
-
-    def after_request_main(self, rec, response, start, call_event_id):
-        duration = time.monotonic() - start
-        return_event = HttpServerResponseEvent(
-            parent_id=call_event_id,
-            elapsed=duration,
-            status_code=response.status_code,
-            headers=dict(response.items()),
-        )
-        rec.add_event(return_event)
 
 
 class DjangoInserter(MiddlewareInserter):

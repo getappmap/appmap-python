@@ -17,7 +17,13 @@ from _appmap import recording
 
 from . import remote_recording
 from .env import Env
-from .event import Event, ReturnEvent, describe_value
+from .event import (
+    Event,
+    ExceptionEvent,
+    HttpServerResponseEvent,
+    ReturnEvent,
+    describe_value,
+)
 from .recorder import Recorder, ThreadRecorder
 from .utils import root_relative_path, scenario_filename
 
@@ -52,7 +58,7 @@ class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
         return result
 
 
-class HasFilename(Protocol):
+class HasFilename(Protocol):  # pylint: disable=too-few-public-methods
     filename: str
 
 
@@ -99,7 +105,7 @@ def create_appmap_file(
     request_method,
     request_path_info,
     request_full_path,
-    response,
+    status,
     headers,
     rec,
 ):
@@ -109,7 +115,7 @@ def create_appmap_file(
         + " "
         + request_path_info
         + " ("
-        + str(response.status_code)
+        + str(status)
         + ") - "
         + start_time.strftime("%T.%f")[:-3]
     )
@@ -129,23 +135,30 @@ def create_appmap_file(
 
 class AppmapMiddleware(ABC):
     @abstractmethod
-    def before_request_main(self, rec, req) -> Tuple[float, int]:
+    def before_request_main(self, rec, req: Any) -> Tuple[float, int]:
         """Specify the main operations to be performed by a request is processed."""
+        raise NotImplementedError
 
-    @abstractmethod
-    def after_request_main(self, rec, response, start, call_event_id) -> None:
-        """Specify the main operations to be performed after a request is processed."""
+    def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
+        duration = time.monotonic() - start
+        return_event = HttpServerResponseEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            status_code=status,
+            headers=dict(headers.items()),
+        )
+        rec.add_event(return_event)
 
     def __init__(self, framework_name):
         self.record_url = "/_appmap/record"
         env = Env.current
         record_requests = env.enables("requests")
         if record_requests:
-            logger.debug("Requests will be recorded (%s)", framework_name)
+            logger.info("Requests will be recorded (%s)", framework_name)
 
         self.should_record = env.enables("remote") or record_requests
 
-    def before_request_hook(self, request, _) -> Tuple[Optional[Recorder], float, int]:
+    def before_request_hook(self, request) -> Tuple[Optional[Recorder], float, int]:
         rec = None
         start = 0
         call_event_id = 0
@@ -168,13 +181,13 @@ class AppmapMiddleware(ABC):
         request_path,
         request_method,
         request_base_url,
-        response,
-        response_headers,
+        status,
+        headers,
         start,
         call_event_id,
-    ):
+    ) -> None:
         if request_path == self.record_url:
-            return response
+            return
 
         env = Env.current
         if env.enables("requests"):
@@ -182,7 +195,7 @@ class AppmapMiddleware(ABC):
             assert rec is not None
 
             try:
-                self.after_request_main(rec, response, start, call_event_id)
+                self.after_request_main(rec, status, headers, start, call_event_id)
 
                 output_dir = Env.current.output_dir / "requests"
                 create_appmap_file(
@@ -190,8 +203,8 @@ class AppmapMiddleware(ABC):
                     request_method,
                     request_path,
                     request_base_url,
-                    response,
-                    response_headers,
+                    status,
+                    headers,
                     rec,
                 )
             finally:
@@ -200,10 +213,18 @@ class AppmapMiddleware(ABC):
                 request_recorder.set(None)
         elif env.enables("remote"):
             rec = Recorder.get_global()
+            assert rec is not None
             if rec.get_enabled():
-                self.after_request_main(rec, response, start, call_event_id)
+                self.after_request_main(rec, status, headers, start, call_event_id)
 
-        return response
+    def on_exception(self, rec, start, call_event_id, exc_info):
+        duration = time.monotonic() - start
+        exception_event = ExceptionEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            exc_info=exc_info,
+        )
+        rec.add_event(exception_event)
 
 
 class MiddlewareInserter(ABC):
