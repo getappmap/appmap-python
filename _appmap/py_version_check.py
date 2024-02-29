@@ -17,7 +17,7 @@ def _get_platform_version():
 
 
 def check_py_version():
-    req = (3, 6)
+    req = (3, 8)
     actual = _get_platform_version()
     if _get_py_version() < req:
         raise AppMapPyVerException(

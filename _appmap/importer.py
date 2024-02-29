@@ -167,14 +167,14 @@ class Importer:
         if mod.__name__.startswith(cls._skip_instrumenting):
             return
 
-        logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
+        logger.trace("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
             cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
 
         def instrument_functions(filterable, selected_functions=None):
-            logger.debug("  looking for members of %s", filterable.obj)
+            logger.trace("  looking for members of %s", filterable.obj)
             functions = get_members(filterable.obj)
-            logger.debug("  functions %s", functions)
+            logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
                 # Only instrument the function if it was specifically called out for the package
@@ -198,11 +198,11 @@ class Importer:
             instrument_functions(fm)
 
         classes = get_classes(mod)
-        logger.debug("  classes %s", classes)
+        logger.trace("  classes %s", classes)
         for c in classes:
             fc = FilterableCls(c)
             if fc.fqname.startswith(cls._skip_instrumenting):
-                logger.debug("  not instrumenting %s", fc.fqname)
+                logger.trace("  not instrumenting %s", fc.fqname)
                 continue
             if fc.fqname in package_functions:
                 instrument_functions(fc, package_functions.get(fc.fqname))
@@ -221,18 +221,18 @@ def wrap_finder_function(fn, decorator):
     obj = fn.__self__ if hasattr(fn, "__self__") else fn
 
     if getattr(obj, marker, None) is None:
-        logger.debug("wrapping %r", fn)
+        logger.trace("wrapping %r", fn)
         ret = decorator(fn)
         setattr(obj, marker, True)
     else:
-        logger.debug("already wrapped, %r", fn)
+        logger.trace("already wrapped, %r", fn)
 
     return ret
 
 
 @wrapt.decorator
 def wrapped_exec_module(exec_module, _, args, kwargs):
-    logger.debug("exec_module %r args %s kwargs %s", exec_module, args, kwargs)
+    logger.trace("exec_module %r args %s kwargs %s", exec_module, args, kwargs)
     exec_module(*args, **kwargs)
     # Only process imports if we're currently enabled. This
     # handles the case where we previously hooked the finders, but
@@ -264,7 +264,7 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
             else:
                 loader.exec_module = wrap_exec_module(loader.exec_module)
         else:
-            logger.debug("no exec_module for loader %r", spec.loader)
+            logger.trace("no exec_module for loader %r", spec.loader)
     return spec
 
 
@@ -275,14 +275,14 @@ def wrap_finder_find_spec(finder):
     if sys.version_info[1] < 11:
         find_spec = getattr(finder, "find_spec", None)
         if find_spec is None:
-            logger.debug("no find_spec for finder %r", finder)
+            logger.trace("no find_spec for finder %r", finder)
             return
 
         finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
     else:
         find_spec = inspect.getattr_static(finder, "find_spec", None)
         if find_spec is None:
-            logger.debug("no find_spec for finder %r", finder)
+            logger.trace("no find_spec for finder %r", finder)
             return
 
         if isinstance(find_spec, (classmethod, staticmethod)):
@@ -319,7 +319,7 @@ def initialize():
     Importer.initialize()
     # If we're not enabled, there's no reason to hook the finders.
     if Env.current.enabled:
-        logger.debug("sys.metapath: %s", sys.meta_path)
+        logger.trace("sys.metapath: %s", sys.meta_path)
         for finder in sys.meta_path:
             wrap_finder_find_spec(finder)
 

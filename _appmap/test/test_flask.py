@@ -59,6 +59,21 @@ def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     assert Metadata()["frameworks"] == [{"name": "flask", "version": flask.__version__}]
 
 
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_exception(client, events):  # pylint: disable=unused-argument
+    with pytest.raises(Exception):
+        client.get("/exception")
+
+    assert events[0].http_server_request == DictIncluding(
+        {"request_method": "GET", "path_info": "/exception", "protocol": "HTTP/1.1"}
+    )
+    assert events[1].event == "return"
+    assert events[1].parent_id == events[0].id
+    assert events[1].exceptions == [
+        DictIncluding({"class": "builtins.Exception", "message": "An exception"})
+    ]
+
+
 @pytest.mark.appmap_enabled
 def test_template(app, events):
     with app.app_context():

@@ -11,17 +11,24 @@ from abc import ABC, abstractmethod
 from contextvars import ContextVar
 from hashlib import sha256
 from json.decoder import JSONDecodeError
+from typing import Any, Optional, Protocol, Tuple
 
 from _appmap import recording
 
-from . import generation, remote_recording
+from . import remote_recording
 from .env import Env
-from .event import Event, ReturnEvent, describe_value
+from .event import (
+    Event,
+    ExceptionEvent,
+    HttpServerResponseEvent,
+    ReturnEvent,
+    describe_value,
+)
 from .recorder import Recorder, ThreadRecorder
 from .utils import root_relative_path, scenario_filename
 
 logger = Env.current.getLogger(__name__)
-request_recorder = ContextVar("appmap_request_recorder")
+request_recorder: ContextVar[Optional[Recorder]] = ContextVar("appmap_request_recorder")
 
 # These are the errors that can get raised when trying to update params based on the results of
 # parsing the body of an application/json request:
@@ -51,7 +58,11 @@ class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
         return result
 
 
-class TemplateHandler:  # pylint: disable=too-few-public-methods
+class HasFilename(Protocol):  # pylint: disable=too-few-public-methods
+    filename: str
+
+
+class TemplateHandler(HasFilename):  # pylint: disable=too-few-public-methods
     """Patch for a template class to capture and record template
     rendering (if recording is enabled).
 
@@ -66,10 +77,11 @@ class TemplateHandler:  # pylint: disable=too-few-public-methods
         If recording is enabled, adds appropriate TemplateEvent
         and ReturnEvent.
         """
+
         rec = Recorder.get_current()
         if rec.get_enabled():
             start = time.monotonic()
-            call_event = TemplateEvent(self.filename, self)  # pylint: disable=no-member
+            call_event = TemplateEvent(self.filename, self)
             Recorder.add_event(call_event)
         try:
             return orig(self, *args, **kwargs)
@@ -93,7 +105,7 @@ def create_appmap_file(
     request_method,
     request_path_info,
     request_full_path,
-    response,
+    status,
     headers,
     rec,
 ):
@@ -103,7 +115,7 @@ def create_appmap_file(
         + " "
         + request_path_info
         + " ("
-        + str(response.status_code)
+        + str(status)
         + ") - "
         + start_time.strftime("%T.%f")[:-3]
     )
@@ -122,22 +134,34 @@ def create_appmap_file(
 
 
 class AppmapMiddleware(ABC):
+    @abstractmethod
+    def before_request_main(self, rec, req: Any) -> Tuple[float, int]:
+        """Specify the main operations to be performed by a request is processed."""
+        raise NotImplementedError
+
+    def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
+        duration = time.monotonic() - start
+        return_event = HttpServerResponseEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            status_code=status,
+            headers=dict(headers.items()),
+        )
+        rec.add_event(return_event)
+
     def __init__(self, framework_name):
         self.record_url = "/_appmap/record"
         env = Env.current
         record_requests = env.enables("requests")
         if record_requests:
-            logger.debug("Requests will be recorded (%s)", framework_name)
+            logger.info("Requests will be recorded (%s)", framework_name)
 
         self.should_record = env.enables("remote") or record_requests
 
-    def before_request_hook(self, request, request_path):
-        if request_path == self.record_url:
-            return None, None, None
-
+    def before_request_hook(self, request) -> Tuple[Optional[Recorder], float, int]:
         rec = None
-        start = None
-        call_event_id = None
+        start = 0
+        call_event_id = 0
         env = Env.current
         if env.enables("requests"):
             rec = ThreadRecorder()
@@ -152,28 +176,26 @@ class AppmapMiddleware(ABC):
 
         return rec, start, call_event_id
 
-    @abstractmethod
-    def before_request_main(self, rec, req):
-        """Specify the main operations to be performed by a request is processed."""
-
     def after_request_hook(
         self,
         request_path,
         request_method,
         request_base_url,
-        response,
-        response_headers,
+        status,
+        headers,
         start,
         call_event_id,
-    ):
+    ) -> None:
         if request_path == self.record_url:
-            return response
+            return
 
         env = Env.current
         if env.enables("requests"):
             rec = request_recorder.get()
+            assert rec is not None
+
             try:
-                self.after_request_main(rec, response, start, call_event_id)
+                self.after_request_main(rec, status, headers, start, call_event_id)
 
                 output_dir = Env.current.output_dir / "requests"
                 create_appmap_file(
@@ -181,8 +203,8 @@ class AppmapMiddleware(ABC):
                     request_method,
                     request_path,
                     request_base_url,
-                    response,
-                    response_headers,
+                    status,
+                    headers,
                     rec,
                 )
             finally:
@@ -191,14 +213,18 @@ class AppmapMiddleware(ABC):
                 request_recorder.set(None)
         elif env.enables("remote"):
             rec = Recorder.get_global()
+            assert rec is not None
             if rec.get_enabled():
-                self.after_request_main(rec, response, start, call_event_id)
+                self.after_request_main(rec, status, headers, start, call_event_id)
 
-        return response
-
-    @abstractmethod
-    def after_request_main(self, rec, response, start, call_event_id):
-        """Specify the main operations to be performed after a request is processed."""
+    def on_exception(self, rec, start, call_event_id, exc_info):
+        duration = time.monotonic() - start
+        exception_event = ExceptionEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            exc_info=exc_info,
+        )
+        rec.add_event(exception_event)
 
 
 class MiddlewareInserter(ABC):

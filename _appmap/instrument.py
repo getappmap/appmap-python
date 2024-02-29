@@ -48,7 +48,7 @@ def track_shallow(fn):
     """
     tls = appmap_tls()
     rule = getattr(fn, "_appmap_shallow", None)
-    logger.debug("track_shallow(%r) [%r]", fn, rule)
+    logger.trace("track_shallow(%r) [%r]", fn, rule)
     result = rule and tls.get("last_rule", None) == rule
     tls["last_rule"] = rule
     return result
@@ -82,7 +82,7 @@ def call_instrumented(f, instance, args, kwargs):
         return f.fn(*args, **kwargs)
 
     with recording_disabled():
-        logger.debug("%s args %s kwargs %s", f.fn, args, kwargs)
+        logger.trace("%s args %s kwargs %s", f.fn, args, kwargs)
         params = CallEvent.set_params(f.params, instance, args, kwargs)
         call_event = f.make_call_event(parameters=params)
     Recorder.add_event(call_event)

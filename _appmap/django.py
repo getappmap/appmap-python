@@ -30,5 +30,7 @@ class RemoteRecording:  # pylint: disable=missing-class-docstring,too-few-public
         def not_allowed():
             return "", HTTPStatus.METHOD_NOT_ALLOWED
 
+        assert request.method is not None
         body, status = handlers.get(request.method, not_allowed)()
+
         return HttpResponse(body, status=status, content_type="application/json")
