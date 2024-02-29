@@ -1,3 +1,13 @@
+## [1.19.1](https://github.com/getappmap/appmap-python/compare/v1.19.0...v1.19.1) (2024-02-29)
+
+
+### Bug Fixes
+
+* add TRACE log level ([778c6e3](https://github.com/getappmap/appmap-python/commit/778c6e3ecea63f45a17e4c52bca8a31f4d9bb073))
+* drop Flask 1 ([5a28dc7](https://github.com/getappmap/appmap-python/commit/5a28dc733d684a9caa15fac7d16a9a82477dd8ca))
+* drop python 3.7 support ([99d33c9](https://github.com/getappmap/appmap-python/commit/99d33c9de1e5aea980c6a8561e7822f9359bb76d))
+* Flask integration should record exceptions ([2e89cfa](https://github.com/getappmap/appmap-python/commit/2e89cfaf3afc55901dfb9cbbe6fabde5d86c35ac))
+
 # [1.19.0](https://github.com/getappmap/appmap-python/compare/v1.18.4...v1.19.0) (2024-02-13)
 
 
