@@ -1,5 +1,6 @@
 import re
 import time
+from importlib.metadata import version
 
 import flask
 import flask.cli
@@ -96,7 +97,7 @@ class AppmapFlask(AppmapMiddleware):
         self.before_request_hook(request)
 
     def before_request_main(self, rec, req):
-        Metadata.add_framework("flask", flask.__version__)
+        Metadata.add_framework("flask", version("flask"))
         np = None
         if req.url_rule:
             # pragma pylint: disable=line-too-long

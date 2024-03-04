@@ -1,10 +1,9 @@
 import json
 import platform
 import re
+from importlib.metadata import version as dist_version
 from operator import itemgetter
 from typing import List
-
-import pytest
 
 
 def normalize_path(path):
@@ -45,7 +44,7 @@ def normalize_metadata(metadata):
         for f in frameworks:
             if f["name"] == "pytest":
                 v = f.pop("version")
-                assert v == pytest.__version__
+                assert v == dist_version("pytest")
 
 
 def normalize_headers(dct):

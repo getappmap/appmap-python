@@ -2,6 +2,7 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+import importlib.metadata
 import inspect
 import os
 import sys
@@ -9,7 +10,6 @@ from os.path import realpath
 from pathlib import Path
 from textwrap import dedent
 
-import importlib_metadata
 import yaml
 from yaml.parser import ParserError
 
@@ -314,7 +314,7 @@ class DistMatcher(PathMatcher):
     def __init__(self, dist, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dist = dist
-        self.files = [str(pp.locate()) for pp in importlib_metadata.files(dist)]
+        self.files = [str(pp.locate()) for pp in importlib.metadata.files(dist)]
 
     def matches(self, filterable):
         try:

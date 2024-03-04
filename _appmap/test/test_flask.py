@@ -3,7 +3,11 @@
 
 import importlib
 import os
-from threading import Thread
+import socket
+import sys
+from importlib.metadata import version
+from pathlib import Path
+from types import SimpleNamespace as NS
 
 import flask
 import pytest
@@ -56,7 +60,7 @@ def flask_client(app):
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
 def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     client.get("/")
-    assert Metadata()["frameworks"] == [{"name": "flask", "version": flask.__version__}]
+    assert Metadata()["frameworks"] == [{"name": "flask", "version": version("flask")}]
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})

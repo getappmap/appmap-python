@@ -41,7 +41,6 @@ packages = [
 python = "^3.8"
 PyYAML = ">=5.3.0"
 inflection = ">=0.3.0"
-importlib-metadata = ">=0.8"
 importlib-resources = "^5.4.0"
 packaging = ">=19.0"
 # If you include "Django" as an optional dependency here, you'll be able to use poetry to install it
