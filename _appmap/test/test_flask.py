@@ -34,15 +34,15 @@ def flask_app(data_dir, monkeypatch):
 
     monkeypatch.setenv("FLASK_DEBUG", "True")
 
-    import app  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
+    import flaskapp  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
 
-    importlib.reload(app)
+    importlib.reload(flaskapp)
 
     # Add the AppmapFlask extension to the app. This now happens automatically when a Flask app is
     # started from the command line, but must be done manually otherwise.
-    AppmapFlask().init_app(app.app)
+    AppmapFlask().init_app(flaskapp.app)
 
-    return app.app
+    return flaskapp.app
 
 
 @pytest.fixture(name="client")
@@ -103,7 +103,7 @@ export PYTHONPATH="$PWD"
 cd _appmap/test/data/flask/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
-            + f" APPMAP_OUTPUT_DIR=/tmp {flask_debug} FLASK_APP=app.py flask run -p "
+            + f" APPMAP_OUTPUT_DIR=/tmp {flask_debug} FLASK_APP=flaskapp.py flask run -p "
             + str(_TestRecordRequests.server_port)
         )
 

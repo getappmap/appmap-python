@@ -1,11 +1,11 @@
 import pytest
-from app import app
+from flaskapp import app
 
 
-@pytest.fixture
-def client():
-    with app.test_client() as client:  # pylint: disable=no-member
-        yield client
+@pytest.fixture(name="client")
+def test_client():
+    with app.test_client() as c:  # pylint: disable=no-member
+        yield c
 
 
 def test_request(client):

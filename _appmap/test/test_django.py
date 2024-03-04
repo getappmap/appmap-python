@@ -36,7 +36,7 @@ from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
 # Import app just for the side-effects. It must happen after sys.path has been modified.
-import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+import djangoapp  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
 
 
 @pytest.mark.django_db
@@ -68,9 +68,9 @@ def test_template(events):
     render_to_string("hello_world.html")
     assert events[0].to_dict() == DictIncluding(
         {
-            "path": "_appmap/test/data/django/app/hello_world.html",
+            "path": "_appmap/test/data/django/djangoapp/hello_world.html",
             "event": "call",
-            "defined_class": "<templates>._AppmapTestDataDjangoAppHello_WorldHtml",
+            "defined_class": "<templates>._AppmapTestDataDjangoDjangoappHello_WorldHtml",
             "method_id": "render",
             "static": False,
         }
@@ -213,7 +213,7 @@ export PYTHONPATH="$PWD"
 cd _appmap/test/data/django/
 PYTHONPATH="$PYTHONPATH:$PWD/init"
 """
-            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings}"
+            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=djangoapp.{settings}"
             + " python manage.py runserver"
             + f" 127.0.0.1:{_TestRecordRequests.server_port}"
         )
