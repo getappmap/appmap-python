@@ -10,11 +10,11 @@ from .env import Env
 from .recorder import Recorder
 from .utils import (
     FnType,
+    FqFnName,
     appmap_tls,
     compact_dict,
     fqname,
     get_function_location,
-    split_function_name,
 )
 
 logger = Env.current.getLogger(__name__)
@@ -173,7 +173,7 @@ class Param:
 
 
 class CallEvent(Event):
-    __slots__ = ["_fn", "static", "receiver", "parameters", "labels"]
+    __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels"]
 
     @staticmethod
     def make(fn, fntype):
@@ -209,10 +209,9 @@ class CallEvent(Event):
             # going to log a message about a mismatch.
             wrapped_sig = inspect.signature(fn, follow_wrapped=True)
             if sig != wrapped_sig:
-                logger.debug(
-                    "signature of wrapper %s.%s doesn't match wrapped",
-                    *split_function_name(fn)
-                )
+                logger.debug("signature of wrapper %r doesn't match wrapped", fn)
+                logger.debug("sig: %r", sig)
+                logger.debug("wrapped_sig: %r", wrapped_sig)
 
         return [Param(p) for p in sig.parameters.values()]
 
@@ -270,17 +269,17 @@ class CallEvent(Event):
     @property
     @lru_cache(maxsize=None)
     def function_name(self):
-        return split_function_name(self._fn)
+        return self._fqfn.fqfn
 
     @property
     @lru_cache(maxsize=None)
     def defined_class(self):
-        return self.function_name[0]
+        return self._fqfn.fqclass
 
     @property
     @lru_cache(maxsize=None)
     def method_id(self):
-        return self.function_name[1]
+        return self._fqfn.fqfn[1]
 
     @property
     @lru_cache(maxsize=None)
@@ -308,6 +307,7 @@ class CallEvent(Event):
     def __init__(self, fn, fntype, parameters, labels):
         super().__init__("call")
         self._fn = fn
+        self._fqfn = FqFnName(fn)
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
         if fntype in FnType.CLASS | FnType.INSTANCE:
@@ -351,7 +351,15 @@ class MessageEvent(Event):  # pylint: disable=too-few-public-methods
     def __init__(self, message_parameters):
         super().__init__("call")
         self.message = []
-        for name, value in message_parameters.items():
+        self.message_parameters = message_parameters
+
+    @property
+    def message_parameters(self):
+        return self.message
+
+    @message_parameters.setter
+    def message_parameters(self, params):
+        for name, value in params.items():
             message_object = describe_value(name, value)
             self.message.append(message_object)
 
@@ -386,6 +394,7 @@ class HttpClientRequestEvent(MessageEvent):
 
 
 # pylint: disable=too-few-public-methods
+_NORMALIZED_PATH_INFO_ATTR = "normalized_path_info"
 class HttpServerRequestEvent(MessageEvent):
     """A call AppMap event representing an HTTP server request."""
 
@@ -406,7 +415,7 @@ class HttpServerRequestEvent(MessageEvent):
             "request_method": request_method,
             "protocol": protocol,
             "path_info": path_info,
-            "normalized_path_info": normalized_path_info,
+            _NORMALIZED_PATH_INFO_ATTR: normalized_path_info,
         }
 
         if headers is not None:
@@ -419,6 +428,14 @@ class HttpServerRequestEvent(MessageEvent):
             )
 
         self.http_server_request = compact_dict(request)
+
+    @property
+    def normalized_path_info(self):
+        return self.http_server_request.get(_NORMALIZED_PATH_INFO_ATTR, None)
+
+    @normalized_path_info.setter
+    def normalized_path_info(self, npi):
+        self.http_server_request[_NORMALIZED_PATH_INFO_ATTR] = npi
 
 
 class ReturnEvent(Event):
