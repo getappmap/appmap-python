@@ -1,7 +1,6 @@
 """Shared metadata gathering"""
 
 import platform
-import re
 from functools import lru_cache
 
 from . import utils

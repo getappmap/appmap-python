@@ -34,6 +34,8 @@ request_recorder: ContextVar[Optional[Recorder]] = ContextVar("appmap_request_re
 # parsing the body of an application/json request:
 JSON_ERRORS = (JSONDecodeError, AttributeError, TypeError, ValueError)
 
+REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
+REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
 
 class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
     """A special call event that records template rendering."""
@@ -145,7 +147,7 @@ class AppmapMiddleware(ABC):
             parent_id=call_event_id,
             elapsed=duration,
             status_code=status,
-            headers=dict(headers.items()),
+            headers=headers,
         )
         rec.add_event(return_event)
 

@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 include = [
-    'appmap.pth',
+    { path = 'appmap.pth', format = ['sdist','wheel'] },
     { path = '_appmap/test/**/*', format = 'sdist' }
 ]
 
@@ -50,34 +50,31 @@ packaging = ">=19.0"
 # So, if you'd like to run the tests outside of tox, run `pip install -r requirements-dev.txt` to
 # install it and the rest of the dev dependencies.
 
-[tool.poetry.dev-dependencies]
-httpretty = "^1.0.5"
-pytest = "^7.3.2"
-pytest-randomly = "^3.5.0"
-pylint = "^2.6.0"
-pytest-django = "~4.7"
-flake8 = "^3.8.4"
-pyfakefs = "^5.3.5"
-pprintpp = ">=0.4.0"
-coverage = "^5.3"
-pytest-mock = "^3.5.1"
+[tool.poetry.group.dev.dependencies]
 SQLAlchemy = "^1.4.11"
-tox = "^3.22.0"
 Twisted = "^22.4.0"
+asgiref = "^3.7.2"
+black = "^24.2.0"
+coverage = "^5.3"
+flake8 = "^3.8.4"
+httpretty = "^1.0.5"
+isort = "^5.10.1"
+pprintpp = ">=0.4.0"
+pyfakefs = "^5.3.5"
+pylint = "^2.6.0"
+pylint-exit = "^1.2.0"
+pytest = "^7.3.2"
+pytest-django = "~4.7"
+pytest-mock = "^3.5.1"
+pytest-randomly = "^3.5.0"
+pytest-shell-utilities = "^1.8.0"
+pytest-xprocess = "^0.23.0"
+python-decouple = "^3.5"
 requests = "^2.25.1"
-
+tox = "^3.22.0"
 # v2.30.0 of "requests" depends on urllib3 v2, which breaks the tests for http_client_requests. Pin
 # to v1 until this gets fixed.
 urllib3 = "^1"
-
-python-decouple = "^3.5"
-
-[tool.poetry.group.dev.dependencies]
-black = "^22.8.0"
-isort = "^5.10.1"
-pylint = "^2.16.2"
-pytest-shell-utilities = "^1.8.0"
-pylint-exit = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
@@ -92,7 +89,7 @@ appmap-agent-status = "appmap.command.appmap_agent_status:run"
 appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
 
 [tool.black]
-line-length = 100
+line-length = 102
 extend-exclude = '''
 /(
   | vendor
