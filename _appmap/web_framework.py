@@ -142,6 +142,7 @@ class AppmapMiddleware(ABC):
         raise NotImplementedError
 
     def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
+
         duration = time.monotonic() - start
         return_event = HttpServerResponseEvent(
             parent_id=call_event_id,
@@ -239,7 +240,7 @@ class MiddlewareInserter(ABC):
 
     @abstractmethod
     def insert_middleware(self):
-        """Insert the AppMap middleware."""
+        """Insert the AppMap middleware. Optionally return a new instance of the app."""
 
     @abstractmethod
     def remote_enabled(self):
@@ -247,10 +248,12 @@ class MiddlewareInserter(ABC):
 
     def run(self):
         if not self.middleware_present():
-            self.insert_middleware()
+            return self.insert_middleware()
 
         if self.remote_enabled() and not self.debug:
             self._show_warning()
+
+        return None
 
     def _show_warning(self):
         # The user has explicitly asked for remote recording to be enabled in production. Let them

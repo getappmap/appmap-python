@@ -1,4 +1,5 @@
 """AppMap recorder for Python"""
+
 from _appmap import generation  # noqa: F401
 from _appmap.env import Env  # noqa: F401
 from _appmap.importer import instrument_module  # noqa: F401
@@ -9,13 +10,21 @@ from _appmap.recording import Recording  # noqa: F401
 try:
     from . import django  # noqa: F401
 except ImportError:
-    # not using django
     pass
 
 try:
     from . import flask  # noqa: F401
 except ImportError:
-    # not using flask
+    pass
+
+try:
+    from . import fastapi  # noqa: F401
+except ImportError:
+    pass
+
+try:
+    from . import uvicorn  # noqa: F401
+except ImportError:
     pass
 
 # Note: pytest integration is configured as a pytest plugin, so it doesn't need to be imported here

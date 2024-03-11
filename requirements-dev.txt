@@ -1,5 +1,7 @@
 #requirements-dev.txt
 tox
 django
-flask >=2, < 3
+flask >=2, <= 3
 pytest-django<4.8
+fastapi
+httpx

@@ -301,6 +301,20 @@ class _TestRemoteRecording:
         data = res.data if hasattr(res, "data") else res.content
         generated_appmap = normalize_appmap(data)
 
+        for evt in generated_appmap["events"]:
+            # Strip out thread id. The values for these vary by framework, and
+            # may not even be the same within an AppMap (e.g. FastAPI). They
+            # should always be ints, though
+            if "thread_id" in evt:
+                value = evt.pop("thread_id")
+                assert isinstance(value, int)
+
+            # Check mime_type. These also vary by framework, but will be
+            # consistent within an AppMap.
+            if "http_server_response" in evt:
+                actual_content_type = evt["http_server_response"].pop("mime_type")
+                assert actual_content_type == self.expected_content_type
+
         expected_path = data_dir / "remote.appmap.json"
         with open(expected_path, encoding="utf-8") as expected:
             expected_appmap = json.load(expected)
@@ -308,34 +322,6 @@ class _TestRemoteRecording:
         assert generated_appmap == expected_appmap, f"expected appmap path {expected_path}"
         res = client.delete("/_appmap/record")
         assert res.status_code == 404
-
-
-def port_state(address, port):
-    ret = None
-    s = socket.socket()
-    try:
-        s.connect((address, port))
-        ret = "open"
-    except Exception:  # pylint: disable=broad-except
-        ret = "closed"
-        s.close()
-    return ret
-
-
-def wait_until_port_is(address, port, desired_state):
-    max_wait_seconds = 10
-    sleep_time = 0.1
-    max_count = 1 / sleep_time * max_wait_seconds
-    count = 0
-    # don't "while True" to not lock-up the testsuite if something goes wrong
-    while count < max_count:
-        current_state = port_state(address, port)
-        if current_state == desired_state:
-            break
-
-        time.sleep(sleep_time)
-        count += 1
-
 
 class _TestRecordRequests:
     """Common tests for per-requests recording (record requests.)"""

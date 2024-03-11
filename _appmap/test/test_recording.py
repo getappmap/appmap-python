@@ -208,7 +208,7 @@ def test_process_recording(data_dir, shell, tmp_path):
 
     appmap_dir = tmp / "tmp" / "appmap" / "process"
     appmap_files = list(appmap_dir.glob("*.appmap.json"))
-    assert len(appmap_files) == 1
+    assert len(appmap_files) == 1, "this only fails when run from VS Code?"
     actual = json.loads(appmap_files[0].read_text())
     assert len(actual["events"]) > 0
     assert len(actual["classMap"]) > 0

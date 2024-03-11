@@ -1,4 +1,5 @@
-""" remote_recording is a Flask app that can be mounted to expose the remote-recording endpoint. """
+""" remote_recording contains the functions neccessary to implement a remote-recording endpoint. """
+
 import json
 from threading import Lock
 

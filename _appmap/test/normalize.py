@@ -51,9 +51,13 @@ def normalize_headers(dct):
     """Remove some headers which are variable between implementations.
     This allows sharing tests between web frameworks, for example.
     """
-    for hdr in ["User-Agent", "Content-Length", "ETag", "Cookie", "Host"]:
-        value = dct.pop(hdr, None)
-        assert value is None or isinstance(value, str)
+    for key in list(dct.keys()):
+        value = dct.pop(key, None)
+        key = key.lower()
+        if key in ["user-agent", "content-length", "content-type", "etag", "cookie", "host"]:
+            assert value is None or isinstance(value, str)
+        else:
+            dct[key] = value
 
 
 def normalize_appmap(generated_appmap):
@@ -82,6 +86,11 @@ def normalize_appmap(generated_appmap):
             if len(dct["headers"]) == 0:
                 del dct["headers"]
         if "http_server_request" in dct:
+            # the "headers" property is optional, and will be different
+            # depending on the client sending the request. Rather than expecting
+            # particular headers, the test code should verify that other
+            # properties based on headers (e.g. "mime_type") are set correctly.
+            dct["http_server_request"].pop("headers", None)
             normalize(dct["http_server_request"])
             if "message" in dct:
                 del dct["message"]

@@ -9,19 +9,15 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
-            "id": 1,
-            "thread_id": 1
+            "id": 1
         },
         {
             "event": "return",
             "http_server_response": {
-                "headers": { "Content-Type": "text/html; charset=utf-8" },
-                "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
             "id": 2,
-            "parent_id": 1,
-            "thread_id": 1
+            "parent_id": 1
         },
         {
             "event": "call",
@@ -31,19 +27,15 @@
                 "protocol": "HTTP/1.1",
                 "request_method": "GET"
             },
-            "id": 3,
-            "thread_id": 1
+            "id": 3
         },
         {
             "event": "return",
             "http_server_response": {
-                "headers": { "Content-Type": "text/html; charset=utf-8" },
-                "mime_type": "text/html; charset=utf-8",
                 "status_code": 200
             },
             "id": 4,
-            "parent_id": 3,
-            "thread_id": 1
+            "parent_id": 3
         }
     ],
     "metadata": {

@@ -75,6 +75,9 @@ tox = "^3.22.0"
 # v2.30.0 of "requests" depends on urllib3 v2, which breaks the tests for http_client_requests. Pin
 # to v1 until this gets fixed.
 urllib3 = "^1"
+uvicorn = "^0.27.1"
+fastapi = "^0.110.0"
+httpx = "^0.27.0"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
