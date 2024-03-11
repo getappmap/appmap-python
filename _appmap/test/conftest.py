@@ -1,4 +1,5 @@
 import importlib
+import os
 import sys
 from distutils.dir_util import copy_tree
 from functools import partialmethod
@@ -8,6 +9,7 @@ import yaml
 
 import _appmap
 import appmap
+from _appmap.test.web_framework import _TestRecordRequests
 from appmap import generation
 
 from .. import utils
@@ -128,3 +130,17 @@ def fixture_verify_appmap(monkeypatch):
         return generation.dump(rec)
 
     return _generate
+
+
+@pytest.fixture(name="server_base")
+def server_base_fixture(request):
+    marker = request.node.get_closest_marker("server")
+    debug = marker.kwargs.get("debug", False)
+    server_env = os.environ.copy()
+    server_env.update(marker.kwargs.get("env", {}))
+    if "PYTHONPATH" in server_env:
+        server_env["PYTHONPATH"] = f"{server_env['PYTHONPATH']}:./init"
+    else:
+        server_env["PYTHONPATH"] = "./init"
+
+    return (_TestRecordRequests.server_host, _TestRecordRequests.server_port, debug, server_env)

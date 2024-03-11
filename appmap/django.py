@@ -229,7 +229,7 @@ class Middleware(AppmapMiddleware):
             request.method,
             request.build_absolute_uri(),
             response.status_code,
-            response,
+            response.headers,
             start,
             call_event_id,
         )
