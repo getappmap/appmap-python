@@ -142,8 +142,6 @@ class Config:
 
         self._load_config()
         self._load_functions()
-        logger.info("config: %s", self._config)
-        logger.debug("package_functions: %s", self.package_functions)
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
@@ -415,3 +413,8 @@ def initialize():
 
 
 initialize()
+
+c = Config()
+logger.info("config: %s", c._config)
+logger.debug("package_functions: %s", c.package_functions)
+logger.info("env: %r", os.environ)
