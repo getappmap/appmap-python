@@ -233,13 +233,13 @@ def django_server(xprocess, server_base):
                 pass
             return False
 
+        terminate_on_interrupt = True
         pattern = f"server at http://{host}:{port}"
         args = [
             "bash",
-            "-ec",
-            f"cd {Path(__file__).parent / 'data'/ 'django'};"
-            + f" {sys.executable} manage.py runserver"
-            + f" {host}:{port}",
+            Path(__file__).parent / "bin" / "runner",
+            (Path(__file__).parent / "data" / "django").as_posix(),
+            f"{Path(sys.executable).as_posix()} manage.py runserver {host}:{port}",
         ]
         env = {
             "DJANGO_SETTINGS_MODULE": f"djangoapp.{settings}",

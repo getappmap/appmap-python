@@ -125,16 +125,17 @@ def flask_server(xprocess, server_base):
                 pass
             return False
 
+        terminate_on_interrupt = True
         pattern = f"Running on http://{host}:{port}"
         args = [
             "bash",
-            "-ec",
-            f"cd {Path(__file__).parent / 'data'/ 'flask'};"
-            + f" {sys.executable} -m flask run"
-            + f" -p {port}",
+            Path(__file__).parent / "bin" / "runner",
+            (Path(__file__).parent / "data" / "flask").as_posix(),
+            f" {Path(sys.executable).as_posix()} -m flask run -p {port}",
         ]
         print(args)
         env = {
+            "APPMAP_DISABLE_LOG_FILE": "false",
             "FLASK_APP": "flaskapp.py",
             "FLASK_DEBUG": flask_debug,
             "PYTHONUNBUFFERED": "1",
@@ -142,7 +143,8 @@ def flask_server(xprocess, server_base):
             **server_env,
         }
 
-    xprocess.ensure("myserver", Starter)
+    pid, logpath = xprocess.ensure("myserver", Starter)
+    print(f"pid: {pid} logpath: {logpath}")
     yield NS(debug=debug, url=f"http://{host}:{port}")
     xprocess.getinfo("myserver").terminate()
 

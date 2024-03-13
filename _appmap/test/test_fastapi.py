@@ -88,14 +88,16 @@ def fastapi_server(xprocess, server_base):
                 pass
             return False
 
+        timeout = 10
+        terminate_on_interrupt = True
         pattern = f"Uvicorn running on http://{host}:{port}"
         # Can't set popen_kwargs["cwd"] until
         # https://github.com/pytest-dev/pytest-xprocess/issues/89 is fixed.
         args = [
             "bash",
-            "-ec",
-            f"cd {Path(__file__).parent / 'data'/ 'fastapi'};"
-            + f" {sys.executable} -m uvicorn fastapiapp.main:app"
+            Path(__file__).parent / "bin" / "runner",
+            (Path(__file__).parent / "data" / "fastapi").as_posix(),
+            f"{Path(sys.executable).as_posix()} -m uvicorn fastapiapp.main:app"
             + f" {reload} --host {host} --port {port}",
         ]
         env = {

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -ex
+
+cd "$1"; shift
+
+exec $@
