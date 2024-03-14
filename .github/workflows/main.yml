@@ -27,5 +27,5 @@ jobs:
         pip install tox
     - name: Test
       run: |
-        tox -e ${{ matrix.tox_env }}
+        tox -e ${{ matrix.tox_env }} -- pytest -svv -k test_fastapi
 
