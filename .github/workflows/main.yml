@@ -1,0 +1,31 @@
+name: Build
+on:
+    pull_request:
+    schedule:
+        - cron: "0 0 * * 0"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        python: ["3.12"]
+        include:
+        - python: "3.12"
+          tox_env: "py312-web"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install tox
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install tox
+    - name: Test
+      run: |
+        tox -e ${{ matrix.tox_env }} -- pytest -svv -k test_fastapi
+

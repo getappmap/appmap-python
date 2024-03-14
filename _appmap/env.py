@@ -4,6 +4,7 @@ import logging
 import logging.config
 import os
 from contextlib import contextmanager
+from datetime import datetime
 from os import environ
 from pathlib import Path
 from typing import cast
@@ -124,11 +125,10 @@ class Env(metaclass=_EnvMeta):
     def _configure_logging(self):
         trace_logger.install()
 
-        log_level = self.get("APPMAP_LOG_LEVEL", "warning").upper()
-
+        log_level = self.get("APPMAP_LOG_LEVEL", "warn").upper()
+        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "false").upper() != "FALSE"
         log_config = self.get("APPMAP_LOG_CONFIG")
-        log_stream = self.get("APPMAP_LOG_STREAM", "stderr")
-        log_stream = "ext://sys.%s" % (log_stream)
+        now = datetime.now()
         config_dict = {
             "version": 1,
             "disable_existing_loggers": False,
@@ -138,9 +138,7 @@ class Env(metaclass=_EnvMeta):
                     "format": "[{asctime}] {levelname} {name}: {message}",
                 }
             },
-            "handlers": {
-                "default": {"class": "logging.StreamHandler", "formatter": "default"}
-            },
+            "handlers": {"default": {"class": "logging.StreamHandler", "formatter": "default"}},
             "loggers": {
                 "appmap": {
                     "level": log_level,
@@ -154,6 +152,20 @@ class Env(metaclass=_EnvMeta):
                 },
             },
         }
+        if not disable_log:
+            # Default to being more verbose if we're logging to a file, but
+            # still allow the level to be overridden.
+            log_level = self.get("APPMAP_LOG_LEVEL", "info").upper()
+            loggers = config_dict["loggers"]
+            loggers["appmap"]["level"] = loggers["_appmap"]["level"] = log_level
+            config_dict["handlers"] = {
+                "default": {
+                    "class": "logging.FileHandler",
+                    "formatter": "default",
+                    "filename": f"appmap-{now:%Y%m%d%H%M%S}-{os.getpid()}.log",
+                }
+            }
+
         if log_config is not None:
             name, level = log_config.split("=", 2)
             config_dict["loggers"].update(

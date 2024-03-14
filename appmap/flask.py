@@ -1,8 +1,7 @@
 import re
 import time
+from importlib.metadata import version
 
-import flask
-import flask.cli
 import jinja2
 from flask import g, got_request_exception, request, request_finished, request_started
 from flask.cli import ScriptInfo
@@ -15,7 +14,13 @@ from _appmap.event import HttpServerRequestEvent
 from _appmap.flask import app as remote_recording_app
 from _appmap.metadata import Metadata
 from _appmap.utils import patch_class, values_dict
-from _appmap.web_framework import JSON_ERRORS, AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import (
+    JSON_ERRORS,
+    REMOTE_ENABLED_ATTR,
+    REQUEST_ENABLED_ATTR,
+    AppmapMiddleware,
+    MiddlewareInserter,
+)
 from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
 try:
@@ -55,10 +60,6 @@ def request_params(req):
 NP_PARAMS = re.compile(r"<Rule '(.*?)'")
 NP_PARAM_DELIMS = str.maketrans("<>", "{}")
 
-_REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
-_REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
-
-
 class AppmapFlask(AppmapMiddleware):
     """
     A Flask extension to add remote recording to an application.
@@ -70,33 +71,36 @@ class AppmapFlask(AppmapMiddleware):
     from appmap.flask import AppmapFlask
 
     app = new Flask(__Name__)
-    AppmapFlask().init_app(app)
+    AppmapFlask(app).init_app()
     ```
     """
 
-    def __init__(self):
+    def __init__(self, app):
         super().__init__("Flask")
+        self.app = app
 
-    def init_app(self, app):
-        enable_by_default = "true" if app.debug else "false"
+    def init_app(self):
+        enable_by_default = "true" if self.app.debug else "false"
         remote_enabled = Env.current.enables("remote", enable_by_default)
         if remote_enabled:
             logger.debug("Remote recording is enabled (Flask)")
-            app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {"/_appmap": remote_recording_app})
-        setattr(app, _REMOTE_ENABLED_ATTR, remote_enabled)
+            self.app.wsgi_app = DispatcherMiddleware(
+                self.app.wsgi_app, {"/_appmap": remote_recording_app}
+            )
+        setattr(self.app, REMOTE_ENABLED_ATTR, remote_enabled)
 
-        request_started.connect(self.request_started, app, weak=False)
-        request_finished.connect(self.request_finished, app, weak=False)
-        got_request_exception.connect(self.got_request_exception, app, weak=False)
+        request_started.connect(self.request_started, self.app, weak=False)
+        request_finished.connect(self.request_finished, self.app, weak=False)
+        got_request_exception.connect(self.got_request_exception, self.app, weak=False)
 
-        setattr(app, _REQUEST_ENABLED_ATTR, True)
+        setattr(self.app, REQUEST_ENABLED_ATTR, True)
 
     def request_started(self, _, **__):
         # request context is bound, we can use flask.request now:
         self.before_request_hook(request)
 
     def before_request_main(self, rec, req):
-        Metadata.add_framework("flask", flask.__version__)
+        Metadata.add_framework("flask", version("flask"))
         np = None
         if req.url_rule:
             # pragma pylint: disable=line-too-long
@@ -167,13 +171,13 @@ class FlaskInserter(MiddlewareInserter):
         self.app = app
 
     def middleware_present(self):
-        return hasattr(self.app, _REQUEST_ENABLED_ATTR)
+        return hasattr(self.app, REQUEST_ENABLED_ATTR)
 
     def insert_middleware(self):
-        AppmapFlask().init_app(self.app)
+        AppmapFlask(self.app).init_app()
 
     def remote_enabled(self):
-        return getattr(self.app, _REMOTE_ENABLED_ATTR, None)
+        return getattr(self.app, REMOTE_ENABLED_ATTR, None)
 
 
 def install_extension(wrapped, _, args, kwargs):

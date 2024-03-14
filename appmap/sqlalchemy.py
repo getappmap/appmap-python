@@ -1,8 +1,8 @@
 """SQL statement capture for SQLAlchemy."""
 
 import time
+from importlib.metadata import version
 
-import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -21,7 +21,7 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
         # Don't record this query in the appmap.
         pass
     elif Recorder.get_enabled():
-        Metadata.add_framework("SQLAlchemy", sqlalchemy.__version__)
+        Metadata.add_framework("SQLAlchemy", version("sqlalchemy"))
         if executemany:
             # Sometimes the same query is executed with different parameter sets.
             # Instead of substituting them all, just say how many times it was run.

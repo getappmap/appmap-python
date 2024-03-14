@@ -1,7 +1,7 @@
 import json
 import sys
+from importlib.metadata import PackageNotFoundError, version
 
-from importlib_metadata import PackageNotFoundError, version
 from packaging.version import parse
 
 from _appmap.py_version_check import AppMapPyVerException, check_py_version

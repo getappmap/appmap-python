@@ -1,6 +1,7 @@
 import json
 import platform
 import re
+from importlib.metadata import version as dist_version
 from operator import itemgetter
 
 import pytest
@@ -60,7 +61,7 @@ class AppMapTestBase:
             for f in frameworks:
                 if f["name"] == "pytest":
                     v = f.pop("version")
-                    assert v == pytest.__version__
+                    assert v == dist_version("pytest")
 
     def normalize_appmap(self, generated_appmap):
         """

@@ -9,7 +9,7 @@ DEBUG = True
 
 # Must set ROOT_URLCONF else we get
 # AttributeError: 'Settings' object has no attribute 'ROOT_URLCONF'
-ROOT_URLCONF = "app.urls"
+ROOT_URLCONF = "djangoapp.urls"
 
 # Turn off deprecation warning
 USE_TZ = True
