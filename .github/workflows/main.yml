@@ -26,6 +26,7 @@ jobs:
         python -m pip install --upgrade pip setuptools
         pip install tox
     - name: Test
+      shell: bash
       run: |
         tox -e ${{ matrix.tox_env }} -- pytest -svv -k test_fastapi
 
