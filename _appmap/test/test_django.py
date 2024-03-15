@@ -3,9 +3,10 @@
 
 import json
 import os
+import socket
 import sys
 from pathlib import Path
-from threading import Thread
+from types import SimpleNamespace as NS
 
 import django
 import django.core.handlers.exception
@@ -15,28 +16,45 @@ import django.test
 import pytest
 from django.template.loader import render_to_string
 from django.test.client import MULTIPART_CONTENT
+from xprocess import ProcessStarter
 
 import appmap
 import appmap.django  # noqa: F401
 from _appmap.metadata import Metadata
 
 from ..test.helpers import DictIncluding
-
-# Make sure assertions in web_framework get rewritten (e.g. to show
-# diffs in generated appmaps)
-pytest.register_assert_rewrite("_appmap.test.web_framework")
-
-# pylint: disable=unused-import,wrong-import-position
-from .web_framework import TestRemoteRecording  # pyright:ignore
-from .web_framework import TestRequestCapture  # pyright: ignore
-from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
-
-# pylint: enable=unused-import
+from .web_framework import (
+    _TestFormCapture,
+    _TestFormData,
+    _TestRecordRequests,
+    _TestRemoteRecording,
+    _TestRequestCapture,
+)
 
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
 # Import app just for the side-effects. It must happen after sys.path has been modified.
-import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+import djangoapp  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+
+
+class TestFormCapture(_TestFormCapture):
+    pass
+
+
+class TestFormTest(_TestFormData):
+    pass
+
+
+class TestRecordRequests(_TestRecordRequests):
+    pass
+
+
+class TestRemoteRecording(_TestRemoteRecording):
+    pass
+
+
+class TestRequestCapture(_TestRequestCapture):
+    pass
 
 
 @pytest.mark.django_db
@@ -68,9 +86,9 @@ def test_template(events):
     render_to_string("hello_world.html")
     assert events[0].to_dict() == DictIncluding(
         {
-            "path": "_appmap/test/data/django/app/hello_world.html",
+            "path": "_appmap/test/data/django/djangoapp/hello_world.html",
             "event": "call",
-            "defined_class": "<templates>._AppmapTestDataDjangoAppHello_WorldHtml",
+            "defined_class": "<templates>._AppmapTestDataDjangoDjangoappHello_WorldHtml",
             "method_id": "render",
             "static": False,
         }
@@ -200,55 +218,21 @@ class TestDjangoApp:
         assert not (pytester.path / "tmp").exists()
 
 
-class TestRecordRequestsDjango(_TestRecordRequests):
-    def server_start_thread(self, debug=True):
-        # Use appmap from our working copy, not the module installed by virtualenv. Add the init
-        # directory so the sitecustomize.py file it contains will be loaded on startup. This
-        # simulates a real installation.
-        settings = "settings_dev" if debug else "settings"
-        exec_cmd(
-            """
-export PYTHONPATH="$PWD"
+@pytest.fixture(name="server")
+def django_server(xprocess, server_base):
+    debug = server_base.debug
+    host = server_base.host
+    port = server_base.port
+    settings = "settings_dev" if debug else "settings"
 
-cd _appmap/test/data/django/
-PYTHONPATH="$PYTHONPATH:$PWD/init"
-"""
-            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings}"
-            + " python manage.py runserver"
-            + f" 127.0.0.1:{_TestRecordRequests.server_port}"
-        )
+    name = "django"
+    pattern = f"server at http://{host}:{port}"
+    cmd = f"manage.py runserver {host}:{port}"
+    env = {"DJANGO_SETTINGS_MODULE": f"djangoapp.{settings}"}
 
-    def server_start(self, debug=True):
-        def start_with_debug():
-            self.server_start_thread(debug)
+    xprocess.ensure(name, server_base.factory(name, cmd, pattern, env))
 
-        # start as background thread so running the tests can continue
-        thread = Thread(target=start_with_debug)
-        thread.start()
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "open")
+    url = f"http://{server_base.host}:{port}"
+    yield NS(debug=debug, url=url)
 
-    def server_stop(self):
-        exec_cmd(
-            "ps -ef"
-            + "| grep -i 'manage.py runserver'"
-            + "| grep -v grep"
-            + "| awk '{ print $2 }'"
-            + "| xargs kill -9"
-        )
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "closed")
-
-    def test_record_request_appmap_enabled_requests_enabled_no_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(False)
-        self.server_stop()
-
-    def test_record_request_appmap_enabled_requests_enabled_and_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(True)
-        self.server_stop()
-
-    # it's not possible to test for
-    # appmap_not_enabled_requests_enabled_and_remote because when
-    # APPMAP=false the routes for remote recording are disabled.
+    xprocess.getinfo(name).terminate()

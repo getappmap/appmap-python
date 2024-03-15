@@ -3,27 +3,50 @@
 
 import importlib
 import os
-from threading import Thread
+import socket
+import sys
+from functools import partial
+from importlib.metadata import version
+from pathlib import Path
+from types import SimpleNamespace as NS
 
 import flask
 import pytest
+from attr import dataclass
+from xprocess import ProcessStarter
 
 from _appmap.env import Env
 from _appmap.metadata import Metadata
 from appmap.flask import AppmapFlask
 
 from ..test.helpers import DictIncluding
+from .web_framework import (
+    _TestFormCapture,
+    _TestFormData,
+    _TestRecordRequests,
+    _TestRemoteRecording,
+    _TestRequestCapture,
+)
 
-# Make sure assertions in web_framework get rewritten (e.g. to show
-# diffs in generated appmaps)
-pytest.register_assert_rewrite("_appmap.test.web_framework")
 
-# pylint: disable=unused-import,wrong-import-position
-from .web_framework import TestRemoteRecording  # pyright:ignore
-from .web_framework import TestRequestCapture  # pyright: ignore
-from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
+class TestFormCapture(_TestFormCapture):
+    pass
 
-# pylint: enable=unused-import
+
+class TestFormTest(_TestFormData):
+    pass
+
+
+class TestRecordRequests(_TestRecordRequests):
+    pass
+
+
+class TestRemoteRecording(_TestRemoteRecording):
+    pass
+
+
+class TestRequestCapture(_TestRequestCapture):
+    pass
 
 
 @pytest.fixture(name="app")
@@ -34,15 +57,15 @@ def flask_app(data_dir, monkeypatch):
 
     monkeypatch.setenv("FLASK_DEBUG", "True")
 
-    import app  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
+    import flaskapp  # pyright: ignore pylint: disable=import-error,import-outside-toplevel
 
-    importlib.reload(app)
+    importlib.reload(flaskapp)
 
     # Add the AppmapFlask extension to the app. This now happens automatically when a Flask app is
     # started from the command line, but must be done manually otherwise.
-    AppmapFlask().init_app(app.app)
+    AppmapFlask(flaskapp.app).init_app()
 
-    return app.app
+    return flaskapp.app
 
 
 @pytest.fixture(name="client")
@@ -56,7 +79,7 @@ def flask_client(app):
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
 def test_framework_metadata(client, events):  # pylint: disable=unused-argument
     client.get("/")
-    assert Metadata()["frameworks"] == [{"name": "flask", "version": flask.__version__}]
+    assert Metadata()["frameworks"] == [{"name": "flask", "version": version("flask")}]
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
@@ -89,59 +112,25 @@ def test_template(app, events):
     )
 
 
-class TestRecordRequestsFlask(_TestRecordRequests):
-    def server_start_thread(self, debug=True):
-        # Use appmap from our working copy, not the module installed by virtualenv. Add the init
-        # directory so the sitecustomize.py file it contains will be loaded on startup. This
-        # simulates a real installation.
-        flask_debug = "FLASK_DEBUG=1" if debug else ""
+@pytest.fixture(name="server")
+def flask_server(xprocess, server_base):
+    debug = server_base.debug
+    host = server_base.host
+    port = server_base.port
 
-        exec_cmd(
-            """
-export PYTHONPATH="$PWD"
+    name = "flask"
+    pattern = f"Running on http://{host}:{port}"
+    cmd = f" -m flask run -p {port}"
+    env = {
+        "FLASK_APP": "flaskapp.py",
+        "FLASK_DEBUG": "1" if debug else "0",
+    }
+    xprocess.ensure(name, server_base.factory(name, cmd, pattern, env))
 
-cd _appmap/test/data/flask/
-PYTHONPATH="$PYTHONPATH:$PWD/init"
-"""
-            + f" APPMAP_OUTPUT_DIR=/tmp {flask_debug} FLASK_APP=app.py flask run -p "
-            + str(_TestRecordRequests.server_port)
-        )
+    url = f"http://{server_base.host}:{port}"
+    yield NS(debug=debug, url=url)
 
-    def server_start(self, debug=True):
-        # start as background thread so running the tests can continue
-        def start_with_debug():
-            self.server_start_thread(debug)
-
-        thread = Thread(target=start_with_debug)
-        thread.start()
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "open")
-
-    def server_stop(self):
-        exec_cmd(
-            "ps -ef"
-            + "| grep -i 'flask run'"
-            + "| grep -v grep"
-            + "| awk '{ print $2 }'"
-            + "| xargs kill -9"
-        )
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "closed")
-
-    def test_record_request_appmap_enabled_requests_enabled_no_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(False)
-        self.server_stop()
-
-    def test_record_request_appmap_enabled_requests_enabled_and_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(True)
-        self.server_stop()
-
-    # it's not possible to test for
-    # appmap_not_enabled_requests_enabled_and_remote because when
-    # APPMAP=false the routes for remote recording are disabled.
-
+    xprocess.getinfo(name).terminate()
 
 class TestFlaskApp:
     """

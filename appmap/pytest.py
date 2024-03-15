@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 import pytest
 
 from _appmap import noappmap, testing_framework, wrapt
@@ -26,7 +28,7 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
     @pytest.hookimpl
     def pytest_sessionstart(session):
         session.appmap = testing_framework.session(
-            name="pytest", recorder_type="tests", version=pytest.__version__
+            name="pytest", recorder_type="tests", version=version("pytest")
         )
 
     @pytest.hookimpl

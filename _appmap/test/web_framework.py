@@ -5,11 +5,8 @@ import concurrent.futures
 import json
 import multiprocessing
 import os
-import socket
-import subprocess
 import time
 import traceback
-from abc import abstractmethod
 from os.path import exists
 from random import SystemRandom
 
@@ -19,10 +16,13 @@ import requests
 import appmap
 from _appmap.env import Env
 
-from ..test.helpers import DictIncluding
+from ..test.helpers import DictIncluding, HeadersIncluding
 from .normalize import normalize_appmap
 
-SR = SystemRandom()
+TEST_HOST = "127.0.0.1"
+TEST_PORT = 8000
+
+_SR = SystemRandom()
 
 
 def content_type(res):
@@ -34,7 +34,31 @@ def content_type(res):
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
-class TestRequestCapture:
+class _TestFormData:
+    @staticmethod
+    @pytest.mark.parametrize("bad_json", ["bad json", 1, False, None, [2, 3]])
+    def test_post_bad_json(events, client, bad_json):
+        client.post(
+            "/test?my_param=example",
+            data=str(bad_json),
+            content_type="application/json",
+        )
+
+        assert events[0].message == [
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+        ]
+
+    @staticmethod
+    def test_post_multipart(events, client):
+        client.post("/test", data={"my_param": "example"}, content_type="multipart/form-data")
+
+        assert events[0].message == [
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+        ]
+
+
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+class _TestRequestCapture:
     """Common tests for HTTP server request and response capture."""
 
     @staticmethod
@@ -51,7 +75,7 @@ class TestRequestCapture:
             {"status_code": 200, "mime_type": "text/html; charset=utf-8"}
         )
 
-        assert "ETag" in response["headers"]
+        assert "etag" in map(str.lower, response["headers"].keys())
 
     @staticmethod
     def test_http_capture_post(client, events):
@@ -76,7 +100,7 @@ class TestRequestCapture:
             }
         )
 
-        assert events[0].http_server_request["headers"] == DictIncluding(
+        assert events[0].http_server_request["headers"] == HeadersIncluding(
             {"Accept": "application/json", "Accept-Language": "pl"}
         )
 
@@ -84,12 +108,12 @@ class TestRequestCapture:
     def test_post(events, client):
         client.post(
             "/test",
-            data=json.dumps({"my_param": "example"}),
-            content_type="application/json; charset=UTF-8",
+            json={"my_param": "example"},
             headers={
                 "Authorization": 'token "test-token"',
                 "Accept": "application/json",
                 "Accept-Language": "pl",
+                "Content-Type": "application/json; charset=UTF-8",
             },
         )
 
@@ -108,7 +132,7 @@ class TestRequestCapture:
             }
         )
 
-        assert events[0].http_server_request["headers"] == DictIncluding(
+        assert events[0].http_server_request["headers"] == HeadersIncluding(
             {"Accept": "application/json", "Accept-Language": "pl"}
         )
 
@@ -137,20 +161,6 @@ class TestRequestCapture:
         ]
 
     @staticmethod
-    def test_post_form_urlencoded(events, client):
-        client.post(
-            "/test",
-            data="my_param=example",
-            content_type="application/x-www-form-urlencoded",
-        )
-
-        assert events[0].message == [
-            DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
-            )
-        ]
-
-    @staticmethod
     def test_put(events, client):
         client.put("/test", json={"my_param": "example"})
 
@@ -160,42 +170,16 @@ class TestRequestCapture:
             )
         ]
 
-    @pytest.mark.parametrize("bad_json", ["bad json", 1, False, None, [2, 3]])
-    def test_post_bad_json(self, events, client, bad_json):
-        client.post(
-            "/test?my_param=example",
-            data=str(bad_json),
-            content_type="application/json",
-        )
-
-        assert events[0].message == [
-            DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
-            )
-        ]
-
-    @staticmethod
-    def test_post_multipart(events, client):
-        client.post(
-            "/test", data={"my_param": "example"}, content_type="multipart/form-data"
-        )
-
-        assert events[0].message == [
-            DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
-            )
-        ]
-
     @staticmethod
     def test_post_with_query(events, client):
-        client.post("/test?my_param=get", data={"my_param": "example"})
+        client.post("/test?my_param=get&my_param=an", json={"my_param": "example"})
 
         assert events[0].message == [
             DictIncluding(
                 {
                     "name": "my_param",
                     "class": "builtins.list",
-                    "value": "['get', 'example']",
+                    "value": "['get', 'an', 'example']",
                 }
             )
         ]
@@ -228,8 +212,42 @@ class TestRequestCapture:
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
-class TestRemoteRecording:
+class _TestFormCapture:
+    @staticmethod
+    def test_post_form_urlencoded(events, client):
+        client.post(
+            "/test",
+            data="my_param=example",
+            content_type="application/x-www-form-urlencoded",
+        )
+
+        assert events[0].message == [
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+        ]
+
+    @staticmethod
+    def test_post_multipart(events, client):
+        client.post("/test", data={"my_param": "example"}, content_type="multipart/form-data")
+
+        assert events[0].message == [
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+        ]
+
+
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+class _TestRemoteRecording:
     """Common tests for remote recording."""
+
+    @property
+    def expected_content_type(self):
+        return self._expected_content_type
+
+    @expected_content_type.setter
+    def expected_content_type(self, value):
+        self._expected_content_type = value
+
+    def setup_method(self):
+        self.expected_content_type = "text/html; charset=utf-8"
 
     @staticmethod
     # since APPMAP records by default, disable it explicitly
@@ -265,16 +283,17 @@ class TestRemoteRecording:
         res = client.post("/_appmap/record")
         assert res.status_code == 409
 
-    @staticmethod
-    def test_can_record(data_dir, client):
+    def test_can_record(self, data_dir, client):
         res = client.post("/_appmap/record")
         assert res.status_code == 200
 
         res = client.get("/")
         assert res.status_code == 200
+        assert res.headers["content-type"] == self.expected_content_type
 
         res = client.get("/user/test_user")
         assert res.status_code == 200
+        assert res.headers["content-type"] == self.expected_content_type
 
         res = client.delete("/_appmap/record")
         assert res.status_code == 200
@@ -282,92 +301,49 @@ class TestRemoteRecording:
         data = res.data if hasattr(res, "data") else res.content
         generated_appmap = normalize_appmap(data)
 
+        for evt in generated_appmap["events"]:
+            # Strip out thread id. The values for these vary by framework, and
+            # may not even be the same within an AppMap (e.g. FastAPI). They
+            # should always be ints, though
+            if "thread_id" in evt:
+                value = evt.pop("thread_id")
+                assert isinstance(value, int)
+
+            # Check mime_type. These also vary by framework, but will be
+            # consistent within an AppMap.
+            if "http_server_response" in evt:
+                actual_content_type = evt["http_server_response"].pop("mime_type")
+                assert actual_content_type == self.expected_content_type
+
         expected_path = data_dir / "remote.appmap.json"
         with open(expected_path, encoding="utf-8") as expected:
             expected_appmap = json.load(expected)
 
-        assert (
-            generated_appmap == expected_appmap
-        ), f"expected appmap path {expected_path}"
-
+        assert generated_appmap == expected_appmap, f"expected appmap path {expected_path}"
         res = client.delete("/_appmap/record")
         assert res.status_code == 404
-
-
-def exec_cmd(command):
-    p = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    output, _ = p.communicate()
-    return output.decode()
-
-
-def port_state(address, port):
-    ret = None
-    s = socket.socket()
-    try:
-        s.connect((address, port))
-        ret = "open"
-    except Exception:  # pylint: disable=broad-except
-        ret = "closed"
-        s.close()
-    return ret
-
-
-def wait_until_port_is(address, port, desired_state):
-    max_wait_seconds = 10
-    sleep_time = 0.1
-    max_count = 1 / sleep_time * max_wait_seconds
-    count = 0
-    # don't "while True" to not lock-up the testsuite if something goes wrong
-    while count < max_count:
-        current_state = port_state(address, port)
-        if current_state == desired_state:
-            break
-
-        time.sleep(sleep_time)
-        count += 1
-
 
 class _TestRecordRequests:
     """Common tests for per-requests recording (record requests.)"""
 
-    server_port = 8000
+    @classmethod
+    def server_url(cls):
+        return f"http://{TEST_HOST}:{TEST_PORT}"
 
-    @abstractmethod
-    def server_start(self, debug=False):
-        """Start the webserver in the background. Don't block execution."""
-
-    @abstractmethod
-    def server_stop(self):
-        """Stop the webserver."""
-
-    @staticmethod
-    def server_url():
-        return "http://127.0.0.1:" + str(_TestRecordRequests.server_port)
-
-    @staticmethod
-    def record_request_thread():
+    @classmethod
+    def record_request_thread(cls):
         # I've seen occasional test failures, seemingly because the test servers can't handle the
         # barrage of requests. A tiny bit of delay still causes many, many concurrent requests, but
         # eliminates the failures.
-        time.sleep(SR.uniform(0, 0.1))
-        return requests.get(_TestRecordRequests.server_url() + "/test", timeout=30)
+        time.sleep(_SR.uniform(0, 0.1))
+        return requests.get(cls.server_url() + "/test", timeout=30)
 
-    @staticmethod
-    @pytest.mark.appmap_enabled
-    def record_request(record_remote):
+    def record_requests(self, record_remote):
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
             # events when per-request recording is enabled
-            response = requests.post(
-                _TestRecordRequests.server_url() + "/_appmap/record", timeout=30
-            )
+            response = requests.post(self.server_url() + "/_appmap/record", timeout=30)
             assert response.status_code == 200
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -377,7 +353,7 @@ class _TestRecordRequests:
             max_number_of_threads = 400
             future_to_request_number = {}
             for n in range(max_number_of_threads):
-                future = executor.submit(_TestRecordRequests.record_request_thread)
+                future = executor.submit(self.record_request_thread)
                 future_to_request_number[future] = n
 
             # wait for all threads to complete
@@ -396,11 +372,11 @@ class _TestRecordRequests:
                     assert response.get_data() == b"testing"
 
                 if hasattr(response, "headers"):
-                    assert response.headers["AppMap-File-Name"]
+                    assert "AppMap-File-Name" in response.headers
                     appmap_file_name = response.headers["AppMap-File-Name"]
                 else:
                     # response.headers doesn't exist in Django 2.2
-                    assert response["AppMap-File-Name"]
+                    assert "AppMap-File-Name" in response
                     appmap_file_name = response["AppMap-File-Name"]
                 assert exists(appmap_file_name)
                 appmap_file_name_basename = appmap_file_name.split("/")[-1]
@@ -423,31 +399,34 @@ class _TestRecordRequests:
 
                     # AppMap should contain only one request and response
                     http_server_requests = [
-                        event["http_server_request"]
-                        for event in recording["events"]
-                        if "http_server_request" in event
+                        event for event in recording["events"] if "http_server_request" in event
                     ]
                     http_server_responses = [
-                        event["http_server_response"]
-                        for event in recording["events"]
-                        if "http_server_response" in event
+                        event for event in recording["events"] if "http_server_response" in event
                     ]
                     assert len(http_server_requests) == 1
                     assert len(http_server_responses) == 1
+                    assert http_server_responses[0]["parent_id"] == http_server_requests[0]["id"]
 
                 os.remove(appmap_file_name)
 
-    def test_remote_disabled_in_prod(self):
-        self.server_stop()
-        self.server_start(debug=False)
-        response = requests.get(self.server_url() + "/_appmap/record", timeout=30)
-        assert response.status_code == 404
-        self.server_stop()
+    @pytest.mark.appmap_enabled
+    @pytest.mark.server(debug=True)
+    def test_record_requests_with_remote(self, server):
+        self.record_requests(server.debug)
 
-    def test_remote_enabled_in_prod(self, monkeypatch):
-        self.server_stop()
-        monkeypatch.setenv("APPMAP_RECORD_REMOTE", "true")
-        self.server_start(debug=False)
-        response = requests.get(self.server_url() + "/_appmap/record", timeout=30)
+    @pytest.mark.appmap_enabled
+    @pytest.mark.server(debug=False)
+    def test_record_requests_without_remote(self, server):
+        self.record_requests(server.debug)
+
+    @pytest.mark.server(debug=False)
+    def test_remote_disabled_in_prod(self, server):
+        response = requests.get(server.url + "/_appmap/record", timeout=30)
+        assert response.status_code == 404
+
+    @pytest.mark.server(debug=False, env={"APPMAP_RECORD_REMOTE": "true"})
+    @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REMOTE": "true"})
+    def test_remote_enabled_in_prod(self, server):
+        response = requests.get(server.url + "/_appmap/record", timeout=30)
         assert response.status_code == 200
-        self.server_stop()

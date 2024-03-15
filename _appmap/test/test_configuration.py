@@ -84,39 +84,40 @@ def test_config_no_message(caplog):
     assert caplog.text == ""
 
 
-cf = lambda: ConfigFilter(NullFilter())
+def cf():
+    return ConfigFilter(NullFilter())
 
 
 @pytest.mark.appmap_enabled(config="appmap-class.yml")
 def test_class_included():
-    f = Filterable("package1.package2.Mod1Class", None)
+    f = Filterable(None, "package1.package2.Mod1Class", None)
     assert cf().filter(f) is True
 
 
 @pytest.mark.appmap_enabled(config="appmap-func.yml")
 def test_function_included():
-    f = Filterable("package1.package2.Mod1Class.func", None)
+    f = Filterable(None, "package1.package2.Mod1Class.func", None)
     assert cf().filter(f) is True
 
 
 @pytest.mark.appmap_enabled(config="appmap-class.yml")
 def test_function_included_by_class():
-    f = Filterable("package1.package2.Mod1Class.func", None)
+    f = Filterable(None, "package1.package2.Mod1Class.func", None)
     assert cf().filter(f) is True
 
 
 @pytest.mark.appmap_enabled
 class TestConfiguration:
     def test_package_included(self):
-        f = Filterable("package1.cls", None)
+        f = Filterable(None, "package1.cls", None)
         assert cf().filter(f) is True
 
     def test_function_included_by_package(self):
-        f = Filterable("package1.package2.Mod1Class.func", None)
+        f = Filterable(None, "package1.package2.Mod1Class.func", None)
         assert cf().filter(f) is True
 
     def test_class_prefix_doesnt_match(self):
-        f = Filterable("package1_prefix.cls", None)
+        f = Filterable(None, "package1_prefix.cls", None)
         assert cf().filter(f) is False
 
 

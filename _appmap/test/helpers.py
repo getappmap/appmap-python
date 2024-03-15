@@ -15,3 +15,14 @@ class DictIncluding(dict):
 
     def __eq__(self, other):
         return other.items() >= self.items()
+
+
+class HeadersIncluding(dict):
+    """Like DictIncluding, but key comparison is case-insensitive."""
+
+    def __eq__(self, other):
+        for k in self.keys():
+            v = other.get(k, other.get(k.lower(), None))
+            if v is None:
+                return False
+        return True

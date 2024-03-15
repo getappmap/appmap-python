@@ -1,15 +1,20 @@
-from contextvars import ContextVar
 import inspect
 import os
 import re
 import shlex
 import subprocess
-import threading
 import types
-from collections.abc import MutableMapping
-from enum import IntFlag, auto
+from contextlib import contextmanager
+from contextvars import ContextVar
+from enum import Enum, IntFlag, auto
+from typing import Any, Callable
 
 from .env import Env
+
+
+class Scope(Enum):
+    MODULE = 0
+    CLASS = 1
 
 
 def compact_dict(dictionary):
@@ -41,27 +46,6 @@ class FnType(IntFlag):
         return FnType.INSTANCE
 
 
-class ThreadLocalDict(threading.local, MutableMapping):
-    def __init__(self):
-        super().__init__()
-        self.values = {}
-
-    def __getitem__(self, k):
-        return self.values[k]
-
-    def __setitem__(self, k, v):
-        self.values[k] = v
-
-    def __delitem__(self, k):
-        del self.values[k]
-
-    def __iter__(self):
-        return iter(self.values)
-
-    def __len__(self):
-        return len(self.values)
-
-
 _appmap_tls = ContextVar("tls")
 
 
@@ -73,24 +57,57 @@ def appmap_tls():
         return _appmap_tls.get()
 
 
+@contextmanager
+def appmap_tls_context():
+    token = _appmap_tls.set({})
+    try:
+        yield
+    finally:
+        _appmap_tls.reset(token)
+
+
 def fqname(cls):
     return "%s.%s" % (cls.__module__, cls.__qualname__)
 
-
-def split_function_name(fn):
+class FqFnName:
     """
-    Given a method, return a tuple containing its fully-qualified
-    class name and the method name.
+    FqFnName makes it easy to reference the parts of the fully-qualified name of a callable.
     """
-    qualname = fn.__qualname__
-    if "." in qualname:
-        class_name, fn_name = qualname.rsplit(".", 1)
-        class_name = "%s.%s" % (fn.__module__, class_name)
-    else:
-        class_name = fn.__module__
-        fn_name = qualname
-    return (class_name, fn_name)
 
+    def __init__(self, fn: Callable[..., Any]):
+
+        self._modname = fn.__module__
+        qualname = fn.__qualname__
+        if "." in qualname:
+            self._scope = Scope.CLASS
+            self._class_name, self._fn_name = qualname.rsplit(".", 1)
+        else:
+            self._scope = Scope.MODULE
+            self._class_name = None
+            self._fn_name = qualname
+
+    @property
+    def scope(self) -> Scope:
+        """The scope of the Callable, i.e. whether it's contained in a module or a class."""
+        return self._scope
+
+    @property
+    def fqmod(self):
+        return self._modname
+
+    @property
+    def fqclass(self):
+        return self._modname if self._class_name is None else f"{self._modname}.{self._class_name}"
+
+    @property
+    def fqfn(self):
+        return (self.fqclass, self._fn_name)
+
+    @property
+    def fn_name(self):
+        return self._fn_name
+
+FqFnName(fqname)
 
 def root_relative_path(path):
     """Returns the path relative to the current root_dir.

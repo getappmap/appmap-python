@@ -1,7 +1,8 @@
 """Tests for the SQLAlchemy integration."""
 
+from importlib.metadata import version
+
 import pytest
-import sqlalchemy
 from sqlalchemy import (
     Column,
     ForeignKey,
@@ -27,9 +28,7 @@ class TestSQLAlchemy(AppMapTestBase):
             {"sql": "SELECT 1", "database_type": "sqlite"}
         )
         assert events[0].sql_query["server_version"].startswith("3.")
-        assert Metadata()["frameworks"] == [
-            {"name": "SQLAlchemy", "version": sqlalchemy.__version__}
-        ]
+        assert Metadata()["frameworks"] == [{"name": "SQLAlchemy", "version": version("sqlalchemy")}]
 
     @staticmethod
     # pylint: disable=unused-argument

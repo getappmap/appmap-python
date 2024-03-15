@@ -34,6 +34,8 @@ request_recorder: ContextVar[Optional[Recorder]] = ContextVar("appmap_request_re
 # parsing the body of an application/json request:
 JSON_ERRORS = (JSONDecodeError, AttributeError, TypeError, ValueError)
 
+REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
+REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
 
 class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
     """A special call event that records template rendering."""
@@ -140,12 +142,13 @@ class AppmapMiddleware(ABC):
         raise NotImplementedError
 
     def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
+
         duration = time.monotonic() - start
         return_event = HttpServerResponseEvent(
             parent_id=call_event_id,
             elapsed=duration,
             status_code=status,
-            headers=dict(headers.items()),
+            headers=headers,
         )
         rec.add_event(return_event)
 
@@ -237,7 +240,7 @@ class MiddlewareInserter(ABC):
 
     @abstractmethod
     def insert_middleware(self):
-        """Insert the AppMap middleware."""
+        """Insert the AppMap middleware. Optionally return a new instance of the app."""
 
     @abstractmethod
     def remote_enabled(self):
@@ -245,10 +248,12 @@ class MiddlewareInserter(ABC):
 
     def run(self):
         if not self.middleware_present():
-            self.insert_middleware()
+            return self.insert_middleware()
 
         if self.remote_enabled() and not self.debug:
             self._show_warning()
+
+        return None
 
     def _show_warning(self):
         # The user has explicitly asked for remote recording to be enabled in production. Let them

@@ -1,9 +1,9 @@
 import json
 import re
 from distutils.dir_util import copy_tree
+from importlib.metadata import version
 
 import pytest
-from importlib_metadata import version
 
 import _appmap
 from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_validate

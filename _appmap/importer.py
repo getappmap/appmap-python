@@ -10,12 +10,12 @@ from functools import reduce
 from _appmap import wrapt
 
 from .env import Env
-from .utils import FnType
+from .utils import FnType, Scope
 
 logger = Env.current.getLogger(__name__)
 
 
-Filterable = namedtuple("Filterable", "fqname obj")
+Filterable = namedtuple("Filterable", "scope fqname obj")
 
 
 class FilterableMod(Filterable):
@@ -23,10 +23,7 @@ class FilterableMod(Filterable):
 
     def __new__(cls, mod):
         fqname = mod.__name__
-        return super(FilterableMod, cls).__new__(cls, fqname, mod)
-
-    def classify_fn(self, _):
-        return FnType.MODULE
+        return super(FilterableMod, cls).__new__(cls, Scope.MODULE, fqname, mod)
 
 
 class FilterableCls(Filterable):
@@ -34,32 +31,28 @@ class FilterableCls(Filterable):
 
     def __new__(cls, clazz):
         fqname = "%s.%s" % (clazz.__module__, clazz.__qualname__)
-        return super(FilterableCls, cls).__new__(cls, fqname, clazz)
-
-    def classify_fn(self, static_fn):
-        return FnType.classify(static_fn)
+        return super(FilterableCls, cls).__new__(cls, Scope.CLASS, fqname, clazz)
 
 
 class FilterableFn(
     namedtuple(
         "FilterableFn",
-        Filterable._fields
-        + (
-            "scope",
-            "static_fn",
-        ),
+        Filterable._fields + ("static_fn",),
     )
 ):
     __slots__ = ()
 
     def __new__(cls, scope, fn, static_fn):
         fqname = "%s.%s" % (scope.fqname, fn.__name__)
-        self = super(FilterableFn, cls).__new__(cls, fqname, fn, scope, static_fn)
+        self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn)
         return self
 
     @property
     def fntype(self):
-        return self.scope.classify_fn(self.static_fn)
+        if self.scope == Scope.MODULE:
+            return FnType.MODULE
+
+        return FnType.classify(self.static_fn)
 
 
 class Filter(ABC):  # pylint: disable=too-few-public-methods
@@ -162,6 +155,17 @@ class Importer:
         cls.filter_stack.append(filter_class)
 
     @classmethod
+    def instrument_function(cls, fn_name, filterableFn: FilterableFn, selected_functions=None):
+        # Only instrument the function if it was specifically called out for the package
+        # (e.g. because it should be labeled), or it's included by the filters
+        matched = cls.filter_chain.filter(filterableFn)
+        selected = selected_functions and fn_name in selected_functions
+        if selected or matched:
+            return cls.filter_chain.wrap(filterableFn)
+
+        return filterableFn.obj
+
+    @classmethod
     def do_import(cls, *args, **kwargs):
         mod = args[0]
         if mod.__name__.startswith(cls._skip_instrumenting):
@@ -177,15 +181,10 @@ class Importer:
             logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                # Only instrument the function if it was specifically called out for the package
-                # (e.g. because it should be labeled), or it's included by the filters
                 filterableFn = FilterableFn(filterable, fn, static_fn)
-                matched = cls.filter_chain.filter(filterableFn)
-                selected = selected_functions and fn_name in selected_functions
-                if selected or matched:
-                    new_fn = cls.filter_chain.wrap(filterableFn)
-                    if fn != new_fn:
-                        wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+                new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
+                if new_fn != fn:
+                    wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel
