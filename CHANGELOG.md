@@ -1,3 +1,15 @@
+# [1.20.0](https://github.com/getappmap/appmap-python/compare/v1.19.1...v1.20.0) (2024-03-15)
+
+
+### Bug Fixes
+
+* log to a file by default ([3da004f](https://github.com/getappmap/appmap-python/commit/3da004f4ba67b7e3a923fc76ef733eec51a496c7))
+
+
+### Features
+
+* FastAPI support ([3dba2a2](https://github.com/getappmap/appmap-python/commit/3dba2a2561e51a6fe63c68dc870f817391c2bb0f))
+
 ## [1.19.1](https://github.com/getappmap/appmap-python/compare/v1.19.0...v1.19.1) (2024-02-29)
 
 
