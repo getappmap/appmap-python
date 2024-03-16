@@ -59,7 +59,6 @@ class Middleware(AppmapMiddleware, BaseHTTPMiddleware):
 
     def init_app(self):
         # pylint: disable=import-outside-toplevel
-        from fastapi.middleware.wsgi import WSGIMiddleware
         from starlette.routing import Mount, Router
 
         # pylint: enable=import-outside-toplevel
