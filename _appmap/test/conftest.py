@@ -178,6 +178,7 @@ class _ServerStarter(ProcessStarter):
         # In the meantime, pass the desired directory to server_runner, which
         # will handle changing the working directory.
         self._args = [
+            "bash",
             (Path(__file__).parent / "bin" / "server_runner").as_posix(),
             (Path(__file__).parent / "data" / info.name).as_posix(),
             f"{Path(sys.executable).as_posix()} {info.cmd}",
