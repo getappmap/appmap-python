@@ -11,6 +11,7 @@ from sqlalchemy import (
     String,
     Table,
     create_engine,
+    text,
 )
 
 import appmap.sqlalchemy  # pylint: disable=unused-import
@@ -23,10 +24,8 @@ from .appmap_test_base import AppMapTestBase
 class TestSQLAlchemy(AppMapTestBase):
     @staticmethod
     def test_sql_capture(connection, events):
-        connection.execute("SELECT 1")
-        assert events[0].sql_query == DictIncluding(
-            {"sql": "SELECT 1", "database_type": "sqlite"}
-        )
+        connection.execute(text("SELECT 1"))
+        assert events[0].sql_query == DictIncluding({"sql": "SELECT 1", "database_type": "sqlite"})
         assert events[0].sql_query["server_version"].startswith("3.")
         assert Metadata()["frameworks"] == [{"name": "SQLAlchemy", "version": version("sqlalchemy")}]
 
@@ -38,27 +37,26 @@ class TestSQLAlchemy(AppMapTestBase):
     # pylint: disable=unused-argument
     def test_capture_insert(self, connection, schema, events):
         ins = self.users.insert().values(name="jack", fullname="Jack Jones")
-        connection.execute(ins)
-        assert (
-            events[-2].sql_query["sql"]
-            == "INSERT INTO users (name, fullname) VALUES (?, ?)"
-        )
+        with connection.begin():
+            connection.execute(ins)
+            assert events[-2].sql_query["sql"] == "INSERT INTO users (name, fullname) VALUES (?, ?)"
 
     # pylint: disable=unused-argument
     def test_capture_insert_many(self, connection, schema, events):
-        connection.execute(
-            self.addresses.insert(),
-            [
-                {"user_id": 1, "email_address": "jack@yahoo.com"},
-                {"user_id": 1, "email_address": "jack@msn.com"},
-                {"user_id": 2, "email_address": "www@www.org"},
-                {"user_id": 2, "email_address": "wendy@aol.com"},
-            ],
-        )
-        assert (
-            events[-2].sql_query["sql"]
-            == "-- 4 times\nINSERT INTO addresses (user_id, email_address) VALUES (?, ?)"
-        )
+        with connection.begin():
+            connection.execute(
+                self.addresses.insert(),
+                [
+                    {"user_id": 1, "email_address": "jack@yahoo.com"},
+                    {"user_id": 1, "email_address": "jack@msn.com"},
+                    {"user_id": 2, "email_address": "www@www.org"},
+                    {"user_id": 2, "email_address": "wendy@aol.com"},
+                ],
+            )
+            assert (
+                events[-2].sql_query["sql"]
+                == "-- 4 times\nINSERT INTO addresses (user_id, email_address) VALUES (?, ?)"
+            )
 
     @staticmethod
     @pytest.fixture
