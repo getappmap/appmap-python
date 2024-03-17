@@ -80,5 +80,5 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
             try:
                 with testing_framework.collect_result_metadata(metadata):
                     result.get_result()
-            except:  # pylint: disable=bare-except
+            except:  # pylint: disable=bare-except # noqa: E722
                 pass  # exception got recorded in metadata

@@ -4,7 +4,7 @@ from _appmap import generation  # noqa: F401
 from _appmap.env import Env  # noqa: F401
 from _appmap.importer import instrument_module  # noqa: F401
 from _appmap.labels import labels  # noqa: F401
-from _appmap.noappmap import decorator as noappmap
+from _appmap.noappmap import decorator as noappmap  # noqa: F401
 from _appmap.recording import Recording  # noqa: F401
 
 try:
