@@ -8,7 +8,7 @@ from functools import lru_cache
 import yaml
 from importlib_resources import files
 
-from _appmap.labels import LabelSet
+from _appmap.labels import LabelSet  # noqa: F401
 
 
 @lru_cache(maxsize=None)
