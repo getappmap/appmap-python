@@ -1,3 +1,10 @@
+## [1.20.1](https://github.com/getappmap/appmap-python/compare/v1.20.0...v1.20.1) (2024-04-10)
+
+
+### Bug Fixes
+
+* don't create a log file by default ([1fac839](https://github.com/getappmap/appmap-python/commit/1fac839d0e5d053e26597c09c4451aac7f227ca2))
+
 # [1.20.0](https://github.com/getappmap/appmap-python/compare/v1.19.1...v1.20.0) (2024-03-15)
 
 
