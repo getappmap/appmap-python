@@ -126,7 +126,7 @@ class Env(metaclass=_EnvMeta):
         trace_logger.install()
 
         log_level = self.get("APPMAP_LOG_LEVEL", "warn").upper()
-        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "false").upper() != "FALSE"
+        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "true").upper() != "FALSE"
         log_config = self.get("APPMAP_LOG_CONFIG")
         now = datetime.now()
         config_dict = {
