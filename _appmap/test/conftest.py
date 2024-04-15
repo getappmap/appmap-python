@@ -14,7 +14,6 @@ from xprocess import ProcessStarter
 
 import _appmap
 import appmap
-from _appmap.env import Env
 from _appmap.test.web_framework import TEST_HOST, TEST_PORT
 from appmap import generation
 
@@ -62,11 +61,11 @@ def pytest_runtest_setup(item):
 
         appmap_enabled = mark.kwargs.get("appmap_enabled", None)
         if isinstance(appmap_enabled, str):
-            env["APPMAP"] = appmap_enabled
+            env["_APPMAP"] = appmap_enabled
         elif appmap_enabled is False:
-            env["APPMAP"] = "false"
+            env["_APPMAP"] = "false"
         elif appmap_enabled is None:
-            env.pop("APPMAP", None)
+            env.pop("_APPMAP", None)
 
     _appmap.initialize(env=env)  # pylint: disable=protected-access
 

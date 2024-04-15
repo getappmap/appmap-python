@@ -2,7 +2,7 @@ from _appmap.env import Env
 
 
 def test_disable_temporarily():
-    env = Env({"APPMAP": "true"})
+    env = Env({"_APPMAP": "true"})
     assert env.enables("requests")
     try:
         with env.disabled("requests"):

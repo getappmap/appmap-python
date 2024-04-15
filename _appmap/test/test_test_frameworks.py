@@ -32,7 +32,7 @@ class _TestTestRunner(ABC):
         """Run the tests."""
 
     def test_with_appmap_false(self, testdir, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
+        monkeypatch.setenv("_APPMAP", "false")
 
         self.run_tests(testdir)
 
@@ -165,7 +165,7 @@ def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
 
     # Make sure APPMAP isn't the environment, to test that recording-by-default is working as
     # expected. Individual test cases may set it as necessary.
-    monkeypatch.delenv("APPMAP", raising=False)
+    monkeypatch.delenv("_APPMAP", raising=False)
 
     marker = request.node.get_closest_marker("example_dir")
     test_type = "unittest" if marker is None else marker.args[0]

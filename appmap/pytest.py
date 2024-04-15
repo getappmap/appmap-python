@@ -26,6 +26,10 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
     logger.debug("Test recording is enabled (Pytest)")
 
     @pytest.hookimpl
+    def pytest_configure(config):
+        Env.current.warn_enabled_by_default()
+
+    @pytest.hookimpl
     def pytest_sessionstart(session):
         session.appmap = testing_framework.session(
             name="pytest", recorder_type="tests", version=version("pytest")

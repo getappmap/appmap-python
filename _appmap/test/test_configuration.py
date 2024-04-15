@@ -44,15 +44,15 @@ def test_reports_invalid():
 @pytest.mark.appmap_enabled(config="appmap-broken.yml")
 def test_is_disabled_when_unset():
     """Test that recording is disabled when APPMAP is unset but the config is broken"""
-    assert Env.current.get("APPMAP", None) is None
+    assert Env.current.get("_APPMAP", None) is None
 
     assert not appmap.enabled()
 
 
 @pytest.mark.appmap_enabled(config="appmap-broken.yml", appmap_enabled="false")
 def test_is_disabled_when_false():
-    """Test that recording is disabled when APPMAP=false"""
-    Env.current.set("APPMAP", "false")
+    """Test that recording is disabled when _APPMAP=false"""
+    Env.current.set("_APPMAP", "false")
     assert not appmap.enabled()
 
 
@@ -204,7 +204,7 @@ class TestDefaultConfig(DefaultHelpers):
         assert not path.is_file()
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=repo_root, env={"APPMAP": "false"})
+        _appmap.initialize(cwd=repo_root, env={"_APPMAP": "false"})
 
         c = Config()
         assert not path.is_file()
