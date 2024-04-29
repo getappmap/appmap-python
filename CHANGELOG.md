@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/getappmap/appmap-python/compare/v1.20.1...v1.21.0) (2024-04-29)
+
+
+### Features
+
+* add runner, get ready for v2 ([670660f](https://github.com/getappmap/appmap-python/commit/670660f4f1202f0a255d8f3ebcd11a4970090cca))
+
 ## [1.20.1](https://github.com/getappmap/appmap-python/compare/v1.20.0...v1.20.1) (2024-04-10)
 
 
