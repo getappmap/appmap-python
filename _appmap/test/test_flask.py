@@ -3,21 +3,15 @@
 
 import importlib
 import os
-import socket
-import sys
-from functools import partial
 from importlib.metadata import version
-from pathlib import Path
 from types import SimpleNamespace as NS
 
 import flask
 import pytest
-from attr import dataclass
-from xprocess import ProcessStarter
+from appmap.flask import AppmapFlask
 
 from _appmap.env import Env
 from _appmap.metadata import Metadata
-from appmap.flask import AppmapFlask
 
 from ..test.helpers import DictIncluding
 from .web_framework import (
@@ -154,7 +148,7 @@ class TestFlaskApp:
         assert appmap_file.exists()
 
     def test_disabled(self, pytester, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
+        monkeypatch.setenv("_APPMAP", "false")
 
         result = pytester.runpytest("-svv")
 

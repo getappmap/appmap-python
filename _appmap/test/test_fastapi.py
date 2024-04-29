@@ -1,13 +1,9 @@
 import importlib
-import socket
-import sys
 from importlib.metadata import version
-from pathlib import Path
 from types import SimpleNamespace as NS
 
 import pytest
 from fastapi.testclient import TestClient
-from xprocess import ProcessStarter
 
 import appmap
 from _appmap.env import Env

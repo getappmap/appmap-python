@@ -79,6 +79,7 @@ uvicorn = "^0.27.1"
 fastapi = "^0.110.0"
 httpx = "^0.27.0"
 pytest-env = "^1.1.3"
+pytest-console-scripts = "^1.4.1"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
@@ -91,6 +92,7 @@ appmap = "appmap.pytest"
 appmap-agent-init = "appmap.command.appmap_agent_init:run"
 appmap-agent-status = "appmap.command.appmap_agent_status:run"
 appmap-agent-validate = "appmap.command.appmap_agent_validate:run"
+appmap-python = "appmap.command.runner:run"
 
 [tool.black]
 line-length = 102

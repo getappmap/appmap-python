@@ -3,7 +3,6 @@
 
 import json
 import os
-import socket
 import sys
 from pathlib import Path
 from types import SimpleNamespace as NS
@@ -16,7 +15,6 @@ import django.test
 import pytest
 from django.template.loader import render_to_string
 from django.test.client import MULTIPART_CONTENT
-from xprocess import ProcessStarter
 
 import appmap
 import appmap.django  # noqa: F401
@@ -212,7 +210,7 @@ class TestDjangoApp:
         assert "http_server_request" in events[0]
 
     def test_disabled(self, pytester, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
+        monkeypatch.setenv("_APPMAP", "false")
         result = pytester.runpytest("-svv", "-p", "no:randomly", "-k", "test_request")
         result.assert_outcomes(passed=1, failed=0, errors=0)
         assert not (pytester.path / "tmp").exists()

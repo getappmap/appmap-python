@@ -1,6 +1,6 @@
 import atexit
-from datetime import datetime, timezone
 import os
+from datetime import datetime, timezone
 from tempfile import NamedTemporaryFile
 
 from _appmap import generation
@@ -44,6 +44,7 @@ class Recording:
         return Recorder.get_enabled()
 
     def __enter__(self):
+        Env.current.warn_enabled_by_default()
         self.start()
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -80,6 +81,8 @@ def write_appmap(
 
 def initialize():
     if Env.current.enables("process", "false"):
+        Env.current.warn_enabled_by_default()
+
         r = Recording()
         r.start()
 
