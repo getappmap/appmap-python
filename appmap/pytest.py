@@ -22,7 +22,7 @@ class recorded_testcase:  # pylint: disable=too-few-public-methods
                 return wrapped(*args, **kwargs)
 
 
-if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
+if not Env.current.is_appmap_repo and Env.current.enables("tests"):
     logger.debug("Test recording is enabled (Pytest)")
 
     @pytest.hookimpl

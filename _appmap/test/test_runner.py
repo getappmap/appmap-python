@@ -15,7 +15,7 @@ def test_runner_help(script_runner):
     assert result.stdout.startswith("usage")
 
 
-@pytest.mark.parametrize("recording_type", ["process", "pytest", "remote", "requests", "unittest"])
+@pytest.mark.parametrize("recording_type", ["process", "remote", "requests", "tests"])
 def test_runner_recording_type(script_runner, recording_type):
     result = script_runner.run(["appmap-python", "--record", recording_type])
     assert result.returncode == 0
