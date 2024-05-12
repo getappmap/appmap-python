@@ -84,6 +84,9 @@ class Env(metaclass=_EnvMeta):
     def set(self, name, value):
         self._env[name] = value
 
+    def setdefault(self, name, default_value):
+        self._env.setdefault(name, default_value)
+
     def get(self, name, default=None):
         return self._env.get(name, default)
 
@@ -129,7 +132,7 @@ class Env(metaclass=_EnvMeta):
     def disabled(self, recording_method: str):
         key = _recording_method_key(recording_method)
         value = self.get(key)
-        self.set(key, "false")
+        self.setdefault(key, "false")
         try:
             yield
         finally:
