@@ -247,8 +247,6 @@ class MiddlewareInserter(ABC):
         """Return True if the AppMap middleware has enabled remote recording, False otherwise."""
 
     def run(self):
-        Env.current.warn_enabled_by_default()
-
         if not self.middleware_present():
             return self.insert_middleware()
 

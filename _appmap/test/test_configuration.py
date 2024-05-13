@@ -15,10 +15,6 @@ from _appmap.env import Env
 from _appmap.importer import Filterable, NullFilter
 
 
-def test_enabled_by_default():
-    assert appmap.enabled()
-
-
 @pytest.mark.appmap_enabled
 def test_can_be_configured():
     """
