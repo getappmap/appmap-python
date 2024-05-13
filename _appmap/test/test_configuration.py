@@ -120,6 +120,27 @@ class TestConfiguration:
         f = Filterable(None, "package1_prefix.cls", None)
         assert cf().filter(f) is False
 
+    def test_malformed_path(self, data_dir, caplog):
+        _appmap.initialize(env={"APPMAP_CONFIG": "appmap-malformed-path.yml"}, cwd=data_dir)
+        Config.current._load_config(show_warnings=True)
+        assert (
+            "Malformed path value 'package1/package2/Mod1Class' in configuration file. "
+            "Path entries must be module names not directory paths."
+            in caplog.text
+        )
+
+    def test_all_paths_malformed(self, data_dir):
+        _appmap.initialize(env={"APPMAP_CONFIG": "appmap-all-paths-malformed.yml"}, cwd=data_dir)
+        assert len(Config().packages) == 0
+
+    def test_empty_path(self, data_dir, caplog):
+        _appmap.initialize(env={"APPMAP_CONFIG": "appmap-empty-path.yml"}, cwd=data_dir)
+        Config.current._load_config(show_warnings=True)
+        assert (
+            "Missing path value in configuration file."
+            in caplog.text
+        )
+
 
 class DefaultHelpers:
     def check_default_packages(self, actual_packages):
