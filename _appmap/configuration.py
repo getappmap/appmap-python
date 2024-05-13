@@ -26,13 +26,21 @@ logger = Env.current.getLogger(__name__)
 
 def default_app_name(rootdir):
     rootdir = Path(rootdir)
-    if not (rootdir / ".git").exists():
-        return rootdir.name
+    if (rootdir / ".git").exists():
+        repo_root = _get_repo_root(rootdir)
+        if repo_root:
+            return repo_root.name
+    return rootdir.name
 
+def _get_repo_root(rootdir):
     git = utils.git(cwd=str(rootdir))
     repo_root = git("rev-parse --show-toplevel")
-    return Path(repo_root).name
+    if repo_root:
+        return Path(repo_root)
+    return None
 
+def _resolve_relative_to(path1: Path, path2: Path):
+    return (path2 / path1).resolve(strict=False)
 
 # Make it easy to mock sys.prefix
 def _get_sys_prefix():
@@ -201,7 +209,20 @@ class Config:
         if use_default_config:
             env_config_filename = "appmap.yml"
 
-        path = Path(env_config_filename).resolve()
+        env = Env.current
+        config_dir = env.root_dir
+        
+        path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
+        if not path.is_file():
+            # search config file in parent directories up to
+            # repo root (if exists) or up to file system root
+            repo_root = _get_repo_root(env.root_dir)
+            config_dir = utils.locate_file_up(
+                env_config_filename, env.root_dir, repo_root
+            )
+            if config_dir:
+                path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
+
         if path.is_file():
             self.file_present = True
 
@@ -219,6 +240,19 @@ class Config:
                         self._config["name"] = self.default_name
                     if "packages" not in self._config:
                         self._config["packages"] = self.default_packages
+
+                    # Is appmap_dir specified?
+                    appmap_dir = (
+                        self._config["appmap_dir"]
+                        if "appmap_dir" in self._config else "tmp/appmap"
+                    )
+
+                    # appmap_dir must be resolved relative to the location of config file
+                    # unless APPMAP_OUTPUT_DIR is set by tests.
+                    if config_dir and Env.current.get("APPMAP_OUTPUT_DIR", None) is None:
+                        Env.current.output_dir = _resolve_relative_to(
+                            Path(appmap_dir), Path(config_dir)
+                        )
 
                 self.file_valid = True
                 Env.current.enabled = should_enable

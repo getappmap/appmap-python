@@ -102,6 +102,10 @@ class Env(metaclass=_EnvMeta):
     def output_dir(self):
         return self._output_dir
 
+    @output_dir.setter
+    def output_dir(self, value):
+        self._output_dir = value
+
     @property
     def enabled_by_default(self):
         return self._enabled_by_default

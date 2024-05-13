@@ -248,3 +248,44 @@ class TestEmpty(DefaultHelpers):
                 env={"APPMAP_CONFIG": "appmap-incomplete.yml"},
             )
             self.check_default_config(Path(tmpdir).name)
+
+class TestSearchConfig:
+    def test_config_in_parent_folder(self, data_dir, tmpdir, monkeypatch):
+        copy_tree(data_dir / "config-up", str(tmpdir))
+        project_root = tmpdir / "subprojects" / "p1"
+        monkeypatch.chdir(project_root)
+
+        # pylint: disable=protected-access
+        _appmap.initialize(cwd=project_root)
+        assert Config().name == "config-up-name"
+        assert str(Env.current.output_dir).endswith(str(tmpdir / "tmp" / "appmap"))
+
+    def test_config_not_found_until_repo_root(self, data_dir, tmpdir, git_directory, monkeypatch):
+        copy_tree(data_dir / "config-up", str(tmpdir))
+        repo_root = tmpdir / "subprojects" / "p2"
+        copy_tree(git_directory, str(repo_root))
+        project_root = repo_root / "sub1"
+        monkeypatch.chdir(project_root)
+
+        # pylint: disable=protected-access
+        _appmap.initialize(cwd=project_root)
+        # It should stop searching at repo_root.
+        # Check that it did not find appmap.yml
+        # in config-up folder.
+        assert Config().name != "config-up-name"
+        # It should go on with default config
+        assert Env.current.enabled
+
+    def test_config_not_found_in_path_hierarchy(self, data_dir, tmpdir, monkeypatch):
+        copy_tree(data_dir / "config-up", str(tmpdir))
+        project_root = tmpdir / "subprojects" / "p1"
+        monkeypatch.chdir(project_root)
+
+        # pylint: disable=protected-access
+        _appmap.initialize(
+            cwd=project_root,
+            env={"APPMAP_CONFIG": "notfound.yml"},
+        )
+        Config()
+        # No default config since we specified APPMAP_CONFIG
+        assert not Env.current.enabled
