@@ -87,8 +87,12 @@ reenabled as soon as possible.]
 ### pytest
 
 Note that you must install the dependencies contained in
-[requirements-test.txt](requirements-test.txt) before running tests. See the explanation in
+[requirements-dev.txt](requirements-dev.txt) before running tests. See the explanation in
 [pyproject.toml](pyproject.toml) for details.
+
+Additionally, the tests currently require that you set `APPMAP=true`. You can
+either run `pytest` with `appmap-python` (see [tox.ini](tox.ini)), or you can explicitly
+set the environment variable.
 
 [pytest](https://docs.pytest.org/en/stable/) for testing:
 

@@ -3,7 +3,6 @@ import unittest
 from contextlib import contextmanager
 
 from _appmap import noappmap, testing_framework, wrapt
-from _appmap.env import Env
 from _appmap.utils import get_function_location
 
 _session = testing_framework.session("unittest", "tests")
@@ -43,7 +42,6 @@ if sys.version_info[1] < 8:
         with _session.record(
             test_case.__class__, method_name, location=location
         ) as metadata:
-            Env.current.warn_enabled_by_default()
             if metadata:
                 with wrapped(
                     *args, **kwargs
@@ -69,7 +67,6 @@ else:
         method_name = test_case.id().split(".")[-1]
         location = _get_test_location(test_case.__class__, method_name)
         with _session.record(test_case.__class__, method_name, location=location) as metadata:
-            Env.current.warn_enabled_by_default()
             if metadata:
                 with testing_framework.collect_result_metadata(metadata):
                     wrapped(*args, **kwargs)

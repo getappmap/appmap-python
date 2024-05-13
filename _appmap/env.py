@@ -3,7 +3,6 @@
 import logging
 import logging.config
 import os
-import warnings
 from contextlib import contextmanager
 from os import environ
 from pathlib import Path
@@ -12,20 +11,6 @@ from typing import cast
 from _appmap.singleton import SingletonMeta
 
 from . import trace_logger
-
-_ENABLED_BY_DEFAULT_MSG = """
-
-The APPMAP environment variable is unset. Your code will be
-instrumented and recorded according to the configuration in appmap.yml.
-
-Starting with version 2, this behavior will change: when APPMAP is
-unset, no code will be instrumented. You will need to use the
-appmap-python script to run your application, or explicitly set
-APPMAP.
-
-Visit https://appmap.io/docs/reference/appmap-python.html#appmap-python-script for more
-details.
-"""
 
 _cwd = Path.cwd()
 _bootenv = environ.copy()
@@ -36,9 +21,8 @@ def _recording_method_key(recording_method):
 
 
 class Env(metaclass=SingletonMeta):
-    def __init__(self, env=None, cwd=None):
-        warnings.filterwarnings("once", _ENABLED_BY_DEFAULT_MSG)
 
+    def __init__(self, env=None, cwd=None):
         # root_dir and root_dir_len are going to be used when
         # instrumenting every function, so preprocess them as
         # much as possible.
@@ -54,7 +38,6 @@ class Env(metaclass=SingletonMeta):
 
         self._configure_logging()
         enabled = self._env.get("_APPMAP", None)
-        self._enabled_by_default = enabled is None
         self._enabled = enabled is None or enabled.lower() != "false"
 
         self._root_dir = str(self._cwd) + "/"
@@ -97,14 +80,6 @@ class Env(metaclass=SingletonMeta):
     @output_dir.setter
     def output_dir(self, value):
         self._output_dir = value
-
-    @property
-    def enabled_by_default(self):
-        return self._enabled_by_default
-
-    def warn_enabled_by_default(self):
-        if self._enabled_by_default:
-            warnings.warn(_ENABLED_BY_DEFAULT_MSG, category=DeprecationWarning, stacklevel=2)
 
     @property
     def enabled(self):
