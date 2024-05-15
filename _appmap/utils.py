@@ -1,5 +1,6 @@
 import inspect
 import os
+from pathlib import Path
 import re
 import shlex
 import subprocess
@@ -222,3 +223,33 @@ def scenario_filename(name, separator="_"):
     pattern = r"[^a-z0-9\-_]+"
     replacement = separator
     return re.sub(pattern, replacement, name, flags=re.IGNORECASE)
+
+
+def locate_file_up(filename, start_dir=None, stop_dir=None):
+    """
+    Search for a file in the current directory and recursively up to the root directory.
+    
+    :param filename: The name of the file to locate.
+    :param start_dir: The directory to start the search from. Defaults to the current.
+    :param stop_idr: The directory to stop the search. If None search is performed until
+                     the root of the file system.
+    :return: The path to the directory containing the file or None if the file cannot be found.
+    """
+
+    if start_dir is None:
+        start_dir = Path.cwd()
+    elif isinstance(start_dir, str):
+        start_dir = Path(start_dir)
+
+    file_path = start_dir.joinpath(filename)
+    if Path.exists(file_path):
+        return start_dir
+
+    if isinstance(stop_dir, str):
+        stop_dir = Path(stop_dir)
+
+    parent_dir = start_dir.parent
+    if parent_dir in (start_dir, stop_dir):
+        return None
+
+    return locate_file_up(filename, parent_dir, stop_dir)
