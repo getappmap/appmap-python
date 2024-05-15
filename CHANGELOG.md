@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/getappmap/appmap-python/compare/v1.21.0...v1.22.0) (2024-05-15)
+
+
+### Features
+
+* search for config file ([4555c82](https://github.com/getappmap/appmap-python/commit/4555c82c156d24475a5974566f5d531f5cc2fd69))
+
 # [1.21.0](https://github.com/getappmap/appmap-python/compare/v1.20.1...v1.21.0) (2024-04-29)
 
 
