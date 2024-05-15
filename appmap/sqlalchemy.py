@@ -15,7 +15,7 @@ from _appmap.recorder import Recorder
 @event.listens_for(Engine, "before_cursor_execute")
 # pylint: disable=too-many-arguments,unused-argument
 def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
-    """Capture SQL query callinto appmap."""
+    """Capture SQL query call into appmap."""
     if is_instrumentation_disabled():
         # We must be in the middle of fetching object representation.
         # Don't record this query in the appmap.

@@ -51,7 +51,6 @@ packaging = ">=19.0"
 # install it and the rest of the dev dependencies.
 
 [tool.poetry.group.dev.dependencies]
-SQLAlchemy = "^1.4.11"
 Twisted = "^22.4.0"
 asgiref = "^3.7.2"
 black = "^24.2.0"
