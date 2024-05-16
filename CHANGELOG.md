@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/getappmap/appmap-python/compare/v1.22.0...v1.23.0) (2024-05-16)
+
+
+### Features
+
+* check malformed path entries ([f7937ee](https://github.com/getappmap/appmap-python/commit/f7937eeffa4e690c57b3154847cc4b93c6187068))
+
 # [1.22.0](https://github.com/getappmap/appmap-python/compare/v1.21.0...v1.22.0) (2024-05-15)
 
 
