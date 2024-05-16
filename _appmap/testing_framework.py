@@ -106,7 +106,7 @@ class session:  # pylint: disable=too-few-public-methods
         metadata = item.metadata
         metadata.update(
             {
-                "app": configuration.Config().name,
+                "app": configuration.Config.current.name,
                 "recorder": {
                     "name": self.name,
                     "type": self.recorder_type,

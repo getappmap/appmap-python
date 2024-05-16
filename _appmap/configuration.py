@@ -2,6 +2,7 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+import ast
 import importlib.metadata
 import inspect
 import os
@@ -14,6 +15,7 @@ import yaml
 from yaml.parser import ParserError
 
 from _appmap.labels import LabelSet
+from _appmap.singleton import SingletonMeta
 from appmap.labeling import presets as label_presets
 
 from . import utils
@@ -124,25 +126,13 @@ def find_top_packages(rootdir):
 
     return packages
 
+class AppMapInvalidConfigException(Exception):
+    pass
 
-class Config:
+class Config(metaclass=SingletonMeta):
     """Singleton Config class"""
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            logger.trace("Creating the Config object")
-            cls._instance = super(Config, cls).__new__(cls)
-
-            cls._instance._initialized = False
-
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
-            return
-
         self.file_present = False
         self.file_valid = False
         self.package_functions = {}
@@ -153,12 +143,6 @@ class Config:
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
-
-        self._initialized = True
-
-    @classmethod
-    def initialize(cls):
-        cls._instance = None
 
     @property
     def name(self):
@@ -198,7 +182,7 @@ class Config:
         root_dir = Env.current.root_dir
         return [{"path": p} for p in find_top_packages(root_dir)]
 
-    def _load_config(self):
+    def _load_config(self, show_warnings=False):
         self._config = {"name": None, "packages": []}
 
         # Only use a default config if the user hasn't specified a
@@ -211,7 +195,7 @@ class Config:
 
         env = Env.current
         config_dir = env.root_dir
-        
+
         path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
         if not path.is_file():
             # search config file in parent directories up to
@@ -240,6 +224,8 @@ class Config:
                         self._config["name"] = self.default_name
                     if "packages" not in self._config:
                         self._config["packages"] = self.default_packages
+                    else:
+                        self._drop_malformed_package_paths(show_warnings)
 
                     # Is appmap_dir specified?
                     appmap_dir = (
@@ -302,6 +288,43 @@ It will be created with this configuration:
             modules[mod] = modules[mod] + [name] if mod in modules else [name]
 
         self.package_functions.update(modules)
+
+    def _drop_malformed_package_paths(self, show_warnings):
+        invalid_items = []
+        for item in self._config["packages"]:
+            # it can be a "dist" entry
+            if "path" not in item:
+                continue
+
+            path = item.get("path")
+            if path is None:
+                if show_warnings:
+                    logger.warning("Missing path value in configuration file.")
+                invalid_items.append(item)
+                continue
+
+            if not self._check_path_value(path):
+                has_separator = isinstance(path, str) and ('/' in path or '\\' in path)
+                if show_warnings:
+                    logger.warning(
+                        f"Malformed path value '{path}' in configuration file. "
+                        "Path entries must be module names"
+                        f"{' not directory paths' if has_separator else ''}.",
+                        stack_info=False,
+                    )
+                invalid_items.append(item)
+                continue
+
+        if len(invalid_items) > 0:
+            self._config["packages"] = [item for item in self._config["packages"]
+                                        if item not in invalid_items]
+
+    def _check_path_value(self, value):
+        try:
+            ast.parse(f"import {value}")
+            return True
+        except SyntaxError:
+            return False
 
 
 def startswith(prefix, sequence):
@@ -395,7 +418,7 @@ class MatcherFilter(Filter):
         wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
         if wrapped is None:
             logger.trace("  wrapping %s", filterable.fqname)
-            Config().labels.apply(filterable)
+            Config.current.labels.apply(filterable)
             ret = instrument(filterable)
             if rule and rule.shallow:
                 setattr(ret, "_appmap_shallow", rule)
@@ -428,7 +451,7 @@ class ConfigFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [matcher_of_config(p) for p in Config().packages]
+            matchers = [matcher_of_config(p) for p in Config.current.packages]
         super().__init__(matchers, *args, **kwargs)
 
 
@@ -441,14 +464,15 @@ class BuiltinFilter(MatcherFilter):
 
 
 def initialize():
-    Config().initialize()
+    Config.reset()
     Importer.use_filter(BuiltinFilter)
     Importer.use_filter(ConfigFilter)
 
 
 initialize()
 
-c = Config()
+c = Config.current
+c._load_config(show_warnings=True)
 logger.info("config: %s", c._config)
 logger.debug("package_functions: %s", c.package_functions)
 logger.info("env: %r", os.environ)

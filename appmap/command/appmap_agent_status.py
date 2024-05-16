@@ -68,7 +68,7 @@ def has_unittest_tests():
 
 
 def _run(*, discover_tests):
-    config = Config()
+    config = Config.current
     uses_pytest = has_dist("pytest")
 
     has_tests = None
