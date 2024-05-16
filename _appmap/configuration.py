@@ -472,7 +472,12 @@ def initialize():
 initialize()
 
 c = Config.current
-c._load_config(show_warnings=True)
-logger.info("config: %s", c._config)
-logger.debug("package_functions: %s", c.package_functions)
-logger.info("env: %r", os.environ)
+# For various reasons, this code runs more than once on startup. Use an
+# environment variable to make sure the user only sees startup messages once.
+_startup_messages_shown = os.environ.get("_APPMAP_MESSAGES_SHOWN")
+if _startup_messages_shown is None:
+    c._load_config(show_warnings=True)
+    logger.info("config: %s", c._config)
+    logger.debug("package_functions: %s", c.package_functions)
+    logger.info("env: %r", os.environ)
+    os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"
