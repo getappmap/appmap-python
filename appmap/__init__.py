@@ -5,7 +5,11 @@ import os
 # putting them in a function and conditionally calling the function. If we
 # execute the imports in a function, the modules all get put into the funtion's
 # globals, rather than into appmap's globals.
-if os.environ.get("APPMAP", "true").upper() == "TRUE":
+_enabled = os.environ.get("APPMAP", None)
+if _enabled is None or _enabled.upper() == "TRUE":
+    if _enabled is not None:
+        # Use setdefault so tests can manage _APPMAP as necessary
+        os.environ["_APPMAP"] = _enabled
     from _appmap import generation  # noqa: F401
     from _appmap.env import Env  # noqa: F401
     from _appmap.importer import instrument_module  # noqa: F401

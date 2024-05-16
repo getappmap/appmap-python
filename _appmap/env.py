@@ -46,7 +46,11 @@ class Env(metaclass=SingletonMeta):
         self._cwd = cwd or _cwd
         self._env = _bootenv.copy()
         if env:
-            self._env.update(env)
+            for k, v in env.items():
+                if v is not None:
+                    self._env[k] = v
+                else:
+                    self._env.pop(k, None)
 
         self._configure_logging()
         enabled = self._env.get("_APPMAP", None)
