@@ -10,6 +10,8 @@ from os import environ
 from pathlib import Path
 from typing import cast
 
+from _appmap.singleton import SingletonMeta
+
 from . import trace_logger
 
 _ENABLED_BY_DEFAULT_MSG = """
@@ -34,23 +36,7 @@ def _recording_method_key(recording_method):
     return f"APPMAP_RECORD_{recording_method.upper()}"
 
 
-class _EnvMeta(type):
-    def __init__(cls, *args, **kwargs):
-        type.__init__(cls, *args, **kwargs)
-        cls._instance = None
-
-    @property
-    def current(cls):
-        if not cls._instance:
-            cls._instance = Env()
-
-        return cls._instance
-
-    def reset(cls, **kwargs):
-        cls._instance = Env(**kwargs)
-
-
-class Env(metaclass=_EnvMeta):
+class Env(metaclass=SingletonMeta):
     def __init__(self, env=None, cwd=None):
         warnings.filterwarnings("once", _ENABLED_BY_DEFAULT_MSG)
 

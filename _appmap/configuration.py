@@ -14,6 +14,7 @@ import yaml
 from yaml.parser import ParserError
 
 from _appmap.labels import LabelSet
+from _appmap.singleton import SingletonMeta
 from appmap.labeling import presets as label_presets
 
 from . import utils
@@ -125,24 +126,10 @@ def find_top_packages(rootdir):
     return packages
 
 
-class Config:
+class Config(metaclass=SingletonMeta):
     """Singleton Config class"""
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            logger.trace("Creating the Config object")
-            cls._instance = super(Config, cls).__new__(cls)
-
-            cls._instance._initialized = False
-
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
-            return
-
         self.file_present = False
         self.file_valid = False
         self.package_functions = {}
@@ -153,12 +140,6 @@ class Config:
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
-
-        self._initialized = True
-
-    @classmethod
-    def initialize(cls):
-        cls._instance = None
 
     @property
     def name(self):
@@ -395,7 +376,7 @@ class MatcherFilter(Filter):
         wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
         if wrapped is None:
             logger.trace("  wrapping %s", filterable.fqname)
-            Config().labels.apply(filterable)
+            Config.current.labels.apply(filterable)
             ret = instrument(filterable)
             if rule and rule.shallow:
                 setattr(ret, "_appmap_shallow", rule)
@@ -428,7 +409,7 @@ class ConfigFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [matcher_of_config(p) for p in Config().packages]
+            matchers = [matcher_of_config(p) for p in Config.current.packages]
         super().__init__(matchers, *args, **kwargs)
 
 
@@ -441,14 +422,14 @@ class BuiltinFilter(MatcherFilter):
 
 
 def initialize():
-    Config().initialize()
+    Config.reset()
     Importer.use_filter(BuiltinFilter)
     Importer.use_filter(ConfigFilter)
 
 
 initialize()
 
-c = Config()
+c = Config.current
 logger.info("config: %s", c._config)
 logger.debug("package_functions: %s", c.package_functions)
 logger.info("env: %r", os.environ)

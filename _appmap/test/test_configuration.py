@@ -26,7 +26,7 @@ def test_can_be_configured():
     """
     assert appmap.enabled()
 
-    c = Config()
+    c = Config.current
     assert c.file_present
     assert c.file_valid
 
@@ -38,7 +38,7 @@ def test_reports_invalid():
     indicates that the config is not valid.
     """
     assert not appmap.enabled()
-    assert not Config().file_valid
+    assert not Config.current.file_valid
 
 
 @pytest.mark.appmap_enabled(config="appmap-broken.yml")
@@ -62,9 +62,9 @@ def test_config_not_found(caplog):
             "APPMAP_CONFIG": "notfound.yml",
         }
     )
-    assert Config().name is None
-    assert not Config().file_present
-    assert not Config().file_valid
+    assert Config.current.name is None
+    assert not Config.current.file_present
+    assert not Config.current.file_valid
 
     assert not appmap.enabled()
     not_found = Path("notfound.yml").resolve()
@@ -80,7 +80,7 @@ def test_config_no_message(caplog):
     """
 
     assert not appmap.enabled()
-    assert Config().name is None
+    assert Config.current.name is None
     assert caplog.text == ""
 
 
@@ -129,7 +129,7 @@ class DefaultHelpers:
     def check_default_config(self, expected_name):
         assert appmap.enabled()
 
-        default_config = Config()
+        default_config = Config.current
         assert default_config.name == expected_name
         self.check_default_packages(default_config.packages)
         assert default_config.default["appmap_dir"] == "tmp/appmap"
@@ -160,7 +160,7 @@ class TestDefaultConfig(DefaultHelpers):
                 "APPMAP_CONFIG": "/tmp/appmap.yml",
             }
         )
-        assert not Config().name
+        assert not Config.current.name
         assert not appmap.enabled()
 
     def test_exclusions(self, data_dir, tmpdir, mocker, monkeypatch):
@@ -186,7 +186,7 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root)
 
-        Config()  # write the file as a side-effect
+        Config.current  # write the file as a side-effect
         assert path.is_file()
         with open(path, encoding="utf-8") as cfg:
             actual_config = yaml.safe_load(cfg)
@@ -206,7 +206,7 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root, env={"_APPMAP": "false"})
 
-        c = Config()
+        c = Config.current
         assert not path.is_file()
 
 
@@ -257,7 +257,7 @@ class TestSearchConfig:
 
         # pylint: disable=protected-access
         _appmap.initialize(cwd=project_root)
-        assert Config().name == "config-up-name"
+        assert Config.current.name == "config-up-name"
         assert str(Env.current.output_dir).endswith(str(tmpdir / "tmp" / "appmap"))
 
     def test_config_not_found_until_repo_root(self, data_dir, tmpdir, git_directory, monkeypatch):
@@ -272,7 +272,7 @@ class TestSearchConfig:
         # It should stop searching at repo_root.
         # Check that it did not find appmap.yml
         # in config-up folder.
-        assert Config().name != "config-up-name"
+        assert Config.current.name != "config-up-name"
         # It should go on with default config
         assert Env.current.enabled
 
@@ -286,6 +286,6 @@ class TestSearchConfig:
             cwd=project_root,
             env={"APPMAP_CONFIG": "notfound.yml"},
         )
-        Config()
+        Config.current
         # No default config since we specified APPMAP_CONFIG
         assert not Env.current.enabled

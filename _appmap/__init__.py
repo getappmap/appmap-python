@@ -1,6 +1,5 @@
-from . import configuration
+from . import configuration, event, importer, metadata, recorder, recording, web_framework
 from . import env as appmapenv
-from . import event, importer, metadata, recorder, recording, web_framework
 from .py_version_check import check_py_version
 
 

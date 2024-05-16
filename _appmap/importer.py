@@ -189,7 +189,7 @@ class Importer:
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel
 
-        package_functions = Config().package_functions
+        package_functions = Config.current.package_functions
         fm = FilterableMod(mod)
         if fm.fqname in package_functions:
             instrument_functions(fm, package_functions.get(fm.fqname))

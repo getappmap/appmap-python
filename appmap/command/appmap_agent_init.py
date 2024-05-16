@@ -12,7 +12,7 @@ def _run():
             {
                 "configuration": {
                     "filename": "appmap.yml",
-                    "contents": yaml.dump(Config().default),
+                    "contents": yaml.dump(Config.current.default),
                 }
             }
         )
