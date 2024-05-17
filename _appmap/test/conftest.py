@@ -38,6 +38,7 @@ def fixture_with_data_dir(data_dir, monkeypatch):
 
 @pytest.fixture
 def events():
+    # pylint: disable=protected-access
     rec = Recorder.get_current()
     rec.clear()
     rec._enabled = True

@@ -119,7 +119,9 @@ def run():
     for disabled in no_record:
         envvars[f"APPMAP_RECORD_{disabled.upper()}"] = "false"
 
-    envvars["APPMAP_DISABLE_LOG_FILE"] = "false" if parsed_args["enable_log"] else "true"
+    envvars["APPMAP_DISABLE_LOG_FILE"] = (
+        "true" if parsed_args.get("no_enable_log", set()) else "false"
+    )
 
     if len(cmd) == 0:
         for k, v in sorted(envvars.items()):

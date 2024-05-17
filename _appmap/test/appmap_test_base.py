@@ -25,6 +25,7 @@ class AppMapTestBase:
     @staticmethod
     @pytest.fixture
     def events():
+        # pylint: disable=protected-access
         rec = Recorder.get_current()
         rec.clear()
         rec._enabled = True

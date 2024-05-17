@@ -182,6 +182,19 @@ class Config(metaclass=SingletonMeta):
         root_dir = Env.current.root_dir
         return [{"path": p} for p in find_top_packages(root_dir)]
 
+    def _update_output_dir(self, config_dir):
+        # appmap_dir must be resolved relative to the location of config file
+        # unless APPMAP_OUTPUT_DIR is set by tests.
+        if config_dir and Env.current.get("APPMAP_OUTPUT_DIR", None) is None:
+            # Is appmap_dir specified?
+            appmap_dir = (
+                self._config["appmap_dir"]
+                if "appmap_dir" in self._config else "tmp/appmap"
+            )
+            Env.current.output_dir = _resolve_relative_to(
+                Path(appmap_dir), Path(config_dir)
+            )
+
     def _load_config(self, show_warnings=False):
         self._config = {"name": None, "packages": []}
 
@@ -227,18 +240,7 @@ class Config(metaclass=SingletonMeta):
                     else:
                         self._drop_malformed_package_paths(show_warnings)
 
-                    # Is appmap_dir specified?
-                    appmap_dir = (
-                        self._config["appmap_dir"]
-                        if "appmap_dir" in self._config else "tmp/appmap"
-                    )
-
-                    # appmap_dir must be resolved relative to the location of config file
-                    # unless APPMAP_OUTPUT_DIR is set by tests.
-                    if config_dir and Env.current.get("APPMAP_OUTPUT_DIR", None) is None:
-                        Env.current.output_dir = _resolve_relative_to(
-                            Path(appmap_dir), Path(config_dir)
-                        )
+                    self._update_output_dir(config_dir)
 
                 self.file_valid = True
                 Env.current.enabled = should_enable
@@ -472,7 +474,13 @@ def initialize():
 initialize()
 
 c = Config.current
-c._load_config(show_warnings=True)
-logger.info("config: %s", c._config)
-logger.debug("package_functions: %s", c.package_functions)
-logger.info("env: %r", os.environ)
+# For various reasons, this code runs more than once on startup. Use an
+# environment variable to make sure the user only sees startup messages once.
+_startup_messages_shown = os.environ.get("_APPMAP_MESSAGES_SHOWN")
+if _startup_messages_shown is None:
+    # pylint: disable=protected-access
+    c._load_config(show_warnings=True)
+    logger.info("config: %s", c._config)
+    logger.debug("package_functions: %s", c.package_functions)
+    logger.info("env: %r", os.environ)
+    os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"

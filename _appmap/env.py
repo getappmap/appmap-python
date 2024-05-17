@@ -5,7 +5,6 @@ import logging.config
 import os
 import warnings
 from contextlib import contextmanager
-from datetime import datetime
 from os import environ
 from pathlib import Path
 from typing import cast
@@ -47,7 +46,11 @@ class Env(metaclass=SingletonMeta):
         self._cwd = cwd or _cwd
         self._env = _bootenv.copy()
         if env:
-            self._env.update(env)
+            for k, v in env.items():
+                if v is not None:
+                    self._env[k] = v
+                else:
+                    self._env.pop(k, None)
 
         self._configure_logging()
         enabled = self._env.get("_APPMAP", None)
@@ -144,9 +147,8 @@ class Env(metaclass=SingletonMeta):
         trace_logger.install()
 
         log_level = self.get("APPMAP_LOG_LEVEL", "warn").upper()
-        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "true").upper() != "FALSE"
+        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "false").upper() != "FALSE"
         log_config = self.get("APPMAP_LOG_CONFIG")
-        now = datetime.now()
         config_dict = {
             "version": 1,
             "disable_existing_loggers": False,
@@ -156,16 +158,27 @@ class Env(metaclass=SingletonMeta):
                     "format": "[{asctime}] {levelname} {name}: {message}",
                 }
             },
-            "handlers": {"default": {"class": "logging.StreamHandler", "formatter": "default"}},
+            "handlers": {
+                "default": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "default",
+                },
+                "stderr": {
+                    "class": "logging.StreamHandler",
+                    "level": "WARNING",
+                    "formatter": "default",
+                    "stream": "ext://sys.stderr",
+                },
+            },
             "loggers": {
                 "appmap": {
                     "level": log_level,
-                    "handlers": ["default"],
+                    "handlers": ["default", "stderr"],
                     "propagate": True,
                 },
                 "_appmap": {
                     "level": log_level,
-                    "handlers": ["default"],
+                    "handlers": ["default", "stderr"],
                     "propagate": True,
                 },
             },
@@ -178,10 +191,18 @@ class Env(metaclass=SingletonMeta):
             loggers["appmap"]["level"] = loggers["_appmap"]["level"] = log_level
             config_dict["handlers"] = {
                 "default": {
-                    "class": "logging.FileHandler",
+                    "class": "logging.handlers.RotatingFileHandler",
                     "formatter": "default",
-                    "filename": f"appmap-{now:%Y%m%d%H%M%S}-{os.getpid()}.log",
-                }
+                    "filename": "appmap.log",
+                    "maxBytes": 50 * 1024 * 1024,
+                    "backupCount": 1,
+                },
+                "stderr": {
+                    "class": "logging.StreamHandler",
+                    "level": "WARNING",
+                    "formatter": "default",
+                    "stream": "ext://sys.stderr",
+                },
             }
 
         if log_config is not None:

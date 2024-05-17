@@ -122,7 +122,7 @@ class TestConfiguration:
 
     def test_malformed_path(self, data_dir, caplog):
         _appmap.initialize(env={"APPMAP_CONFIG": "appmap-malformed-path.yml"}, cwd=data_dir)
-        Config.current._load_config(show_warnings=True)
+        Config.current._load_config(show_warnings=True)  # pylint: disable=protected-access
         assert (
             "Malformed path value 'package1/package2/Mod1Class' in configuration file. "
             "Path entries must be module names not directory paths."
@@ -135,7 +135,7 @@ class TestConfiguration:
 
     def test_empty_path(self, data_dir, caplog):
         _appmap.initialize(env={"APPMAP_CONFIG": "appmap-empty-path.yml"}, cwd=data_dir)
-        Config.current._load_config(show_warnings=True)
+        Config.current._load_config(show_warnings=True)  # pylint: disable=protected-access
         assert (
             "Missing path value in configuration file."
             in caplog.text
@@ -227,7 +227,7 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root, env={"_APPMAP": "false"})
 
-        c = Config.current
+        Config.current
         assert not path.is_file()
 
 
