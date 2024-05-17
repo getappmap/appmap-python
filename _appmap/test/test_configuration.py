@@ -4,6 +4,7 @@
 from contextlib import contextmanager
 from distutils.dir_util import copy_tree
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 import yaml
@@ -271,40 +272,72 @@ class TestEmpty(DefaultHelpers):
             self.check_default_config(Path(tmpdir).name)
 
 class TestSearchConfig:
+    # pylint: disable=too-many-arguments
+
     def test_config_in_parent_folder(self, data_dir, tmpdir, monkeypatch):
         copy_tree(data_dir / "config-up", str(tmpdir))
-        project_root = tmpdir / "subprojects" / "p1"
-        monkeypatch.chdir(project_root)
+        wd = tmpdir / "project" / "p1"
+        monkeypatch.chdir(wd)
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=project_root)
+        _appmap.initialize(cwd=wd)
         assert Config.current.name == "config-up-name"
         assert str(Env.current.output_dir).endswith(str(tmpdir / "tmp" / "appmap"))
 
-    def test_config_not_found_until_repo_root(self, data_dir, tmpdir, git_directory, monkeypatch):
+    def _init_repo(self, data_dir, tmpdir, git_directory, repo_root, appmapdir):
         copy_tree(data_dir / "config-up", str(tmpdir))
-        repo_root = tmpdir / "subprojects" / "p2"
         copy_tree(git_directory, str(repo_root))
-        project_root = repo_root / "sub1"
-        monkeypatch.chdir(project_root)
+        with open(appmapdir / "appmap.yml", "w+", encoding="utf-8") as f:
+            f.writelines(
+                dedent("""
+                name: project
+                packages: []
+                """)
+            )
+
+    @pytest.mark.parametrize("subdir", [Path("p1"), Path("p2", "sub1")])
+    def test_config_in_repo_root(self, data_dir, tmpdir, git_directory, monkeypatch, subdir):
+        repo_root = tmpdir / "project"
+        self._init_repo(data_dir, tmpdir, git_directory, repo_root, repo_root)
+
+        wd = repo_root / subdir
+        monkeypatch.chdir(wd)
 
         # pylint: disable=protected-access
-        _appmap.initialize(cwd=project_root)
-        # It should stop searching at repo_root.
-        # Check that it did not find appmap.yml
-        # in config-up folder.
-        assert Config.current.name != "config-up-name"
+        _appmap.initialize(cwd=wd)
+
+        # There's a config in the repo root. It should have been found, and have
+        # the correct contents.
+        assert Config.current.file_present
+        assert Config.current.name == "project"
+
+        assert Env.current.enabled
+
+    @pytest.mark.parametrize("subdir", [Path("p1"), Path("p2", "sub1")])
+    def test_config_above_repo_root(self, data_dir, tmpdir, git_directory, monkeypatch, subdir):
+        repo_root = tmpdir / "project"
+        self._init_repo(data_dir, tmpdir, git_directory, repo_root, tmpdir)
+
+        wd = repo_root / subdir
+        monkeypatch.chdir(wd)
+
+        # pylint: disable=protected-access
+        _appmap.initialize(cwd=wd)
+
+        # We should have stopped at the repo root without finding a config.
+        assert not Config.current.file_present
+
         # It should go on with default config
         assert Env.current.enabled
 
     def test_config_not_found_in_path_hierarchy(self, data_dir, tmpdir, monkeypatch):
         copy_tree(data_dir / "config-up", str(tmpdir))
-        project_root = tmpdir / "subprojects" / "p1"
-        monkeypatch.chdir(project_root)
+        wd = tmpdir / "project" / "p1"
+        monkeypatch.chdir(wd)
 
         # pylint: disable=protected-access
         _appmap.initialize(
-            cwd=project_root,
+            cwd=wd,
             env={"APPMAP_CONFIG": "notfound.yml"},
         )
         Config.current

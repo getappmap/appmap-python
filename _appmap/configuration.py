@@ -221,6 +221,7 @@ class Config(metaclass=SingletonMeta):
                 path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
 
         if path.is_file():
+            self._file = path
             self.file_present = True
 
             should_enable = Env.current.enabled
@@ -480,6 +481,7 @@ _startup_messages_shown = os.environ.get("_APPMAP_MESSAGES_SHOWN")
 if _startup_messages_shown is None:
     # pylint: disable=protected-access
     c._load_config(show_warnings=True)
+    logger.info("file: %s", c._file)
     logger.info("config: %s", c._config)
     logger.debug("package_functions: %s", c.package_functions)
     logger.info("env: %r", os.environ)

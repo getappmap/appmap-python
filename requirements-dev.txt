@@ -6,3 +6,4 @@ pytest-django<4.8
 fastapi
 httpx
 sqlalchemy
+debugpy
