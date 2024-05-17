@@ -1,3 +1,15 @@
+# [1.24.0](https://github.com/getappmap/appmap-python/compare/v1.23.0...v1.24.0) (2024-05-17)
+
+
+### Bug Fixes
+
+* improve handling of unset APPMAP ([bbeee65](https://github.com/getappmap/appmap-python/commit/bbeee653a04df9dafb7e4b8c04db023b3f9be210))
+
+
+### Features
+
+* append to a single log file ([cacc62f](https://github.com/getappmap/appmap-python/commit/cacc62f9ba6811c45e3bebe8849ad48800be60f9))
+
 # [1.23.0](https://github.com/getappmap/appmap-python/compare/v1.22.0...v1.23.0) (2024-05-16)
 
 
