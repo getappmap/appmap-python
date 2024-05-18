@@ -208,7 +208,7 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root)
 
-        Config.current  # write the file as a side-effect
+        Config.current  # pylint: disable=pointless-statement
         assert path.is_file()
         with open(path, encoding="utf-8") as cfg:
             actual_config = yaml.safe_load(cfg)
@@ -228,7 +228,7 @@ class TestDefaultConfig(DefaultHelpers):
         # pylint: disable=protected-access
         _appmap.initialize(cwd=repo_root, env={"_APPMAP": "false"})
 
-        Config.current
+        Config.current  # pylint: disable=pointless-statement
         assert not path.is_file()
 
 
@@ -241,7 +241,7 @@ class TestEmpty(DefaultHelpers):
     @contextmanager
     def incomplete_config(self):
         # pylint: disable=protected-access
-        with open("appmap-incomplete.yml", mode="w", buffering=1) as f:
+        with open("appmap-incomplete.yml", mode="w", buffering=1, encoding="utf-8") as f:
             print("# Incomplete file", file=f)
             yield f
 
@@ -340,6 +340,6 @@ class TestSearchConfig:
             cwd=wd,
             env={"APPMAP_CONFIG": "notfound.yml"},
         )
-        Config.current
+        Config.current  # pylint: disable=pointless-statement
         # No default config since we specified APPMAP_CONFIG
         assert not Env.current.enabled

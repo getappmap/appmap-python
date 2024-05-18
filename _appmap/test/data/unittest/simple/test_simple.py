@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import patch
 
-import simple
+import simple  # isort: skip
 
 # Importing from decouple will cause a failure if we're not hooking
 # finders correctly.
-from decouple import config
+from decouple import config  # noqa: F401
 
 import appmap
 

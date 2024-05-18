@@ -1,6 +1,6 @@
 [MAIN]
 # Specify a score threshold under which the program will exit with error.
-fail-under=9.85
+fail-under=9.86
 
 
 # Analyse import fallback blocks. This can be used to support both Python 2 and
@@ -429,7 +429,8 @@ disable=raw-checker-failed,
         missing-class-docstring,
         missing-module-docstring,
         consider-using-f-string,
-        fixme
+        fixme,
+        similarities
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

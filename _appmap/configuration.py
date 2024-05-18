@@ -196,6 +196,7 @@ class Config(metaclass=SingletonMeta):
             )
 
     def _load_config(self, show_warnings=False):
+        # pylint: disable=too-many-branches
         self._config = {"name": None, "packages": []}
 
         # Only use a default config if the user hasn't specified a

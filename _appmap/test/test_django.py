@@ -32,7 +32,8 @@ from .web_framework import (
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
 # Import app just for the side-effects. It must happen after sys.path has been modified.
-import djangoapp  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+# pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+import djangoapp  # pyright: ignore  # noqa: F401
 
 
 class TestFormCapture(_TestFormCapture):

@@ -2,9 +2,8 @@
 Test util functionality
 """
 
-import os
-from pathlib import Path
 import uuid
+from pathlib import Path
 
 from _appmap.utils import locate_file_up, scenario_filename
 

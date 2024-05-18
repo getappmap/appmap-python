@@ -67,6 +67,7 @@ def normalize_appmap(generated_appmap):
     """
 
     def normalize(dct):
+        # pylint: disable=too-many-branches
         if "classMap" in dct:
             dct["classMap"].sort(key=itemgetter("name"))
         if "children" in dct:

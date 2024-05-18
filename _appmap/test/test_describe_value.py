@@ -13,7 +13,7 @@ def test_describe_value_does_not_call_class():
         # pylint: disable=missing-class-docstring,too-few-public-methods
         @property
         def __class__(self):
-            raise Exception("__class__ called")
+            raise RuntimeError("__class__ called")
 
     describe_value(None, WithOverloadedClass())
 

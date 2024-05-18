@@ -4,13 +4,13 @@ import httpretty
 import pytest
 import requests
 
-import appmap.http
+import appmap.http  # noqa: F401
 
 from ..test.helpers import DictIncluding
 
 
 def test_http_client_capture(mock_requests, events):
-    requests.get("https://example.test/foo/bar?q=one&q=two&q2=%F0%9F%A6%A0")
+    requests.get("https://example.test/foo/bar?q=one&q=two&q2=%F0%9F%A6%A0", timeout=1)
 
     assert events[0].to_dict() == DictIncluding(
         {

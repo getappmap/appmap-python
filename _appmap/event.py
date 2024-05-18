@@ -173,6 +173,7 @@ class Param:
 
 
 class CallEvent(Event):
+    # pylint: disable=method-cache-max-size-none
     __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels"]
 
     @staticmethod
@@ -217,6 +218,7 @@ class CallEvent(Event):
 
     @staticmethod
     def set_params(params, instance, args, kwargs):
+        # pylint: disable=too-many-branches
         # Note that set_params expects args and kwargs as a tuple and
         # dict, respectively. It operates on them as collections, so
         # it doesn't unpack them.
@@ -400,6 +402,7 @@ class HttpServerRequestEvent(MessageEvent):
 
     __slots__ = ["http_server_request"]
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         request_method,

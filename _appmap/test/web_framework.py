@@ -339,6 +339,7 @@ class _TestRecordRequests:
         return requests.get(cls.server_url() + "/test", timeout=30)
 
     def record_requests(self, record_remote):
+        # pylint: disable=too-many-locals
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
