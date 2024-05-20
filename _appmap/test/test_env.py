@@ -7,7 +7,7 @@ def test_disable_temporarily():
     try:
         with env.disabled("requests"):
             assert not env.enables("requests")
-            raise 'hell'
-    except:
+            raise RuntimeError("hell")
+    except RuntimeError:
         ...
     assert env.enables("requests")

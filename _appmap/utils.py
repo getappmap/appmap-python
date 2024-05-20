@@ -1,6 +1,5 @@
 import inspect
 import os
-from pathlib import Path
 import re
 import shlex
 import subprocess
@@ -8,6 +7,7 @@ import types
 from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum, IntFlag, auto
+from pathlib import Path
 from typing import Any, Callable
 
 from .env import Env
@@ -228,10 +228,10 @@ def scenario_filename(name, separator="_"):
 def locate_file_up(filename, start_dir=None, stop_dir=None):
     """
     Search for a file in the current directory and recursively up to the root directory.
-    
+
     :param filename: The name of the file to locate.
     :param start_dir: The directory to start the search from. Defaults to the current.
-    :param stop_idr: The directory to stop the search. If None search is performed until
+    :param stop_dir: The directory to stop the search. If None search is performed until
                      the root of the file system.
     :return: The path to the directory containing the file or None if the file cannot be found.
     """
@@ -245,11 +245,10 @@ def locate_file_up(filename, start_dir=None, stop_dir=None):
     if Path.exists(file_path):
         return start_dir
 
-    if isinstance(stop_dir, str):
-        stop_dir = Path(stop_dir)
+    for p in start_dir.parents:
+        if Path.exists(p.joinpath(filename)):
+            return p
+        if p == stop_dir:
+            return None
 
-    parent_dir = start_dir.parent
-    if parent_dir in (start_dir, stop_dir):
-        return None
-
-    return locate_file_up(filename, parent_dir, stop_dir)
+    return None

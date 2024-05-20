@@ -102,6 +102,7 @@ def name_hash(namepart):
     return sha256(os.fsencode(namepart)).hexdigest()
 
 
+# pylint: disable=too-many-arguments
 def create_appmap_file(
     output_dir,
     request_method,
@@ -141,6 +142,7 @@ class AppmapMiddleware(ABC):
         """Specify the main operations to be performed by a request is processed."""
         raise NotImplementedError
 
+    # pylint: disable=too-many-arguments
     def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
 
         duration = time.monotonic() - start
@@ -179,6 +181,7 @@ class AppmapMiddleware(ABC):
 
         return rec, start, call_event_id
 
+    # pylint: disable=too-many-arguments
     def after_request_hook(
         self,
         request_path,

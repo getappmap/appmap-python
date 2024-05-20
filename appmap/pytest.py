@@ -26,7 +26,7 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
     logger.debug("Test recording is enabled (Pytest)")
 
     @pytest.hookimpl
-    def pytest_configure(config):
+    def pytest_configure(config):  # pylint: disable=unused-argument
         Env.current.warn_enabled_by_default()
 
     @pytest.hookimpl
@@ -84,5 +84,5 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
             try:
                 with testing_framework.collect_result_metadata(metadata):
                     result.get_result()
-            except:  # pylint: disable=bare-except
+            except:  # pylint: disable=bare-except   # noqa: E722
                 pass  # exception got recorded in metadata

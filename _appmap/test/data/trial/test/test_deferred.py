@@ -1,4 +1,4 @@
-import time
+import time  # noqa: F401
 
 from twisted.internet import defer, reactor
 from twisted.trial import unittest
