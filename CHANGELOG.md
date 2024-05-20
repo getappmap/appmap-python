@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/getappmap/appmap-python/compare/v1.24.0...v1.24.1) (2024-05-20)
+
+
+### Bug Fixes
+
+* find a config in the repo root ([b9ecced](https://github.com/getappmap/appmap-python/commit/b9ecced9407e59a302750615be66b08ad679ddb4))
+
 # [1.24.0](https://github.com/getappmap/appmap-python/compare/v1.23.0...v1.24.0) (2024-05-17)
 
 
