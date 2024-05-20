@@ -79,7 +79,7 @@ def write_appmap(
 
 
 def initialize():
-    if Env.current.enables("process", "false"):
+    if Env.current.enables("process", Env.RECORD_PROCESS_DEFAULT):
         r = Recording()
         r.start()
 

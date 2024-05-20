@@ -8,10 +8,10 @@ from types import SimpleNamespace as NS
 
 import flask
 import pytest
-from appmap.flask import AppmapFlask
 
 from _appmap.env import Env
 from _appmap.metadata import Metadata
+from appmap.flask import AppmapFlask
 
 from ..test.helpers import DictIncluding
 from .web_framework import (
@@ -144,7 +144,11 @@ class TestFlaskApp:
         appmap_file = (
             pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
         )
+
+        # No request recordings should have been created
         assert not os.path.exists(pytester.path / "tmp" / "appmap" / "requests")
+
+        # but there should be a test recording
         assert appmap_file.exists()
 
     def test_disabled(self, pytester, monkeypatch):
@@ -154,3 +158,14 @@ class TestFlaskApp:
 
         result.assert_outcomes(passed=1, failed=0, errors=0)
         assert not (pytester.path / "tmp" / "appmap").exists()
+
+    def test_disabled_for_process(self, pytester, monkeypatch):
+        monkeypatch.setenv("APPMAP_RECORD_PROCESS", "true")
+
+        result = pytester.runpytest("-svv")
+
+        result.assert_outcomes(passed=1, failed=0, errors=0)
+
+        assert (pytester.path / "tmp" / "appmap" / "process").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "requests").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()

@@ -216,6 +216,19 @@ class TestDjangoApp:
         result.assert_outcomes(passed=1, failed=0, errors=0)
         assert not (pytester.path / "tmp").exists()
 
+    def test_disabled_for_process(self, pytester, monkeypatch):
+        monkeypatch.setenv("APPMAP_RECORD_PROCESS", "true")
+
+        result = pytester.runpytest("-svv")
+
+        # There are two tests for remote recording. They should both fail,
+        # because process recording should disable remote recording.
+        result.assert_outcomes(passed=2, failed=2, errors=0)
+
+        assert (pytester.path / "tmp" / "appmap" / "process").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "requests").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()
+
 
 @pytest.fixture(name="server")
 def django_server(xprocess, server_base):

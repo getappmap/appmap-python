@@ -21,6 +21,7 @@ def _recording_method_key(recording_method):
 
 
 class Env(metaclass=SingletonMeta):
+    RECORD_PROCESS_DEFAULT = "false"
 
     def __init__(self, env=None, cwd=None):
         # root_dir and root_dir_len are going to be used when
@@ -93,8 +94,19 @@ class Env(metaclass=SingletonMeta):
         if not self.enabled:
             return False
 
-        v = self.get(_recording_method_key(recording_method), default).lower()
-        return v != "false"
+        process_enabled = self._enables("process", self.RECORD_PROCESS_DEFAULT)
+        if recording_method == "process":
+            return process_enabled
+
+        # If process recording is enabled, others should be disabled
+        if process_enabled:
+            return False
+
+        # Otherwise, check the environment variable
+        return self._enables(recording_method, default)
+
+    def _enables(self, recording_method, default):
+        return self.get(_recording_method_key(recording_method), default).lower() != "false"
 
     @contextmanager
     def disabled(self, recording_method: str):

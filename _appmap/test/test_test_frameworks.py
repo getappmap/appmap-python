@@ -44,6 +44,13 @@ class _TestTestRunner(ABC):
         self.run_tests(testdir)
         assert not testdir.output().exists()
 
+    def test_disabled_for_process(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_RECORD_PROCESS", "true")
+
+        self.run_tests(testdir)
+        assert (testdir.path / "tmp" / "appmap" / "process").exists()
+        assert not testdir.output().exists()
+
 
 class TestUnittestRunner(_TestTestRunner):
     @classmethod
