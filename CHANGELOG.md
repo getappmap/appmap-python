@@ -1,3 +1,22 @@
+# [2.0.0](https://github.com/getappmap/appmap-python/compare/v1.24.1...v2.0.0) (2024-05-23)
+
+
+### Bug Fixes
+
+* combine testing-related env vars ([500fe55](https://github.com/getappmap/appmap-python/commit/500fe55f06c536611e3e292b22a8fade62101afe))
+* enabling process recording disables others ([74b2ee1](https://github.com/getappmap/appmap-python/commit/74b2ee15bfc380ee44ef74905e880541028f4c3b))
+* honor APPMAP_RECORD_REQUESTS when testing ([2df0f37](https://github.com/getappmap/appmap-python/commit/2df0f37474d1cd26bdfdbb45baf4fd2c9c9c982f))
+
+
+### Features
+
+* disable record by default ([57b3910](https://github.com/getappmap/appmap-python/commit/57b3910a48cea8582612772d79abacc53b5b73d5))
+
+
+### BREAKING CHANGES
+
+* disable record by default
+
 ## [1.24.1](https://github.com/getappmap/appmap-python/compare/v1.24.0...v1.24.1) (2024-05-20)
 
 
