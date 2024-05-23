@@ -24,10 +24,9 @@ will be displayed.
 _RECORDING_TYPES = set(
     [
         "process",
-        "pytest",
         "remote",
         "requests",
-        "unittest",
+        "tests",
     ]
 )
 

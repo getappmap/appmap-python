@@ -16,10 +16,6 @@ from _appmap.env import Env
 from _appmap.importer import Filterable, NullFilter
 
 
-def test_enabled_by_default():
-    assert appmap.enabled()
-
-
 @pytest.mark.appmap_enabled
 def test_can_be_configured():
     """
@@ -45,8 +41,6 @@ def test_reports_invalid():
 @pytest.mark.appmap_enabled(config="appmap-broken.yml")
 def test_is_disabled_when_unset():
     """Test that recording is disabled when APPMAP is unset but the config is broken"""
-    assert Env.current.get("_APPMAP", None) is None
-
     assert not appmap.enabled()
 
 

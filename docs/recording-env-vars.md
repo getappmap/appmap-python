@@ -3,11 +3,11 @@ recording types. In each case, ✓ means that the corresponding recording type
 will be produced, ❌ means that it will not.
 
 ## Web Apps
-These tables describe how `APPMAP_RECORD_REQUEST` and `APPMAP_RECORD_REMOTE` are
+These tables describe how `APPMAP_RECORD_REQUESTS` and `APPMAP_RECORD_REMOTE` are
 handled when running a web app. "web app, debug on" means a Flask app run as `flask --debug`,
 a FastAPI app run using `uvicorn --reload` and, a Django app run with `DEBUG = True` in `settings.py`.
 
-|                      | `APPMAP_RECORD_REQUEST` is unset | `APPMAP_RECORD_REQUEST` == "true" | `APPMAP_RECORD_REQUEST` == "false" |
+|                      | `APPMAP_RECORD_REQUESTS` is unset | `APPMAP_RECORD_REQUESTS` == "true" | `APPMAP_RECORD_REQUESTS` == "false" |
 | -------------------- | :----------------------------: | :------------------------------: | :-------------------------------: |
 | "web app, debug on"  |               ✓                |                ✓                 |                 ❌                 |
 | "web app, debug off" |               ✓                |                ✓                 |                 ❌                 |
@@ -21,13 +21,13 @@ a FastAPI app run using `uvicorn --reload` and, a Django app run with `DEBUG = T
 
 ## Testing
 This table shows how `APPMAP_RECORD_PYTEST`, `APPMAP_RECORD_UNITTEST`, and
-`APPMAP_RECORD_REQUEST` are handled when running tests in. Note that in v2, in
+`APPMAP_RECORD_REQUESTS` are handled when running tests in. Note that in v2, in
 v2, `APPMAP_RECORD_PYTEST` and `APPMAP_RECORD_UNITTEST` will be replaced with
-APPMAP_RECORD_TEST.
+`APPMAP_RECORD_TESTS`.
 
-|        | `APPMAP_RECORD_PYTEST` is unset | `APPMAP_RECORD_PYTEST` == "true" | `APPMAP_RECORD_PYTEST` == "false" | `APPMAP_RECORD_REQUEST` is unset | `APPMAP_RECORD_REQUEST` == "true" | `APPMAP_RECORD_REQUEST` == "false" |
+|        | `APPMAP_RECORD_PYTEST` is unset | `APPMAP_RECORD_PYTEST` == "true" | `APPMAP_RECORD_PYTEST` == "false" | `APPMAP_RECORD_REQUESTS` is unset | `APPMAP_RECORD_REQUESTS` == "true" | `APPMAP_RECORD_REQUESTS` == "false" |
 | ------ | :---------------------------: | :-----------------------------: | :------------------------------: | :----------------------------: | :-----------------------------: | :------------------------------: |
-| pytest |               ✓               |                ✓                |                ❌                 |        ✓in v1, ❌ in v2         |                ✓                |                ❌                 |
+| pytest |               ✓               |                ✓                |                ❌                 |        ❌         |                ignored in v1, ✓ in v2                |                ❌                 |
 
 
 

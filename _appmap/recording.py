@@ -44,7 +44,6 @@ class Recording:
         return Recorder.get_enabled()
 
     def __enter__(self):
-        Env.current.warn_enabled_by_default()
         self.start()
 
     def __exit__(self, exc_type, exc_value, tb):
@@ -80,9 +79,7 @@ def write_appmap(
 
 
 def initialize():
-    if Env.current.enables("process", "false"):
-        Env.current.warn_enabled_by_default()
-
+    if Env.current.enables("process", Env.RECORD_PROCESS_DEFAULT):
         r = Recording()
         r.start()
 
