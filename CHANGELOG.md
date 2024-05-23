@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/getappmap/appmap-python/compare/v2.0.0...v2.0.1) (2024-05-23)
+
+
+### Bug Fixes
+
+* completely disable record-by-default ([27e1bb4](https://github.com/getappmap/appmap-python/commit/27e1bb40734213ad100f27e024337e3d2e484c3e))
+* handle non json serializable types ([b4fedc6](https://github.com/getappmap/appmap-python/commit/b4fedc6c8d22082c9640d03caa8fbf12121fe8f9))
+
 # [2.0.0](https://github.com/getappmap/appmap-python/compare/v1.24.1...v2.0.0) (2024-05-23)
 
 
