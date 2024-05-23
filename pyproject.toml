@@ -78,6 +78,8 @@ fastapi = "^0.110.0"
 httpx = "^0.27.0"
 pytest-env = "^1.1.3"
 pytest-console-scripts = "^1.4.1"
+# v1.24.4 of numpy is the latest version supporting Python 3.8
+numpy = "1.24.4"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
