@@ -38,7 +38,7 @@ class Env(metaclass=SingletonMeta):
                     self._env.pop(k, None)
 
         self._configure_logging()
-        enabled = self._env.get("_APPMAP", None)
+        enabled = self._env.get("_APPMAP", "false")
         self._enabled = enabled is None or enabled.lower() != "false"
 
         self._root_dir = str(self._cwd) + "/"

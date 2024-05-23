@@ -106,7 +106,10 @@ def run():
     parsed_args = vars(parsed_args)
 
     # our settings override those in the environment
-    envvars = {"APPMAP": "true"}
+    envvars = {
+        "APPMAP": "true",
+        "_APPMAP": "true",
+    }
 
     # Set the environment variables based on the the flags. A recording type in
     # --record overrides one set in --no-record. The environment variable for a

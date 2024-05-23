@@ -46,3 +46,7 @@ if _enabled is None or _enabled.upper() == "TRUE":
 
         def enabled():
             return Env.current.enabled
+    else:
+        os.environ.pop("_APPMAP", None)
+else:
+    os.environ.setdefault("_APPMAP", "false")
