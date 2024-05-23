@@ -111,7 +111,10 @@ class AppMapEncoder(json.JSONEncoder):
         if isinstance(o, ClassMapEntry):
             return o.to_dict()
 
-        return json.JSONEncoder.default(self, o)
+        try:
+            return json.JSONEncoder.default(self, o)
+        except TypeError:
+            return str(o)
 
 
 def dump(recording, metadata=None, indent=None):
