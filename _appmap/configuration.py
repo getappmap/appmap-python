@@ -482,8 +482,7 @@ _startup_messages_shown = os.environ.get("_APPMAP_MESSAGES_SHOWN")
 if _startup_messages_shown is None:
     # pylint: disable=protected-access
     c._load_config(show_warnings=True)
-    logger.info("file: %s", c._file)
-    logger.info("config: %s", c._config)
+    logger.info("file: %s", c._file if c.file_present else "[no appmap.yml]")
     logger.debug("package_functions: %s", c.package_functions)
     logger.info("env: %r", os.environ)
     os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"
