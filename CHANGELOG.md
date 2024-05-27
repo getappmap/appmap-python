@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/getappmap/appmap-python/compare/v2.0.1...v2.0.2) (2024-05-27)
+
+
+### Bug Fixes
+
+* expect a missing config file ([9cb20a4](https://github.com/getappmap/appmap-python/commit/9cb20a4e09f4084bb11fa117016d6b418bc03651))
+
 ## [2.0.1](https://github.com/getappmap/appmap-python/compare/v2.0.0...v2.0.1) (2024-05-23)
 
 
