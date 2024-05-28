@@ -7,3 +7,4 @@ fastapi
 httpx
 sqlalchemy
 debugpy
+numpy
