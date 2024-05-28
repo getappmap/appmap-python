@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/getappmap/appmap-python/compare/v2.0.2...v2.0.3) (2024-05-28)
+
+
+### Bug Fixes
+
+* ask pytest not to rewrite our modules ([aae5dea](https://github.com/getappmap/appmap-python/commit/aae5dea50217568c67ccd312558c5e818f49b4ca))
+
 ## [2.0.2](https://github.com/getappmap/appmap-python/compare/v2.0.1...v2.0.2) (2024-05-27)
 
 
