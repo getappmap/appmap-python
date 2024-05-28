@@ -1,4 +1,6 @@
-"""AppMap recorder for Python"""
+"""AppMap recorder for Python
+PYTEST_DONT_REWRITE
+"""
 import os
 
 # Note that we need to guard these imports with a conditional, rather than
