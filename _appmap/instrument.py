@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from . import event
 from .env import Env
 from .event import CallEvent
-from .recorder import Recorder
+from .recorder import Recorder, AppMapTooManyEvents
 from .utils import appmap_tls
 
 logger = Env.current.getLogger(__name__)
@@ -97,6 +97,8 @@ def call_instrumented(f, instance, args, kwargs):
         )
         Recorder.add_event(return_event)
         return ret
+    except AppMapTooManyEvents:
+        raise
     except Exception:  # noqa: E722
         elapsed_time = time.time() - start_time
         Recorder.add_event(

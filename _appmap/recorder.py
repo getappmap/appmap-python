@@ -10,6 +10,17 @@ logger = Env.current.getLogger(__name__)
 # pylint: disable=global-statement
 _default_recorder = None
 
+# Allow the user to suggest a limit on the number of events that should be added to a Recorder.
+# Depending on how exceptions get processed by the framework, there may be some more added, but it
+# shouldn't be an enormous number.
+_MAX_EVENTS = Env.current.get("APPMAP_MAX_EVENTS")
+if _MAX_EVENTS is not None:
+    _MAX_EVENTS = int(_MAX_EVENTS)
+
+
+class AppMapTooManyEvents(RuntimeError):
+    """Thrown when a recorder has more than APPMAP_MAX_EVENTS"""
+
 
 class Recorder(ABC):
     """
@@ -17,6 +28,8 @@ class Recorder(ABC):
 
     Note that the abstract methods have implementations for use by subclasses.
     """
+
+    _aborting = False
 
     @property
     @abstractmethod
@@ -104,6 +117,7 @@ class Recorder(ABC):
         return [perthread, _default_recorder]
 
     def clear(self):
+        Recorder._aborting = False
         self._events = []
 
     def __init__(self, enabled=False):
@@ -130,7 +144,13 @@ class Recorder(ABC):
 
     @abstractmethod
     def _add_event(self, event):
+        if Recorder._aborting:
+            return
+
         self._events.append(event)
+        if _MAX_EVENTS is not None and len(self._events) > _MAX_EVENTS:
+            Recorder._aborting = True
+            raise AppMapTooManyEvents()
 
     @staticmethod
     def _initialize():
