@@ -1,3 +1,10 @@
+## [2.0.4](https://github.com/getappmap/appmap-python/compare/v2.0.3...v2.0.4) (2024-05-29)
+
+
+### Bug Fixes
+
+* optionally limit number of events collected ([7c17a38](https://github.com/getappmap/appmap-python/commit/7c17a383fc849474ac44239abc6fb9f173f97edd))
+
 ## [2.0.3](https://github.com/getappmap/appmap-python/compare/v2.0.2...v2.0.3) (2024-05-28)
 
 
