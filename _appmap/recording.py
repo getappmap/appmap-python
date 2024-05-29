@@ -54,6 +54,33 @@ class Recording:
         return False
 
 
+class NoopRecording:
+    """
+    A noop context manager to export as "Recording" instead of class
+    Recording when not Env.current.enabled.
+    """
+
+    def __init__(self, exit_hook=None):
+        self.exit_hook = exit_hook
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def is_running(self):
+        return False
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if self.exit_hook is not None:
+            self.exit_hook(self)
+        return False
+
+
 def write_appmap(
     appmap, appmap_fname, recorder_type, metadata=None, basedir=Env.current.output_dir
 ):
