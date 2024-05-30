@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/getappmap/appmap-python/compare/v2.0.4...v2.0.5) (2024-05-30)
+
+
+### Bug Fixes
+
+* appmap.Recording is available even when APPMAP=[secure] ([6bb7687](https://github.com/getappmap/appmap-python/commit/6bb7687412808c1d10a5d705ab0b1983868bb576))
+
 ## [2.0.4](https://github.com/getappmap/appmap-python/compare/v2.0.3...v2.0.4) (2024-05-29)
 
 
