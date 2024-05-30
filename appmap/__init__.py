@@ -8,6 +8,7 @@ import os
 # execute the imports in a function, the modules all get put into the funtion's
 # globals, rather than into appmap's globals.
 _enabled = os.environ.get("APPMAP", None)
+_recording_exported = False
 if _enabled is None or _enabled.upper() == "TRUE":
     if _enabled is not None:
         # Use setdefault so tests can manage _APPMAP as necessary
@@ -18,6 +19,7 @@ if _enabled is None or _enabled.upper() == "TRUE":
         from _appmap.labels import labels  # noqa: F401
         from _appmap.noappmap import decorator as noappmap  # noqa: F401
         from _appmap.recording import Recording  # noqa: F401
+        _recording_exported = True
 
         try:
             from . import django  # noqa: F401
@@ -52,3 +54,10 @@ if _enabled is None or _enabled.upper() == "TRUE":
         os.environ.pop("_APPMAP", None)
 else:
     os.environ.setdefault("_APPMAP", "false")
+
+if not _recording_exported:
+    # Client code that imports appmap.Recording should run correctly
+    # even when not Env.current.enabled (not APPMAP=true).
+    # This prevents:
+    #   ImportError: cannot import name 'Recording' from 'appmap'...
+    from _appmap.recording import NoopRecording as Recording # noqa: F401
