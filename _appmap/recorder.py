@@ -191,7 +191,7 @@ class SharedRecorder(Recorder):
     A shared Recorder. The global recorder is an instance of this class.
     """
 
-    _lock = threading.Lock()
+    _lock = threading.RLock()
 
     def __init__(self):
         super().__init__()
