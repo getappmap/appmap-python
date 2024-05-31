@@ -1,3 +1,10 @@
+## [2.0.6](https://github.com/getappmap/appmap-python/compare/v2.0.5...v2.0.6) (2024-05-31)
+
+
+### Bug Fixes
+
+* use an RLock in SharedRecorder._add_event ([ec1f95d](https://github.com/getappmap/appmap-python/commit/ec1f95debdd3524b688793459be490432895d57c))
+
 ## [2.0.5](https://github.com/getappmap/appmap-python/compare/v2.0.4...v2.0.5) (2024-05-30)
 
 
