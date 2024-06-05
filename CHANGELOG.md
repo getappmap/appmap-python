@@ -1,3 +1,12 @@
+## [2.0.8](https://github.com/getappmap/appmap-python/compare/v2.0.7...v2.0.8) (2024-06-05)
+
+
+### Bug Fixes
+
+* move __reduce_ex__ up to ObjectProxy ([f4618b6](https://github.com/getappmap/appmap-python/commit/f4618b68bc9bc40ff54120385c1820896094bd2e))
+* optionally disable schema render ([4e29c13](https://github.com/getappmap/appmap-python/commit/4e29c1321d0e52554a797efd4e5bdda240e2fe82))
+* support APPMAP_MAX_TIME ([d60c528](https://github.com/getappmap/appmap-python/commit/d60c52813aec424de1db2b45bb5f13eb23965d61))
+
 ## [2.0.7](https://github.com/getappmap/appmap-python/compare/v2.0.6...v2.0.7) (2024-06-05)
 
 
