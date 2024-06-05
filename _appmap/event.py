@@ -111,7 +111,9 @@ def describe_value(name, val, max_depth=5):
         "object_id": id(val),
         "value": display_string(val),
     }
-    ret.update(_describe_schema(name, val, 0, max_depth))
+    if Env.current.display_params:
+        ret.update(_describe_schema(name, val, 0, max_depth))
+
     if any(_is_list_or_dict(type(val))):
         ret["size"] = len(val)
 
