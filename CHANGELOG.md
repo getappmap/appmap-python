@@ -1,3 +1,10 @@
+## [2.0.7](https://github.com/getappmap/appmap-python/compare/v2.0.6...v2.0.7) (2024-06-05)
+
+
+### Bug Fixes
+
+* max recursion depth exceeded ([4223079](https://github.com/getappmap/appmap-python/commit/42230798cda296e31d437b93593e87760a498fad))
+
 ## [2.0.6](https://github.com/getappmap/appmap-python/compare/v2.0.5...v2.0.6) (2024-05-31)
 
 
