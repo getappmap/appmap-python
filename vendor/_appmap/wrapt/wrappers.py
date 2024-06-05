@@ -457,9 +457,11 @@ class ObjectProxy(with_metaclass(_ObjectProxyMetaType)):
         raise NotImplementedError(
                 'object proxy must define __reduce_ex__()')
 
+    # Return the qualname of the wrapped function instead of a tuple. This allows an instance of
+    # subclasses to be pickled as the function it wraps. This seems to be adequate for generating
+    # AppMaps.
     def __reduce_ex__(self, protocol):
-        raise NotImplementedError(
-                'object proxy must define __reduce_ex__()')
+         return self.__wrapped__.__qualname__
 
 class CallableObjectProxy(ObjectProxy):
 
@@ -740,12 +742,9 @@ class FunctionWrapper(_FunctionWrapperBase):
     # new FunctionWrapper will be created. If it doesn't, then __reduce_ex__ can simply return a
     # string, which would cause deepcopy to return the original FunctionWrapper.
     #
-    # Update: We'll return the qualname of the wrapped function instead of a tuple allows a
-    # FunctionWrapper to be pickled (as the function it wraps). This seems to be adequate for
-    # generating AppMaps, so go with that.
 
-    def __reduce_ex__(self, protocol):
-         return self.__wrapped__.__qualname__
+    # def __reduce_ex__(self, protocol):
+    #      return self.__wrapped__.__qualname__
  
          # return FunctionWrapper, (
          #     self.__wrapped__,
