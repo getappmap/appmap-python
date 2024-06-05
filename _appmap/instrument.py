@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from . import event
 from .env import Env
 from .event import CallEvent
-from .recorder import Recorder, AppMapTooManyEvents
+from .recorder import Recorder, AppMapLimitExceeded
 from .utils import appmap_tls
 
 logger = Env.current.getLogger(__name__)
@@ -90,6 +90,7 @@ def call_instrumented(f, instance, args, kwargs):
     call_event_id = call_event.id
     start_time = time.time()
     try:
+        Recorder.check_time(start_time)
         ret = f.fn(*args, **kwargs)
         elapsed_time = time.time() - start_time
 
@@ -98,7 +99,7 @@ def call_instrumented(f, instance, args, kwargs):
         )
         Recorder.add_event(return_event)
         return ret
-    except AppMapTooManyEvents:
+    except AppMapLimitExceeded:
         raise
     except Exception:  # noqa: E722
         elapsed_time = time.time() - start_time
