@@ -15,11 +15,12 @@ logger = Env.current.getLogger(__name__)
 @contextmanager
 def recording_disabled():
     tls = appmap_tls()
+    original_value = tls.get("instrumentation_disabled")
     tls["instrumentation_disabled"] = True
     try:
         yield
     finally:
-        tls["instrumentation_disabled"] = False
+        tls["instrumentation_disabled"] = original_value
 
 
 def is_instrumentation_disabled():

@@ -110,6 +110,9 @@ class ExampleClass(Super, ClassMethodMixin):
     def with_comment(self):
         return True
 
+    def return_self(self):
+        return self
+
 
 def modfunc():
     return "Hello world!"

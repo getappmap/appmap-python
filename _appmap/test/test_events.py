@@ -105,3 +105,15 @@ class TestEvents:
             # MagicMock. (If it's broken, we may not get here at all,
             # because the assertion above may fail.)
             param.__repr__.assert_called_once_with()
+
+    def test_describe_return_value_recursion_protection(self):
+        r = appmap.Recording()
+        with r:
+            # pylint: disable=import-outside-toplevel
+            from example_class import ExampleClass
+
+            ExampleClass().return_self()
+        # There should be no event for method another_method which is called by __repr__.
+        assert [e.method_id for e in r.events if e.event == "call" and hasattr(e, "method_id")] == [
+            "return_self"
+        ]

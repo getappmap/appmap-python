@@ -455,7 +455,11 @@ class FuncReturnEvent(ReturnEvent):
 
     def __init__(self, parent_id, elapsed, return_value):
         super().__init__(parent_id, elapsed)
-        self.return_value = describe_value(None, return_value)
+        # Import here to prevent circular dependency
+        # pylint: disable=import-outside-toplevel
+        from _appmap.instrument import recording_disabled # noqa: F401
+        with recording_disabled():
+            self.return_value = describe_value(None, return_value)
 
 
 class HttpResponseEvent(ReturnEvent):
