@@ -1,4 +1,5 @@
 import threading
+import time
 import traceback
 from abc import ABC, abstractmethod
 
@@ -17,9 +18,21 @@ _MAX_EVENTS = Env.current.get("APPMAP_MAX_EVENTS")
 if _MAX_EVENTS is not None:
     _MAX_EVENTS = int(_MAX_EVENTS)
 
+_MAX_TIME = Env.current.get("APPMAP_MAX_TIME")
+if _MAX_TIME is not None:
+    _MAX_TIME = int(_MAX_TIME)
 
-class AppMapTooManyEvents(RuntimeError):
+
+class AppMapLimitExceeded(RuntimeError):
+    """Class of events thrown when some limit has been exceeded"""
+
+
+class AppMapTooManyEvents(AppMapLimitExceeded):
     """Thrown when a recorder has more than APPMAP_MAX_EVENTS"""
+
+
+class AppMapSessionTooLong(AppMapLimitExceeded):
+    """Throw when an individual recording session has exceeded APPMAP_MAX_TIME"""
 
 
 class Recorder(ABC):
@@ -98,6 +111,13 @@ class Recorder(ABC):
         return cls.get_current()._stop_recording()  # pylint: disable=protected-access
 
     @classmethod
+    def check_time(cls, event_time):
+        if _MAX_TIME is None:
+            return
+        if event_time - cls.get_current()._start_time > _MAX_TIME:
+            raise AppMapSessionTooLong(f"Session exceeded {_MAX_TIME} seconds")
+
+    @classmethod
     def add_event(cls, event):
         """
         Add the given event to the global recorder, as well as the thread's recorder (if it has
@@ -124,6 +144,7 @@ class Recorder(ABC):
         self._events = []
         self._enabled = enabled
         self.start_tb = None
+        self._start_time = None
 
     @abstractmethod
     def _start_recording(self):
@@ -134,6 +155,7 @@ class Recorder(ABC):
             raise RuntimeError("Recording already in progress")
         self.start_tb = traceback.extract_stack()
         self._enabled = True
+        self._start_time = time.time()
 
     @abstractmethod
     def _stop_recording(self):
@@ -150,7 +172,7 @@ class Recorder(ABC):
         self._events.append(event)
         if _MAX_EVENTS is not None and len(self._events) > _MAX_EVENTS:
             Recorder._aborting = True
-            raise AppMapTooManyEvents()
+            raise AppMapTooManyEvents(f"Session exceeded {_MAX_EVENTS} events")
 
     @staticmethod
     def _initialize():
