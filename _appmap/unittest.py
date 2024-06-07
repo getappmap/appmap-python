@@ -3,6 +3,7 @@ import unittest
 from contextlib import contextmanager
 
 from _appmap import noappmap, testing_framework, wrapt
+from _appmap.env import Env
 from _appmap.utils import get_function_location
 
 _session = testing_framework.session("unittest", "tests")
@@ -52,6 +53,17 @@ if sys.version_info[1] < 8:
                 yield
 
 else:
+    # We need to disable request recording in TestCase._callSetUp too
+    # in order to prevent creation of a request recording besides test
+    # recording when requests are made inside setUp method.
+    # This edge case can be observed in this test in django project:
+    #   $ APPMAP=TRUE ./runtests.py auth_tests.test_views.ChangelistTests.test_user_change_email
+    #   (ChangelistTests.setUp makes a request)
+    @wrapt.patch_function_wrapper("unittest.case", "TestCase._callSetUp")
+    def callSetUp(wrapped, test_case, args, kwargs): # pylint: disable=unused-argument
+        with Env.current.disabled("requests"):
+            wrapped(*args, **kwargs)
+
     # As of 3.8, unittest.case.TestCase now calls the test's method indirectly, through
     # TestCase._callTestMethod. Hook that to manage a recording session.
     @wrapt.patch_function_wrapper("unittest.case", "TestCase._callTestMethod")
