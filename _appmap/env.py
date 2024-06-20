@@ -37,6 +37,7 @@ class Env(metaclass=SingletonMeta):
                 else:
                     self._env.pop(k, None)
 
+        self.log_file_creation_failed = False
         self._configure_logging()
         enabled = self._env.get("_APPMAP", "false")
         self._enabled = enabled is None or enabled.lower() != "false"
@@ -133,6 +134,21 @@ class Env(metaclass=SingletonMeta):
     def getLogger(self, name) -> trace_logger.TraceLogger:
         return cast(trace_logger.TraceLogger, logging.getLogger(name))
 
+    def determine_log_file(self):
+        log_file = "appmap.log"
+
+        # Try creating the log file in the current directory
+        try:
+            with open(log_file, 'a', encoding='UTF8'):
+                pass
+        except IOError:
+            # The circumstances in which creation is going to fail
+            # are also those in which the user doesn't care whether
+            # there's a log file (e.g. when starting a REPL).
+            return None
+        return log_file
+
+
     def _configure_logging(self):
         trace_logger.install()
 
@@ -179,13 +195,19 @@ class Env(metaclass=SingletonMeta):
             log_level = self.get("APPMAP_LOG_LEVEL", "info").upper()
             loggers = config_dict["loggers"]
             loggers["appmap"]["level"] = loggers["_appmap"]["level"] = log_level
+
+            log_file = self.determine_log_file()
+            # Use NullHandler if log_file is None to avoid complicating the configuration
+            # with the absence of the "default" handler.
             config_dict["handlers"] = {
                 "default": {
                     "class": "logging.handlers.RotatingFileHandler",
                     "formatter": "default",
-                    "filename": "appmap.log",
+                    "filename": log_file,
                     "maxBytes": 50 * 1024 * 1024,
                     "backupCount": 1,
+                } if log_file is not None else {
+                    "class": "logging.NullHandler"
                 },
                 "stderr": {
                     "class": "logging.StreamHandler",
@@ -194,6 +216,7 @@ class Env(metaclass=SingletonMeta):
                     "stream": "ext://sys.stderr",
                 },
             }
+            self.log_file_creation_failed = log_file is None
 
         if log_config is not None:
             name, level = log_config.split("=", 2)
@@ -213,3 +236,7 @@ def initialize(**kwargs):
     Env.reset(**kwargs)
     logger = logging.getLogger(__name__)
     logger.info("appmap enabled: %s", Env.current.enabled)
+    if Env.current.log_file_creation_failed:
+        # Writing to stderr makes the REPL fail in vscode-python.
+        # https://github.com/microsoft/vscode-python/blob/c71c85ebf3749d5fac76899feefb21ee321a4b5b/src/client/common/process/rawProcessApis.ts#L268-L269
+        logger.info("appmap.log cannot be created")

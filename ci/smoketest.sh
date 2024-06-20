@@ -19,6 +19,22 @@ EOF
   fi
 }
 
+test_log_file_not_writable()
+{
+  cat <<EOF > test_log_file_not_writable.py
+import appmap
+EOF
+
+  python test_log_file_not_writable.py
+
+  if [[ $? -eq 0 ]]; then
+    echo 'Script executed successfully'
+  else
+    echo 'Script execution failed'
+    exit 1
+  fi
+}
+
 set -ex
 pip -q install -U pip pytest "flask>=2,<3" python-decouple
 pip -q install /dist/appmap-*-py3-none-any.whl
@@ -49,3 +65,5 @@ else
   find $PWD
   exit 1
 fi
+
+test_log_file_not_writable
