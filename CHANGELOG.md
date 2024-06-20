@@ -1,3 +1,10 @@
+## [2.0.9](https://github.com/getappmap/appmap-python/compare/v2.0.8...v2.0.9) (2024-06-20)
+
+
+### Bug Fixes
+
+* appmap breaks vscode python extension starting a REPL ([c179b86](https://github.com/getappmap/appmap-python/commit/c179b86a5769de90775f0d8848e8ad0422961dfe))
+
 ## [2.0.8](https://github.com/getappmap/appmap-python/compare/v2.0.7...v2.0.8) (2024-06-05)
 
 
