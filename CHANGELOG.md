@@ -1,3 +1,10 @@
+## [2.0.10](https://github.com/getappmap/appmap-python/compare/v2.0.9...v2.0.10) (2024-06-21)
+
+
+### Bug Fixes
+
+* request recording in unittest setUp method ([1ee69cb](https://github.com/getappmap/appmap-python/commit/1ee69cb39b8be8e97b1498218b4ff3a4b9b1c3ee))
+
 ## [2.0.9](https://github.com/getappmap/appmap-python/compare/v2.0.8...v2.0.9) (2024-06-20)
 
 
