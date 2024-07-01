@@ -138,6 +138,12 @@ def get_members(cls):
 
 
 class Importer:
+    # These are to be able to uninstrument
+    # modules for isolating tests from each other
+    # while testing with pytest.
+    save_original_functions = False
+    original_functions = {}
+
     filter_stack = [NullFilter]
     filter_chain = None
 
@@ -184,6 +190,17 @@ class Importer:
                 filterableFn = FilterableFn(filterable, fn, static_fn)
                 new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
                 if new_fn != fn:
+                    if cls.save_original_functions:
+                        module_name = mod.__name__
+                        if module_name not in cls.original_functions:
+                            cls.original_functions[module_name] = {}
+                        if fn_name not in cls.original_functions[module_name]:
+                            (parent, attribute, original) = wrapt.resolve_path(
+                                filterable.obj, fn_name
+                            )
+                            cls.original_functions[module_name][fn_name] = (
+                                parent, attribute, original
+                            )
                     wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
 
         # Import Config here, to avoid circular top-level imports.
@@ -334,3 +351,21 @@ def instrument_module(module):
     were set up or configured to instrument that module.
     """
     Importer.do_import(module)
+
+
+def uninstrument_module(module_name):
+    """
+    Restore the original functions/methods of a module
+    """
+    if module_name in Importer.original_functions:
+        logger.trace("uninstrument_module %s", module_name)
+        for _, original_tuple in Importer.original_functions[module_name].items():
+            parent, attribute, original = original_tuple
+            setattr(parent, attribute, original)
+        del Importer.original_functions[module_name]
+
+
+def uninstrument_all_modules():
+    module_names = list(Importer.original_functions.keys())
+    for module_name in module_names:
+        uninstrument_module(module_name)
