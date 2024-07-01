@@ -9,6 +9,7 @@ from types import SimpleNamespace as NS
 import flask
 import pytest
 
+import _appmap
 from _appmap.env import Env
 from _appmap.metadata import Metadata
 from appmap.flask import AppmapFlask
@@ -169,3 +170,40 @@ class TestFlaskApp:
         assert (pytester.path / "tmp" / "appmap" / "process").exists()
         assert not (pytester.path / "tmp" / "appmap" / "requests").exists()
         assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()
+
+
+def check_call_return_stack_order(events):
+    stack = []
+    for e in events:
+        if e.event == "call":
+            stack.append(e)
+        elif e.event == "return":
+            if len(stack) > 0:
+                call = stack.pop()
+                if call.id != e.parent_id:
+                    return False
+            else:
+                return False
+    if len(stack) == 0:
+        return True
+
+    return False
+
+
+@pytest.mark.appmap_enabled(config="flask/appmap-flask.yml")
+def test_bad_appmap(client, events):
+    client.get("/")
+
+    # We need to uninstrument these modules for the
+    # remaining tests to work properly in pytest run.
+    # Otherwise they will get unexpected additional
+    # appmap events coming from the instrumented
+    # functions in these modules.
+    _appmap.importer.uninstrument_module("flaskapp")
+    _appmap.importer.uninstrument_module("flask.testing")
+
+    # We want "finalize_request" to be included in the events
+    assert any(getattr(e, "method_id", None) == "finalize_request" for e in events), \
+        "no finalize_request event"
+    assert check_call_return_stack_order(events), "bad appmap events order"
+    #assert len(events) == 40
