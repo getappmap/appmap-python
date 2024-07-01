@@ -35,6 +35,10 @@ class FnType(IntFlag):
     CLASS = auto()
     INSTANCE = auto()
     MODULE = auto()
+    # auxtypes
+    GET = auto()
+    SET = auto()
+    DEL = auto()
 
     @staticmethod
     def classify(fn):
