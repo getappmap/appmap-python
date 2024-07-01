@@ -37,14 +37,14 @@ class FilterableCls(Filterable):
 class FilterableFn(
     namedtuple(
         "FilterableFn",
-        Filterable._fields + ("static_fn",),
+        Filterable._fields + ("static_fn", "auxtype"),
     )
 ):
     __slots__ = ()
 
-    def __new__(cls, scope, fn, static_fn):
+    def __new__(cls, scope, fn, static_fn, auxtype=None):
         fqname = "%s.%s" % (scope.fqname, fn.__name__)
-        self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn)
+        self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn, auxtype)
         return self
 
     @property
@@ -52,7 +52,10 @@ class FilterableFn(
         if self.scope == Scope.MODULE:
             return FnType.MODULE
 
-        return FnType.classify(self.static_fn)
+        ret = FnType.classify(self.static_fn)
+        if self.auxtype is not None:
+            ret |= self.auxtype
+        return ret
 
 
 class Filter(ABC):  # pylint: disable=too-few-public-methods
@@ -122,19 +125,31 @@ def get_members(cls):
     # instead iterate over dir(cls), we would see functions from
     # superclasses, too. Those don't need to be instrumented here,
     # they'll get taken care of when the superclass is imported.
-    ret = []
+    functions = []
+    properties = {}
     modname = cls.__module__ if hasattr(cls, "__module__") else cls.__name__
     for key in cls.__dict__:
         if key.startswith("__"):
             continue
         static_value = inspect.getattr_static(cls, key)
-        if not is_member_func(static_value):
-            continue
-        value = getattr(cls, key)
-        if value.__module__ != modname:
-            continue
-        ret.append((key, static_value, value))
-    return ret
+        if isinstance(static_value, property):
+            properties[key] = (
+                static_value,
+                {
+                    "fget": (static_value.fget, FnType.GET),
+                    "fset": (static_value.fset, FnType.SET),
+                    "fdel": (static_value.fdel, FnType.DEL),
+                },
+            )
+        else:
+            if not is_member_func(static_value):
+                continue
+            value = getattr(cls, key)
+            if value.__module__ != modname:
+                continue
+            functions.append((key, static_value, value))
+
+    return (functions, properties)
 
 
 class Importer:
@@ -177,7 +192,7 @@ class Importer:
 
         def instrument_functions(filterable, selected_functions=None):
             logger.trace("  looking for members of %s", filterable.obj)
-            functions = get_members(filterable.obj)
+            functions, properties = get_members(filterable.obj)
             logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
@@ -185,6 +200,20 @@ class Importer:
                 new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
                 if new_fn != fn:
                     wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+            # Now that we've instrumented all the functions, go through the properties and update
+            # them
+            for prop_name, (prop, prop_fns) in properties.items():
+                instrumented_fns = {}
+                for k, (fn, auxtype) in prop_fns.items():
+                    if fn is None:
+                        continue
+                    filterableFn = FilterableFn(filterable, fn, fn, auxtype)
+                    new_fn = cls.instrument_function(fn.__name__, filterableFn, selected_functions)
+                    if new_fn != fn:
+                        new_fn = wrapt.FunctionWrapper(fn, new_fn)
+                    instrumented_fns[k] = new_fn
+                instrumented_fns["doc"] = prop.__doc__
+                setattr(filterable.obj, prop_name, property(**instrumented_fns))
 
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel
