@@ -1,9 +1,10 @@
+import inspect
 import re
 import time
 from importlib.metadata import version
 
 import jinja2
-from flask import g, got_request_exception, request, request_finished, request_started
+from flask import Flask, g, got_request_exception, request, request_finished, request_started
 from flask.cli import ScriptInfo
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
@@ -75,9 +76,13 @@ class AppmapFlask(AppmapMiddleware):
     ```
     """
 
+    current_instance = None
     def __init__(self, app):
         super().__init__("Flask")
+        AppmapFlask.current_instance = self
+
         self.app = app
+        self._after_request_hook_args = None
 
     def init_app(self):
         enable_by_default = "true" if self.app.debug else "false"
@@ -94,6 +99,38 @@ class AppmapFlask(AppmapMiddleware):
         got_request_exception.connect(self.got_request_exception, self.app, weak=False)
 
         setattr(self.app, REQUEST_ENABLED_ATTR, True)
+
+        print(f"self: {self}")
+        def finalize_request_wrapper(wrapped, _, args, kwargs):
+            response = wrapped(*args, **kwargs)
+            instance = AppmapFlask.current_instance
+            print(f"AppmapFlask.current_instance: {instance}")
+            if instance._after_request_hook_args:
+                instance.after_request_hook(*instance._after_request_hook_args)
+            return response
+
+        function_name_to_wrap = "Flask.finalize_request"
+        function_to_wrap = Flask.finalize_request
+        # Check if it's instrumented. We need to use the wrapper function if so.
+        # We assume that if it has a wrapper (_self_wrapper) and is not
+        # already wrapped here (_appmap_wrapped_for_bad_appmap_fix) it's
+        # instrumented.
+        if getattr(Flask.finalize_request, '_self_wrapper', None) is not None \
+            and getattr(Flask.finalize_request, '_appmap_wrapped_for_bad_appmap_fix', None) is None:
+            function_name_to_wrap += "._self_wrapper"
+            function_to_wrap = getattr(Flask.finalize_request, '_self_wrapper')
+        print(f"WRAP CHECK {function_name_to_wrap} {function_to_wrap} \
+              {getattr(function_to_wrap, '_appmap_wrapped', '-')} \
+                {getattr(function_to_wrap, '_appmap_wrapped_for_bad_appmap_fix', '-')} \
+                    _self_wrapper:{getattr(function_to_wrap, '_self_wrapper', None)}")
+
+        if getattr(function_to_wrap, '_appmap_wrapped_for_bad_appmap_fix', None) is None:
+            wrapt.wrap_function_wrapper(
+                "flask.app", function_name_to_wrap, finalize_request_wrapper
+            )
+            function_to_wrap._appmap_wrapped_for_bad_appmap_fix = True # pylint: disable=protected-access
+            print(f"WRAPPED {function_name_to_wrap} {function_to_wrap}")
+
 
     def request_started(self, _, **__):
         # request context is bound, we can use flask.request now:
@@ -137,9 +174,10 @@ class AppmapFlask(AppmapMiddleware):
 
     def request_finished(self, _, response, **__):
         if not self.should_record:
+            self._after_request_hook_args = None
             return response
 
-        self.after_request_hook(
+        self._after_request_hook_args = (
             request.path,
             request.method,
             request.base_url,

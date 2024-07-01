@@ -1,0 +1,5 @@
+name: FlaskTest
+packages:
+- path: app
+- dist: flask
+  shallow: false

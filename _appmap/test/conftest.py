@@ -48,6 +48,10 @@ def events():
 
 
 @pytest.hookimpl
+def pytest_configure():
+    _appmap.importer.Importer.save_original_functions = True
+
+@pytest.hookimpl
 def pytest_runtest_setup(item):
     mark = item.get_closest_marker("appmap_enabled")
     env = {}
