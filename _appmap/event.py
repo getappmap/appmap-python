@@ -176,7 +176,7 @@ class Param:
 
 class CallEvent(Event):
     # pylint: disable=method-cache-max-size-none
-    __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels"]
+    __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels", "auxtype"]
 
     @staticmethod
     def make(fn, fntype):
@@ -283,7 +283,10 @@ class CallEvent(Event):
     @property
     @lru_cache(maxsize=None)
     def method_id(self):
-        return self._fqfn.fqfn[1]
+        ret = self._fqfn.fqfn[1]
+        if self.auxtype is not None:
+            ret = f"{ret} ({self.auxtype})"
+        return ret
 
     @property
     @lru_cache(maxsize=None)
@@ -319,6 +322,13 @@ class CallEvent(Event):
             parameters = parameters[1:]
         self.parameters = parameters
         self.labels = labels
+        self.auxtype = None
+        if fntype & FnType.GET:
+            self.auxtype = "get"
+        elif fntype & FnType.SET:
+            self.auxtype = "set"
+        elif fntype & FnType.DEL:
+            self.auxtype = "del"
 
     def to_dict(self, attrs=None):
         ret = super().to_dict()  # get the attrs defined in __slots__
