@@ -81,6 +81,23 @@ class NoopRecording:
         return False
 
 
+def check_call_return_stack_order(events):
+    stack = []
+    for e in events:
+        if e.event == "call":
+            stack.append(e)
+        elif e.event == "return":
+            if len(stack) > 0:
+                call = stack.pop()
+                if call.id != e.parent_id:
+                    return False
+            else:
+                return False
+    if len(stack) == 0:
+        return True
+
+    return False
+
 def write_appmap(
     appmap, appmap_fname, recorder_type, metadata=None, basedir=Env.current.output_dir
 ):
@@ -103,6 +120,9 @@ def write_appmap(
     appmap_file = basedir / filename
     logger.info("writing %s", appmap_file)
     os.replace(tmp.name, appmap_file)
+
+    if not check_call_return_stack_order(appmap.events):
+        logger.warning(f"Unbalanced event order in: {appmap_file}")
 
 
 def initialize():
