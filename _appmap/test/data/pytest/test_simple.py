@@ -7,7 +7,11 @@ def test_hello_world():
     import simple
 
     os.chdir("/tmp")
-    assert simple.Simple().hello_world() == "Hello world!"
+    s = simple.Simple()
+    assert s.hello_world() == "Hello world!"
+
+    h = s.get_json_unserializable()
+    assert len(h) > 0
 
 
 def test_status_failed():
