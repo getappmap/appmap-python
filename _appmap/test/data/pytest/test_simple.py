@@ -4,10 +4,12 @@ import pytest
 
 
 def test_hello_world():
-    import simple
+    from simple import Simple
 
     os.chdir("/tmp")
-    assert simple.Simple().hello_world() == "Hello world!"
+    assert Simple().hello_world() == "Hello world!"
+
+    assert len(Simple().show_numpy_dict()) > 0
 
 
 def test_status_failed():

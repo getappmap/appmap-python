@@ -1,0 +1,242 @@
+{
+  "version": "1.9",
+  "metadata": {
+    "language": {
+      "name": "python"
+    },
+    "client": {
+      "name": "appmap",
+      "url": "https://github.com/applandinc/appmap-python"
+    },
+    "app": "Simple",
+    "recorder": {
+      "name": "pytest",
+      "type": "tests"
+    },
+    "source_location": "test_simple.py:5",
+    "name": "hello world",
+    "feature": "Hello world",
+    "test_status": "succeeded"
+  },
+  "events": [
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "hello_world",
+      "path": "simple.py",
+      "lineno": 8,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
+        "value": "<simple.Simple object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 1,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "hello",
+      "path": "simple.py",
+      "lineno": 2,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
+        "value": "<simple.Simple object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 2,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.str",
+        "value": "'Hello'"
+      },
+      "parent_id": 2,
+      "id": 3,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "defined_class": "simple.Simple",
+      "method_id": "world",
+      "path": "simple.py",
+      "lineno": 5,
+      "static": false,
+      "receiver": {
+        "class": "simple.Simple",
+        "kind": "req",
+        "name": "self",
+        "value": "<simple.Simple object at 0xabcdef>"
+      },
+      "parameters": [],
+      "id": 4,
+      "event": "call",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.str",
+        "value": "'world!'"
+      },
+      "parent_id": 4,
+      "id": 5,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "class": "builtins.str",
+        "value": "'Hello world!'"
+      },
+      "parent_id": 1,
+      "id": 6,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [],
+      "id": 7,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "show_numpy_dict",
+      "path": "simple.py",
+      "lineno": 11
+    },
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [
+        {
+          "kind": "req",
+          "value": "{np.int64(0): 'zero', np.int64(1): 'one'}",
+          "name": "d",
+          "class": "builtins.dict",
+          "properties": [
+            {
+              "name": "0",
+              "class": "builtins.str"
+            },
+            {
+              "name": "1",
+              "class": "builtins.str"
+            }
+          ],
+          "size": 2
+        }
+      ],
+      "id": 8,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "get_numpy_dict",
+      "path": "simple.py",
+      "lineno": 18
+    },
+    {
+      "return_value": {
+        "value": "{np.int64(0): 'zero', np.int64(1): 'one'}",
+        "class": "builtins.dict",
+        "properties": [
+          {
+            "name": "0",
+            "class": "builtins.str"
+          },
+          {
+            "name": "1",
+            "class": "builtins.str"
+          }
+        ],
+        "size": 2
+      },
+      "parent_id": 8,
+      "id": 9,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "value": "{np.int64(0): 'zero', np.int64(1): 'one'}",
+        "class": "builtins.dict",
+        "properties": [
+          {
+            "name": "0",
+            "class": "builtins.str"
+          },
+          {
+            "name": "1",
+            "class": "builtins.str"
+          }
+        ],
+        "size": 2
+      },
+      "parent_id": 7,
+      "id": 10,
+      "event": "return",
+      "thread_id": 1
+    }
+  ],
+  "classMap": [
+    {
+      "name": "simple",
+      "type": "package",
+      "children": [
+        {
+          "name": "Simple",
+          "type": "class",
+          "children": [
+            {
+              "name": "get_numpy_dict",
+              "type": "function",
+              "location": "simple.py:18",
+              "static": false
+            },
+            {
+              "name": "hello",
+              "type": "function",
+              "location": "simple.py:2",
+              "static": false
+            },
+            {
+              "name": "hello_world",
+              "type": "function",
+              "location": "simple.py:8",
+              "static": false
+            },
+            {
+              "name": "show_numpy_dict",
+              "type": "function",
+              "location": "simple.py:11",
+              "static": false
+            },
+            {
+              "name": "world",
+              "type": "function",
+              "location": "simple.py:5",
+              "static": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
