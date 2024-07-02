@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from _appmap import recording
+from _appmap import recording, generation
 
 from ..test.helpers import DictIncluding
 from .normalize import normalize_appmap
@@ -95,7 +95,7 @@ class TestPytestRunnerPytest(_TestTestRunner):
         cls._test_type = "pytest"
 
     def run_tests(self, testdir):
-        result = testdir.runpytest("-vv")
+        result = testdir.runpytest("-svv")
         result.assert_outcomes(passed=4, failed=2, xpassed=1, xfailed=1)
 
     def test_enabled(self, testdir):
@@ -198,7 +198,9 @@ def verify_expected_appmap(testdir):
     appmap_json = testdir.expected / (f"{testdir.test_type}.appmap.json")
     expected_appmap = json.loads(appmap_json.read_text())
 
-    assert generated_appmap == expected_appmap, f"expected appmap file {appmap_json}"
+    assert (
+        generated_appmap == expected_appmap
+    ), f"expected appmap file {appmap_json}\ngenerated appmap: {json.dumps(generated_appmap, indent=2)}"
 
 
 def verify_expected_metadata(testdir):
@@ -212,4 +214,6 @@ def verify_expected_metadata(testdir):
         name = pattern.search(file.name).group(1)
         metadata = json.loads(file.read_text())["metadata"]
         expected = testdir.expected / f"{name}.metadata.json"
-        assert metadata == DictIncluding(json.loads(expected.read_text()))
+        assert metadata == DictIncluding(
+            json.loads(expected.read_text())
+        ), f"expected appmap: {file}"
