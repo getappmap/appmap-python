@@ -7,10 +7,11 @@ import re
 import sys
 import types
 from abc import ABC, abstractmethod
+from importlib.metadata import version as md_version
 from pathlib import Path
 
 import pytest
-
+from packaging import version
 from _appmap import recording
 
 from ..test.helpers import DictIncluding
@@ -95,13 +96,14 @@ class TestPytestRunnerPytest(_TestTestRunner):
         cls._test_type = "pytest"
 
     def run_tests(self, testdir):
-        result = testdir.runpytest("-vv")
+        result = testdir.runpytest("-svv")
         result.assert_outcomes(passed=4, failed=2, xpassed=1, xfailed=1)
 
     def test_enabled(self, testdir):
         self.run_tests(testdir)
         assert len(list(testdir.output().iterdir())) == 6
-        verify_expected_appmap(testdir)
+        numpy_version = version.parse(md_version("numpy"))
+        verify_expected_appmap(testdir, f"-numpy{numpy_version.major}")
         verify_expected_metadata(testdir)
 
 
@@ -190,15 +192,18 @@ def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
     return pytester
 
 
-def verify_expected_appmap(testdir):
+def verify_expected_appmap(testdir, suffix=""):
     appmap_json = list(testdir.output().glob("*test_hello_world.appmap.json"))
     assert len(appmap_json) == 1  # sanity check
     generated_appmap = normalize_appmap(appmap_json[0].read_text())
 
-    appmap_json = testdir.expected / (f"{testdir.test_type}.appmap.json")
+    appmap_json = testdir.expected / (f"{testdir.test_type}{suffix}.appmap.json")
     expected_appmap = json.loads(appmap_json.read_text())
 
-    assert generated_appmap == expected_appmap, f"expected appmap file {appmap_json}"
+    assert generated_appmap == expected_appmap, (
+        f"expected appmap file {appmap_json}\n"
+        + f"generated appmap: {json.dumps(generated_appmap, indent=2)}"
+    )
 
 
 def verify_expected_metadata(testdir):
@@ -212,4 +217,6 @@ def verify_expected_metadata(testdir):
         name = pattern.search(file.name).group(1)
         metadata = json.loads(file.read_text())["metadata"]
         expected = testdir.expected / f"{name}.metadata.json"
-        assert metadata == DictIncluding(json.loads(expected.read_text()))
+        assert metadata == DictIncluding(
+            json.loads(expected.read_text())
+        ), f"expected appmap: {file}"
