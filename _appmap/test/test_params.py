@@ -1,4 +1,4 @@
-"""Tests for the function parameter handling"""
+"""Tests for function parameter handling"""
 
 # pylint: disable=missing-function-docstring
 
