@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/getappmap/appmap-python/compare/v2.0.10...v2.1.0) (2024-07-03)
+
+
+### Features
+
+* instrument properties ([d69b6e1](https://github.com/getappmap/appmap-python/commit/d69b6e1648bd647b91ca4f9ef75300af7e015bfb))
+
 ## [2.0.10](https://github.com/getappmap/appmap-python/compare/v2.0.9...v2.0.10) (2024-06-21)
 
 
