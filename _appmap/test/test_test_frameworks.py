@@ -10,10 +10,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 import pytest
-from _appmap import recording
-from _appmap.test.helpers import package_version
 
-from ..test.helpers import DictIncluding
+from _appmap import recording
+
+from .helpers import DictIncluding, check_call_stack, package_version
 from .normalize import normalize_appmap
 
 
@@ -154,6 +154,17 @@ def test_write_appmap(recorder_outdir):
     recording.write_appmap(EMPTY_APPMAP, longname, RECORDER_TYPE, None, recorder_outdir.parent)
     expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
     assert (recorder_outdir / expected_shortname).read_text().startswith('{"version"')
+
+@pytest.mark.example_dir("pytest-instrumented")
+@pytest.mark.appmap_enabled
+def test_pytest_instrumented(testdir):
+    result = testdir.runpytest("-svv", "-p", "pytester", "test_instrumented.py")
+    result.assert_outcomes(passed=1)
+    appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_skipped.appmap.json"
+    appmap = json.load(appmap_file.open())
+    events = appmap["events"]
+    assert len(events) > 0
+    check_call_stack(events)
 
 
 def verify_expected_appmap(testdir, suffix=""):

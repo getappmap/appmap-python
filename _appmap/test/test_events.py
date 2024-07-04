@@ -117,3 +117,36 @@ class TestEvents:
         assert [e.method_id for e in r.events if e.event == "call" and hasattr(e, "method_id")] == [
             "return_self"
         ]
+
+    # There should be an exception return event generated even when the raised exception is a
+    # BaseException.
+    def test_exception_event_with_base_exception(self):
+        r = appmap.Recording()
+        with r:
+            # pylint: disable=import-outside-toplevel
+            from example_class import ExampleClass
+
+            try:
+                ExampleClass().raise_base_exception()
+            except BaseException: # pylint: disable=broad-exception-caught
+                pass
+        assert check_call_return_stack_order(r.events), "Unbalanced call stack"
+
+
+def check_call_return_stack_order(events):
+    stack = []
+    for e in events:
+        if e.event == "call":
+            stack.append(e)
+        elif e.event == "return":
+            if len(stack) > 0:
+                call = stack.pop()
+                if call.id != e.parent_id:
+                    return False
+            else:
+                return False
+    if len(stack) == 0:
+        return True
+
+    return False
+

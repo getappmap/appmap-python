@@ -101,7 +101,12 @@ def call_instrumented(f, instance, args, kwargs):
         return ret
     except AppMapLimitExceeded:
         raise
-    except Exception:  # noqa: E722
+    # Some applications make use of exceptions that aren't descended from Exception. For example,
+    # pytest's OutcomeException, used to indicate the outcome of a test case, is a child of
+    # BaseException.
+    #
+    # We need to catch *any* exception raised, to ensure that we add the appropriate ExceptionEvent.
+    except BaseException:  # noqa: E722
         elapsed_time = time.time() - start_time
         Recorder.add_event(
             event.ExceptionEvent(
