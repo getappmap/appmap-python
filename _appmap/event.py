@@ -94,7 +94,8 @@ def _describe_schema(name, val, depth, max_depth):
     if islist:
         elts = [(None, v) for v in val]
         schema_key = "items"
-    elif isdict:
+    else:
+        assert isdict
         elts = val.items()
         schema_key = "properties"
 
