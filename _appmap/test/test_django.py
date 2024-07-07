@@ -186,6 +186,27 @@ def test_deeply_nested_routes(client, events):
     )
 
 
+@pytest.mark.appmap_enabled
+def test_response_underscore_headers(client, monkeypatch):
+    original_init = appmap.django.Middleware.__init__
+
+    def new_get_response(*_, **__):
+        response = django.http.HttpResponse()
+        response._headers = response.headers # pylint: disable=protected-access
+        del response.headers
+        return response
+
+    def new_init(self, get_response):
+        original_init(self, get_response)
+        monkeypatch.setattr(self, 'get_response', new_get_response)
+
+    monkeypatch.setattr(appmap.django.Middleware, "__init__", new_init)
+
+    client.get("/test")
+
+    monkeypatch.undo()
+
+
 class TestDjangoApp:
     """
     Run the tests in the fixture app. These depend on being able to manipulate the app's config in

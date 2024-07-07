@@ -224,12 +224,20 @@ class Middleware(AppmapMiddleware):
             self.on_exception(rec, start, call_event_id, sys.exc_info())
             raise
 
+        # response.headers attribute is missing here while running some
+        # django-oscar project tests. There is a response._header attribute
+        # instead.
+        #   django-oscar commit hash: 9574ce2a56f3d99836c2e20785c116da12af6c42
+        #   example test: tests/functional/dashboard/test_dashboard.py
+        #                 TestDashboardIndexForAnonUser::test_is_not_available
+        headers = getattr(response, 'headers', getattr(response, '_headers', None))
+
         self.after_request_hook(
             request.path_info,
             request.method,
             request.build_absolute_uri(),
             response.status_code,
-            response.headers,
+            headers,
             start,
             call_event_id,
         )
