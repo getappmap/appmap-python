@@ -5,6 +5,7 @@ import concurrent.futures
 import json
 import multiprocessing
 import os
+import re
 import time
 import traceback
 from os.path import exists
@@ -20,7 +21,6 @@ from ..test.helpers import DictIncluding, HeadersIncluding
 from .normalize import normalize_appmap
 
 TEST_HOST = "127.0.0.1"
-TEST_PORT = 8000
 
 _SR = SystemRandom()
 
@@ -323,28 +323,25 @@ class _TestRemoteRecording:
         res = client.delete("/_appmap/record")
         assert res.status_code == 404
 
+@pytest.mark.xdist_group("group1")
 class _TestRecordRequests:
     """Common tests for per-requests recording (record requests.)"""
 
     @classmethod
-    def server_url(cls):
-        return f"http://{TEST_HOST}:{TEST_PORT}"
-
-    @classmethod
-    def record_request_thread(cls):
+    def record_request_thread(cls, server_url):
         # I've seen occasional test failures, seemingly because the test servers can't handle the
         # barrage of requests. A tiny bit of delay still causes many, many concurrent requests, but
         # eliminates the failures.
         time.sleep(_SR.uniform(0, 0.1))
-        return requests.get(cls.server_url() + "/test", timeout=30)
+        return requests.get(server_url + "/test", timeout=30)
 
-    def record_requests(self, record_remote):
+    def record_requests(self, record_remote, server_url):
         # pylint: disable=too-many-locals
         if record_remote:
             # when remote recording is enabled, this test also
             # verifies the global recorder doesn't save duplicate
             # events when per-request recording is enabled
-            response = requests.post(self.server_url() + "/_appmap/record", timeout=30)
+            response = requests.post(server_url + "/_appmap/record", timeout=30)
             assert response.status_code == 200
 
         with concurrent.futures.ThreadPoolExecutor(
@@ -354,7 +351,7 @@ class _TestRecordRequests:
             max_number_of_threads = 400
             future_to_request_number = {}
             for n in range(max_number_of_threads):
-                future = executor.submit(self.record_request_thread)
+                future = executor.submit(self.record_request_thread, server_url)
                 future_to_request_number[future] = n
 
             # wait for all threads to complete
@@ -384,9 +381,8 @@ class _TestRecordRequests:
                 appmap_file_name_basename_part = "_".join(
                     appmap_file_name_basename.split("_")[2:]
                 )
-                assert (
-                    appmap_file_name_basename_part
-                    == "http_127_0_0_1_8000_test.appmap.json"
+                assert re.match(
+                    r"http_127_0_0_1_8[0-9]*_test.appmap.json", appmap_file_name_basename_part
                 )
 
                 with open(appmap_file_name, encoding="utf-8") as f:
@@ -414,12 +410,12 @@ class _TestRecordRequests:
     @pytest.mark.appmap_enabled
     @pytest.mark.server(debug=True)
     def test_record_requests_with_remote(self, server):
-        self.record_requests(server.debug)
+        self.record_requests(server.debug, server.url)
 
     @pytest.mark.appmap_enabled
     @pytest.mark.server(debug=False)
     def test_record_requests_without_remote(self, server):
-        self.record_requests(server.debug)
+        self.record_requests(server.debug, server.url)
 
     @pytest.mark.server(debug=False)
     def test_remote_disabled_in_prod(self, server):

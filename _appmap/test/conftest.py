@@ -14,7 +14,7 @@ from xprocess import ProcessStarter
 
 import _appmap
 import appmap
-from _appmap.test.web_framework import TEST_HOST, TEST_PORT
+from _appmap.test.web_framework import TEST_HOST
 from appmap import generation
 
 from .. import utils
@@ -198,14 +198,22 @@ def server_starter(info, name, cmd, pattern, env=None):
 
     return _starter
 
+@pytest.fixture(name="server_port")
+def server_port_fixture(worker_id):
+    if worker_id == "master":
+        offset = "0"
+    else:
+        offset = worker_id[2:]
+    return 8000 + int(offset)
+
 
 @pytest.fixture(name="server_base")
-def server_base_fixture(request):
+def server_base_fixture(request, server_port):
     marker = request.node.get_closest_marker("server")
     debug = marker.kwargs.get("debug", False)
     server_env = os.environ.copy()
     server_env.update(marker.kwargs.get("env", {}))
 
-    info = ServerInfo(debug=debug, host=TEST_HOST, port=TEST_PORT, env=server_env)
+    info = ServerInfo(debug=debug, host=TEST_HOST, port=server_port, env=server_env)
     info.factory = partial(server_starter, info)
     return info

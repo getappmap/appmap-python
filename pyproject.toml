@@ -78,6 +78,8 @@ fastapi = "^0.110.0"
 httpx = "^0.27.0"
 pytest-env = "^1.1.3"
 pytest-console-scripts = "^1.4.1"
+pytest-xdist = "^3.6.1"
+psutil = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.1.0"]
