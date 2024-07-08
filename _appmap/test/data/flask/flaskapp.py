@@ -6,8 +6,9 @@ testing of record-by-default.
 """
 # pylint: disable=missing-function-docstring
 
-from flask import Flask, make_response
+from flask import Flask, make_response, request
 from markupsafe import escape
+import werkzeug
 
 app = Flask(__name__)
 
@@ -50,3 +51,13 @@ def show_org_user_posts(org, username):
 @app.route("/exception")
 def raise_exception():
     raise Exception("An exception")
+
+@app.post("/do_post")
+def do_post():
+    _ = request.get_json()
+    return "Got post request"
+
+
+@app.errorhandler(werkzeug.exceptions.BadRequest)
+def handle_bad_request(e):
+    return "That's a bad request!", 400

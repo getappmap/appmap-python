@@ -143,16 +143,28 @@ class AppmapMiddleware(ABC):
         raise NotImplementedError
 
     # pylint: disable=too-many-arguments
-    def after_request_main(self, rec, status, headers, start, call_event_id) -> None:
+    def after_request_main(
+        self, request_path, status, headers, start, call_event_id
+    ) -> Optional[HttpServerResponseEvent]:
+        if request_path == self.record_url:
+            return None
 
-        duration = time.monotonic() - start
-        return_event = HttpServerResponseEvent(
-            parent_id=call_event_id,
-            elapsed=duration,
-            status_code=status,
-            headers=headers,
-        )
-        rec.add_event(return_event)
+        env = Env.current
+        if env.enables("requests") or env.enables("remote"):
+            rec = request_recorder.get() if env.enables("requests") else Recorder.get_global()
+            assert rec is not None
+
+            duration = time.monotonic() - start
+            return_event = HttpServerResponseEvent(
+                parent_id=call_event_id,
+                elapsed=duration,
+                status_code=status,
+                headers=headers,
+            )
+            rec.add_event(return_event)
+            return return_event
+
+        return None
 
     def __init__(self, framework_name):
         self.record_url = "/_appmap/record"
@@ -189,8 +201,7 @@ class AppmapMiddleware(ABC):
         request_base_url,
         status,
         headers,
-        start,
-        call_event_id,
+        return_event,
     ) -> None:
         if request_path == self.record_url:
             return
@@ -201,7 +212,7 @@ class AppmapMiddleware(ABC):
             assert rec is not None
 
             try:
-                self.after_request_main(rec, status, headers, start, call_event_id)
+                return_event.update(status, headers)
 
                 output_dir = Env.current.output_dir / "requests"
                 create_appmap_file(
@@ -221,7 +232,7 @@ class AppmapMiddleware(ABC):
             rec = Recorder.get_global()
             assert rec is not None
             if rec.get_enabled():
-                self.after_request_main(rec, status, headers, start, call_event_id)
+                return_event.update(status, headers)
 
     def on_exception(self, rec, start, call_event_id, exc_info):
         duration = time.monotonic() - start

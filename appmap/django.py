@@ -224,15 +224,23 @@ class Middleware(AppmapMiddleware):
             self.on_exception(rec, start, call_event_id, sys.exc_info())
             raise
 
-        self.after_request_hook(
+        return_event = self.after_request_main(
             request.path_info,
-            request.method,
-            request.build_absolute_uri(),
             response.status_code,
             response.headers,
             start,
             call_event_id,
         )
+
+        if return_event is not None:
+            self.after_request_hook(
+                request.path_info,
+                request.method,
+                request.build_absolute_uri(),
+                response.status_code,
+                response.headers,
+                return_event,
+            )
 
         return response
 

@@ -217,3 +217,36 @@ def server_base_fixture(request, server_port):
     info = ServerInfo(debug=debug, host=TEST_HOST, port=server_port, env=server_env)
     info.factory = partial(server_starter, info)
     return info
+
+@pytest.fixture(name="testdir")
+def testdir_fixture(request, data_dir, pytester, monkeypatch):
+    # We need to set environment variables to control how tests are run. This will only work
+    # properly if pytester runs pytest in a subprocess.
+    assert (
+        pytester._method == "subprocess"  # pylint:disable=protected-access
+    ), "must run pytest in a subprocess"
+
+    # The init subdirectory contains a sitecustomize.py file that
+    # imports the appmap module. This simulates the way a real
+    # installation works, performing the same function as the the
+    # appmap.pth file that gets put in site-packages.
+    monkeypatch.setenv("PYTHONPATH", "init")
+
+    # Make sure _APPMAP isn't in the environment, to test that recording-by-default is working as
+    # expected. Individual test cases may set it as necessary.
+    monkeypatch.delenv("_APPMAP", raising=False)
+
+    marker = request.node.get_closest_marker("example_dir")
+    test_type = "unittest" if marker is None else marker.args[0]
+    pytester.copy_example(test_type)
+
+    pytester.expected = data_dir / test_type / "expected"
+    pytester.test_type = test_type
+
+    # this is so test_type can be overriden in test cases
+    def output_dir():
+        return pytester.path / "tmp" / "appmap" / pytester.test_type
+
+    pytester.output = output_dir
+
+    return pytester

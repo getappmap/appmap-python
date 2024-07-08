@@ -480,18 +480,19 @@ class HttpResponseEvent(ReturnEvent):
 
     def __init__(self, status_code, headers=None, **kwargs):
         super().__init__(**kwargs)
+        self.response = {}
+        self.update(status_code, headers)
 
-        response = {"status_code": status_code}
+    def update(self, status_code, headers):
+        if status_code is not None:
+            self.response.update({"status_code": status_code})
 
         if headers is not None:
-            response.update(
-                {
-                    "mime_type": headers.get("Content-Type"),
-                    "headers": none_if_empty(dict(headers)),
-                }
-            )
-
-        self.response = compact_dict(response)
+            if "Content-Type" in headers:
+                self.response.update({"mime_type": headers.get("Content-Type")})
+            updated_headers = dict(headers)
+            if len(updated_headers) > 0:
+                self.response.update({"headers": updated_headers})
 
 
 # pylint: disable=too-few-public-methods

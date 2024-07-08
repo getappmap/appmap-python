@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring
 
 import importlib
+import json
 import os
 from importlib.metadata import version
 from types import SimpleNamespace as NS
@@ -13,7 +14,7 @@ from _appmap.env import Env
 from _appmap.metadata import Metadata
 from appmap.flask import AppmapFlask
 
-from ..test.helpers import DictIncluding
+from ..test.helpers import DictIncluding, check_call_stack, package_version
 from .web_framework import (
     _TestFormCapture,
     _TestFormData,
@@ -21,7 +22,6 @@ from .web_framework import (
     _TestRemoteRecording,
     _TestRequestCapture,
 )
-
 
 class TestFormCapture(_TestFormCapture):
     pass
@@ -77,18 +77,59 @@ def test_framework_metadata(client, events):  # pylint: disable=unused-argument
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
-def test_exception(client, events):  # pylint: disable=unused-argument
+def test_exception(client, events):
     with pytest.raises(Exception):
         client.get("/exception")
 
     assert events[0].http_server_request == DictIncluding(
         {"request_method": "GET", "path_info": "/exception", "protocol": "HTTP/1.1"}
     )
+
     assert events[1].event == "return"
     assert events[1].parent_id == events[0].id
-    assert events[1].exceptions == [
-        DictIncluding({"class": "builtins.Exception", "message": "An exception"})
-    ]
+    assert events[1].http_server_response["status_code"] == 500
+
+
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_not_found(client, events):
+    client.get("/not_found")
+
+    assert events[0].http_server_request == DictIncluding(
+        {"request_method": "GET", "path_info": "/not_found", "protocol": "HTTP/1.1"}
+    )
+
+    assert events[1].event == "return"
+    assert events[1].parent_id == events[0].id
+    assert events[1].http_server_response["status_code"] == 404
+
+
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_bad_request(client, events):
+    client.post("/test")
+
+    assert events[0].http_server_request == DictIncluding(
+        {"request_method": "POST", "path_info": "/test", "protocol": "HTTP/1.1"}
+    )
+
+    assert events[1].event == "return"
+    assert events[1].parent_id == events[0].id
+    assert events[1].http_server_response["status_code"] == 405
+
+
+@pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
+def test_errorhandler(client, events):
+    response = client.post("/do_post", content_type="application/json")
+
+    # Verify that the custom errorhandler was used
+    assert response.text == "That's a bad request!"
+
+    assert events[0].http_server_request == DictIncluding(
+        {"request_method": "POST", "path_info": "/do_post", "protocol": "HTTP/1.1"}
+    )
+
+    assert events[1].event == "return"
+    assert events[1].parent_id == events[0].id
+    assert events[1].http_server_response["status_code"] == 400
 
 
 @pytest.mark.appmap_enabled
@@ -140,7 +181,7 @@ class TestFlaskApp:
     def test_enabled(self, pytester):
         result = pytester.runpytest("-svv")
 
-        result.assert_outcomes(passed=1, failed=0, errors=0)
+        result.assert_outcomes(passed=3, failed=0, errors=0)
         appmap_file = (
             pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
         )
@@ -156,7 +197,7 @@ class TestFlaskApp:
 
         result = pytester.runpytest("-svv")
 
-        result.assert_outcomes(passed=1, failed=0, errors=0)
+        result.assert_outcomes(passed=3, failed=0, errors=0)
         assert not (pytester.path / "tmp" / "appmap").exists()
 
     def test_disabled_for_process(self, pytester, monkeypatch):
@@ -164,8 +205,65 @@ class TestFlaskApp:
 
         result = pytester.runpytest("-svv")
 
-        result.assert_outcomes(passed=1, failed=0, errors=0)
+        result.assert_outcomes(passed=3, failed=0, errors=0)
 
         assert (pytester.path / "tmp" / "appmap" / "process").exists()
         assert not (pytester.path / "tmp" / "appmap" / "requests").exists()
         assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()
+
+def verify_events(events):
+    def find(type):
+        return next(filter(lambda e: e[1].get(type) is not None, enumerate(events)), None)
+
+    request = find("http_server_request")
+    assert request is not None
+    request_idx, request_event = request
+
+    response = find("http_server_response")
+    assert response is not None
+    response_idx, response_event = response
+
+    assert response_event.get("parent_id") == request_event.get("id")
+
+    nested_events = events[request_idx + 1 : response_idx]
+    check_call_stack(nested_events)
+
+
+@pytest.mark.example_dir("flask-instrumented")
+class TestFlaskInstrumented:
+
+    def test_all(self, testdir):
+        result = testdir.runpytest("-svv")
+        result.assert_outcomes(passed=4)
+
+    def test_response(self, testdir):
+        result = testdir.runpytest("-svv", "-k", "test_request")
+        result.assert_outcomes(passed=1)
+
+        appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
+        appmap = json.load(appmap_file.open())
+        verify_events(appmap["events"])
+
+    def test_unhandled_exception(self, testdir):
+        result = testdir.runpytest("-svv", "-k", "test_exception")
+        result.assert_outcomes(passed=1)
+
+        appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_exception.appmap.json"
+        appmap = json.load(appmap_file.open())
+        verify_events(appmap["events"])
+
+    def test_default_exception(self, testdir):
+        result = testdir.runpytest("-svv", "-k", "test_not_found")
+        result.assert_outcomes(passed=1)
+
+        appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_not_found.appmap.json"
+        appmap = json.load(appmap_file.open())
+        verify_events(appmap["events"])
+
+    def test_errorhandler(self, testdir):
+        result = testdir.runpytest("-svv", "-k", "test_errorhandler")
+        result.assert_outcomes(passed=1)
+
+        appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_errorhandler.appmap.json"
+        appmap = json.load(appmap_file.open())
+        verify_events(appmap["events"])

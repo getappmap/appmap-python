@@ -1,6 +1,11 @@
 """Test helpers"""
 
 
+import importlib.metadata
+
+from packaging import version as pkg_version
+
+
 class DictIncluding(dict):
     """A dict that on comparison just checks whether the other dict includes
     all of its items. Any extra ones are ignored.
@@ -26,3 +31,20 @@ class HeadersIncluding(dict):
             if v is None:
                 return False
         return True
+
+
+def package_version(pkg):
+    return pkg_version.parse(importlib.metadata.version(pkg))
+
+
+def check_call_stack(events):
+    """Ensure that the call stack in events has balanced call and return events"""
+    stack = []
+    for e in events:
+        if e.get("event") == "call":
+            stack.append(e)
+        elif e.get("event") == "return":
+            assert len(stack) > 0, "return without call"
+            call = stack.pop()
+            assert call.get("id") == e.get("parent_id")
+    assert len(stack) == 0, "leftover events"
