@@ -2,7 +2,7 @@ import importlib
 import os
 import socket
 import sys
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from functools import partial, partialmethod
 from pathlib import Path
 from typing import Any
@@ -98,7 +98,7 @@ def git_directory_fixture(tmp_path_factory):
 
 @pytest.fixture(name="git")
 def tmp_git(git_directory, tmp_path):
-    copy_tree(git_directory, str(tmp_path))
+    copytree(git_directory, str(tmp_path), dirs_exist_ok=True)
     return utils.git(cwd=tmp_path)
 
 

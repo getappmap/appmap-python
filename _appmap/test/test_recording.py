@@ -3,13 +3,12 @@
 
 import json
 import os
-from distutils.dir_util import copy_tree
-from distutils.file_util import copy_file
+from shutil import copy, copytree
 from threading import Thread
 
+import appmap
 import pytest
 
-import appmap
 from _appmap.event import Event
 from _appmap.recorder import Recorder, ThreadRecorder
 from _appmap.wrapt import FunctionWrapper
@@ -193,9 +192,9 @@ class TestRecordingPerThread:
 def test_process_recording(data_dir, shell, tmp_path):
     fixture = data_dir / "package1"
     tmp = tmp_path / "process"
-    copy_tree(fixture, str(tmp / "package1"))
-    copy_file(data_dir / "appmap.yml", str(tmp))
-    copy_tree(data_dir / "flask" / "init", str(tmp / "init"))
+    copytree(fixture, str(tmp / "package1"), dirs_exist_ok=True)
+    copy(data_dir / "appmap.yml", str(tmp))
+    copytree(data_dir / "flask" / "init", str(tmp / "init"), dirs_exist_ok=True)
 
     ret = shell.run(
         "python",
