@@ -1,10 +1,11 @@
 import re
 import time
 from importlib.metadata import version
+from types import SimpleNamespace
 
 import jinja2
-from flask import g, got_request_exception, request, request_finished, request_started
-from flask.cli import ScriptInfo
+from blinker import signal
+from flask import g, request, request_finished, request_started
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
@@ -59,6 +60,9 @@ def request_params(req):
 
 NP_PARAMS = re.compile(r"<Rule '(.*?)'")
 NP_PARAM_DELIMS = str.maketrans("<>", "{}")
+_after_finalize = signal("_appmap_after_finalize")
+_before_exception = signal("_appmap_before_exception")
+
 
 class AppmapFlask(AppmapMiddleware):
     """
@@ -91,7 +95,7 @@ class AppmapFlask(AppmapMiddleware):
 
         request_started.connect(self.request_started, self.app, weak=False)
         request_finished.connect(self.request_finished, self.app, weak=False)
-        got_request_exception.connect(self.got_request_exception, self.app, weak=False)
+        _after_finalize.connect(self.after_finalize, sender=self.app, weak=False)
 
         setattr(self.app, REQUEST_ENABLED_ATTR, True)
 
@@ -130,33 +134,37 @@ class AppmapFlask(AppmapMiddleware):
         # current Context before signaling, which removes our ContextVar.
         # TODO: enhance AppmapMiddleware so it allows subclasses to specify how
         #       the request recording should be stored.
-        g._appmap_recorder = rec  # pylint: disable=protected-access
-        g._appmap_request_event = call_event  # pylint: disable=protected-access
-        g._appmap_request_start = time.monotonic()  # pylint: disable=protected-access
+        g.appmap_recorder = rec
+        g.appmap_request_event = call_event
+        g.appmap_request_start = time.monotonic()
         return None, None
 
-    def request_finished(self, _, response, **__):
+    def after_finalize(self, _, **__):
         if not self.should_record:
-            return response
+            return
+
+        return_event = self.after_request_main(
+            request.path,
+            None,
+            None,
+            g.appmap_request_start,
+            g.appmap_request_event.id,
+        )
 
         self.after_request_hook(
             request.path,
             request.method,
             request.base_url,
-            response.status_code,
-            response.headers,
-            g._appmap_request_start,  # pylint: disable=protected-access
-            g._appmap_request_event.id,  # pylint: disable=protected-access
+            g.appmap_response.status_code,
+            g.appmap_response.headers,
+            return_event,
         )
-        return response
 
-    def got_request_exception(self, _, exception):
-        self.on_exception(
-            g._appmap_recorder,  # pylint: disable=protected-access
-            g._appmap_request_start,  # pylint: disable=protected-access
-            g._appmap_request_event.id,  # pylint: disable=protected-access
-            (type(exception), exception, None),
-        )
+    def request_finished(self, _, response, **__):
+        if not self.should_record:
+            return response
+        g.appmap_response = response
+        return response
 
 
 @patch_class(jinja2.Template)
@@ -187,10 +195,31 @@ def install_extension(wrapped, _, args, kwargs):
 
     return app
 
+def _finalize_request(wrapped, inst, args, kwargs):
+    if not Env.current.enabled or kwargs.get("from_error_handler"):
+        return wrapped(*args, **kwargs)
+
+    ret = wrapped(*args, **kwargs)
+    _after_finalize.send(inst)
+    return ret
+
+
+def _handle_user_exception(wrapped, inst, args, kwargs):
+    if not Env.current.enabled:
+        return wrapped(*args, **kwargs)
+
+    try:
+        return wrapped(*args, **kwargs)
+    except Exception:  # pylint: disable=broad-exception-caught
+        g.appmap_response = SimpleNamespace(status_code=500, headers={})
+        _after_finalize.send(inst)
+        raise
+
 
 if Env.current.enabled:
     # ScriptInfo.load_app is the function that's used by the Flask cli to load an app, no matter how
     # the app's module is specified (e.g. with the FLASK_APP env var, the `--app` flag, etc). Hook
     # it so it installs our extension on the app.
-    load_app = wrapt.wrap_function_wrapper("flask.cli", "ScriptInfo.load_app", install_extension)
-    ScriptInfo.load_app = load_app  # type: ignore[method-assign]
+    wrapt.wrap_function_wrapper("flask.cli", "ScriptInfo.load_app", install_extension)
+    wrapt.wrap_function_wrapper("flask.app", "Flask.finalize_request", _finalize_request)
+    wrapt.wrap_function_wrapper("flask.app", "Flask.handle_user_exception", _handle_user_exception)

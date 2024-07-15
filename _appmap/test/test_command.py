@@ -1,6 +1,6 @@
 import json
 import re
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from importlib.metadata import version
 
 import pytest
@@ -14,7 +14,7 @@ from .helpers import DictIncluding
 @pytest.fixture(name="_cmd_setup")
 def _cmd_setup(request, git, data_dir, monkeypatch):
     repo_root = git.cwd
-    copy_tree(data_dir / request.param, str(repo_root))
+    copytree(data_dir / request.param, str(repo_root), dirs_exist_ok=True)
     monkeypatch.chdir(repo_root)
 
     # pylint: disable=protected-access

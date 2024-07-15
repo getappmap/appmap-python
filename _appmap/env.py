@@ -39,6 +39,8 @@ class Env(metaclass=SingletonMeta):
 
         self.log_file_creation_failed = False
         self._configure_logging()
+        # This uses _APPMAP, rather than APPMAP, to control whether instrumentation is enabled. The
+        # tests use this split to make it easier to control recording.
         enabled = self._env.get("_APPMAP", "false")
         self._enabled = enabled is None or enabled.lower() != "false"
 

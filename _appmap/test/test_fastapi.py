@@ -24,6 +24,10 @@ class TestRecordRequests(_TestRecordRequests):
 
 @pytest.mark.app(remote_enabled=True)
 class TestRemoteRecording(_TestRemoteRecording):
+    def __init__(self):
+        self.expected_thread_id = None
+        self.expected_content_type = None
+
     def setup_method(self):
         self.expected_thread_id = 1
         self.expected_content_type = "application/json"
@@ -39,7 +43,7 @@ def fastapi_app(data_dir, monkeypatch, request):
 
     Env.current.set("APPMAP_CONFIG", data_dir / "fastapi" / "appmap.yml")
 
-    from fastapiapp import main  # pyright: ignore[reportMissingImports]
+    from fastapiapp import main  # pyright: ignore[reportMissingImports] pylint: disable=import-error,import-outside-toplevel
 
     importlib.reload(main)
 

@@ -114,7 +114,8 @@ class Recorder(ABC):
     def check_time(cls, event_time):
         if _MAX_TIME is None:
             return
-        if event_time - cls.get_current()._start_time > _MAX_TIME:
+        delta = event_time - cls.get_current()._start_time  # pylint: disable=protected-access
+        if delta > _MAX_TIME:
             raise AppMapSessionTooLong(f"Session exceeded {_MAX_TIME} seconds")
 
     @classmethod

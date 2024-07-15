@@ -1,0 +1,4 @@
+name: FlaskTest
+packages:
+- path: flaskapp
+- path: flask

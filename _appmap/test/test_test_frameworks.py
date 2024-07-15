@@ -7,12 +7,11 @@ import re
 import sys
 import types
 from abc import ABC, abstractmethod
-from importlib.metadata import version as md_version
 from pathlib import Path
 
 import pytest
-from packaging import version
 from _appmap import recording
+from _appmap.test.helpers import package_version
 
 from ..test.helpers import DictIncluding
 from .normalize import normalize_appmap
@@ -102,10 +101,9 @@ class TestPytestRunnerPytest(_TestTestRunner):
     def test_enabled(self, testdir):
         self.run_tests(testdir)
         assert len(list(testdir.output().iterdir())) == 6
-        numpy_version = version.parse(md_version("numpy"))
+        numpy_version = package_version("numpy")
         verify_expected_appmap(testdir, f"-numpy{numpy_version.major}")
         verify_expected_metadata(testdir)
-
 
 @pytest.mark.example_dir("trial")
 class TestPytestRunnerTrial(_TestTestRunner):
@@ -156,40 +154,6 @@ def test_write_appmap(recorder_outdir):
     recording.write_appmap(EMPTY_APPMAP, longname, RECORDER_TYPE, None, recorder_outdir.parent)
     expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
     assert (recorder_outdir / expected_shortname).read_text().startswith('{"version"')
-
-
-@pytest.fixture(name="testdir")
-def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
-    # We need to set environment variables to control how tests are run. This will only work
-    # properly if pytester runs pytest in a subprocess.
-    assert (
-        pytester._method == "subprocess"  # pylint:disable=protected-access
-    ), "must run pytest in a subprocess"
-
-    # The init subdirectory contains a sitecustomize.py file that
-    # imports the appmap module. This simulates the way a real
-    # installation works, performing the same function as the the
-    # appmap.pth file that gets put in site-packages.
-    monkeypatch.setenv("PYTHONPATH", "init")
-
-    # Make sure APPMAP isn't the environment, to test that recording-by-default is working as
-    # expected. Individual test cases may set it as necessary.
-    monkeypatch.delenv("_APPMAP", raising=False)
-
-    marker = request.node.get_closest_marker("example_dir")
-    test_type = "unittest" if marker is None else marker.args[0]
-    pytester.copy_example(test_type)
-
-    pytester.expected = data_dir / test_type / "expected"
-    pytester.test_type = test_type
-
-    # this is so test_type can be overriden in test cases
-    def output_dir():
-        return pytester.path / "tmp" / "appmap" / pytester.test_type
-
-    pytester.output = output_dir
-
-    return pytester
 
 
 def verify_expected_appmap(testdir, suffix=""):

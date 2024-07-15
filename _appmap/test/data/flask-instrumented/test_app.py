@@ -13,6 +13,11 @@ def test_request(client):
 
     assert response.status_code == 200
 
+def test_exception(client):
+    response = client.get("/exception")
+
+    assert response.status_code == 500
+
 def test_not_found(client):
     response = client.get("/not_found")
 

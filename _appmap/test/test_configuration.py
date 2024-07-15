@@ -2,7 +2,7 @@
 # pylint: disable=missing-function-docstring
 
 from contextlib import contextmanager
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from pathlib import Path
 from textwrap import dedent
 
@@ -154,7 +154,7 @@ class DefaultHelpers:
 class TestDefaultConfig(DefaultHelpers):
     def test_created(self, git, data_dir, monkeypatch):
         repo_root = git.cwd
-        copy_tree(data_dir / "config", str(repo_root))
+        copytree(data_dir / "config", str(repo_root), dirs_exist_ok=True)
         monkeypatch.chdir(repo_root)
 
         # pylint: disable=protected-access
@@ -163,7 +163,7 @@ class TestDefaultConfig(DefaultHelpers):
         self.check_default_config(repo_root.name)
 
     def test_created_outside_repo(self, data_dir, tmpdir, monkeypatch):
-        copy_tree(data_dir / "config", str(tmpdir))
+        copytree(data_dir / "config", str(tmpdir), dirs_exist_ok=True)
         monkeypatch.chdir(tmpdir)
 
         # pylint: disable=protected-access
@@ -180,7 +180,7 @@ class TestDefaultConfig(DefaultHelpers):
         assert not appmap.enabled()
 
     def test_exclusions(self, data_dir, tmpdir, mocker, monkeypatch):
-        copy_tree(data_dir / "config-exclude", str(tmpdir))
+        copytree(data_dir / "config-exclude", str(tmpdir), dirs_exist_ok=True)
         monkeypatch.chdir(tmpdir)
         mocker.patch(
             "_appmap.configuration._get_sys_prefix",
@@ -193,7 +193,7 @@ class TestDefaultConfig(DefaultHelpers):
 
     def test_created_if_missing_and_enabled(self, git, data_dir, monkeypatch, tmpdir):
         repo_root = git.cwd
-        copy_tree(data_dir / "config", str(repo_root))
+        copytree(data_dir / "config", str(repo_root), dirs_exist_ok=True)
         monkeypatch.chdir(repo_root)
 
         path = Path(repo_root / "appmap.yml")
@@ -213,7 +213,7 @@ class TestDefaultConfig(DefaultHelpers):
 
     def test_not_created_if_missing_and_not_enabled(self, git, data_dir, monkeypatch):
         repo_root = git.cwd
-        copy_tree(data_dir / "config", str(repo_root))
+        copytree(data_dir / "config", str(repo_root), dirs_exist_ok=True)
         monkeypatch.chdir(repo_root)
 
         path = Path(repo_root / "appmap.yml")
@@ -229,7 +229,7 @@ class TestDefaultConfig(DefaultHelpers):
 class TestEmpty(DefaultHelpers):
     @pytest.fixture(autouse=True)
     def setup_config(self, data_dir, monkeypatch, tmpdir):
-        copy_tree(data_dir / "config", str(tmpdir))
+        copytree(data_dir / "config", str(tmpdir), dirs_exist_ok=True)
         monkeypatch.chdir(tmpdir)
 
     @contextmanager
@@ -269,7 +269,7 @@ class TestSearchConfig:
     # pylint: disable=too-many-arguments
 
     def test_config_in_parent_folder(self, data_dir, tmpdir, monkeypatch):
-        copy_tree(data_dir / "config-up", str(tmpdir))
+        copytree(data_dir / "config-up", str(tmpdir), dirs_exist_ok=True)
         wd = tmpdir / "project" / "p1"
         monkeypatch.chdir(wd)
 
@@ -279,8 +279,8 @@ class TestSearchConfig:
         assert str(Env.current.output_dir).endswith(str(tmpdir / "tmp" / "appmap"))
 
     def _init_repo(self, data_dir, tmpdir, git_directory, repo_root, appmapdir):
-        copy_tree(data_dir / "config-up", str(tmpdir))
-        copy_tree(git_directory, str(repo_root))
+        copytree(data_dir / "config-up", str(tmpdir), dirs_exist_ok=True)
+        copytree(git_directory, str(repo_root), dirs_exist_ok=True)
         with open(appmapdir / "appmap.yml", "w+", encoding="utf-8") as f:
             f.writelines(
                 dedent("""
@@ -325,7 +325,7 @@ class TestSearchConfig:
         assert Env.current.enabled
 
     def test_config_not_found_in_path_hierarchy(self, data_dir, tmpdir, monkeypatch):
-        copy_tree(data_dir / "config-up", str(tmpdir))
+        copytree(data_dir / "config-up", str(tmpdir), dirs_exist_ok=True)
         wd = tmpdir / "project" / "p1"
         monkeypatch.chdir(wd)
 

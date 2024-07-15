@@ -117,15 +117,23 @@ class Middleware(AppmapMiddleware, BaseHTTPMiddleware):
 
         parsed = request.url.components
         baseurl = urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
-        self.after_request_hook(
+        return_event = self.after_request_main(
             request.url.path,
-            request.method,
-            baseurl,
             response.status_code,
             response.headers,
             start,
             call_event_id,
         )
+        if return_event is not None:
+            self.after_request_hook(
+                request.url.path,
+                request.method,
+                baseurl,
+                response.status_code,
+                response.headers,
+                return_event,
+            )
+
         return response
 
     async def _parse_json(self, request):
