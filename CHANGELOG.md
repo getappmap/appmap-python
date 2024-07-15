@@ -1,3 +1,11 @@
+## [2.1.1](https://github.com/getappmap/appmap-python/compare/v2.1.0...v2.1.1) (2024-07-15)
+
+
+### Bug Fixes
+
+* Flask events are ordered correctly ([f970fb7](https://github.com/getappmap/appmap-python/commit/f970fb7828edc3e5d19aa03e48e9302077d58614))
+* only instrument property functions once ([23b52b5](https://github.com/getappmap/appmap-python/commit/23b52b507eedfb42a15e93a5e7ce1a5fc1d3edad))
+
 # [2.1.0](https://github.com/getappmap/appmap-python/compare/v2.0.10...v2.1.0) (2024-07-03)
 
 
