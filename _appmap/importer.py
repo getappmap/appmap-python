@@ -132,7 +132,7 @@ def get_members(cls):
         if key.startswith("__"):
             continue
         static_value = inspect.getattr_static(cls, key)
-        if isinstance(static_value, property):
+        if Importer.instrument_properties and isinstance(static_value, property):
             properties[key] = (
                 static_value,
                 {
@@ -164,6 +164,9 @@ class Importer:
         cls.filter_stack = []
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
+        cls.instrument_properties = (
+            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
+        )
 
     @classmethod
     def use_filter(cls, filter_class):
