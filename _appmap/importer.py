@@ -205,15 +205,17 @@ class Importer:
             for prop_name, (prop, prop_fns) in properties.items():
                 instrumented_fns = {}
                 for k, (fn, auxtype) in prop_fns.items():
-                    if fn is None:
+                    if fn is None or getattr(fn, "_appmap_wrapped", None):
                         continue
                     filterableFn = FilterableFn(filterable, fn, fn, auxtype)
                     new_fn = cls.instrument_function(fn.__name__, filterableFn, selected_functions)
                     if new_fn != fn:
                         new_fn = wrapt.FunctionWrapper(fn, new_fn)
+                        setattr(new_fn, "_appmap_wrapped", True)
                     instrumented_fns[k] = new_fn
-                instrumented_fns["doc"] = prop.__doc__
-                setattr(filterable.obj, prop_name, property(**instrumented_fns))
+                if len(instrumented_fns) > 0:
+                    instrumented_fns["doc"] = prop.__doc__
+                    setattr(filterable.obj, prop_name, property(**instrumented_fns))
 
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel
