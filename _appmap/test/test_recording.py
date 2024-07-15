@@ -6,9 +6,9 @@ import os
 from shutil import copy, copytree
 from threading import Thread
 
-import appmap
 import pytest
 
+import appmap
 from _appmap.event import Event
 from _appmap.recorder import Recorder, ThreadRecorder
 from _appmap.wrapt import FunctionWrapper

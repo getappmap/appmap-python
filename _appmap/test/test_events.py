@@ -45,7 +45,7 @@ class TestEvents:
     def test_recursion_protection(self):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             ExampleClass().instance_method()
 
@@ -56,7 +56,7 @@ class TestEvents:
     def test_when_str_raises(self, mocker):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
@@ -72,7 +72,7 @@ class TestEvents:
     def test_when_both_raise(self, mocker):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
@@ -88,7 +88,7 @@ class TestEvents:
         Env.current.set("APPMAP_DISPLAY_PARAMS", "false")
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.MagicMock()
 

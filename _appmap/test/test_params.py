@@ -58,7 +58,7 @@ class TestMethodBase:
         of this fixture, unload it after.  This ensures that each test
         sees a pristine version of the classes it contains.
         """
-        from params import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        from params import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error,import-outside-toplevel
             C,
         )
 

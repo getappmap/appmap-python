@@ -14,7 +14,7 @@ from _appmap.env import Env
 from _appmap.metadata import Metadata
 from appmap.flask import AppmapFlask
 
-from ..test.helpers import DictIncluding, check_call_stack, package_version
+from ..test.helpers import DictIncluding, check_call_stack
 from .web_framework import (
     _TestFormCapture,
     _TestFormData,
@@ -212,8 +212,8 @@ class TestFlaskApp:
         assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()
 
 def verify_events(events):
-    def find(type):
-        return next(filter(lambda e: e[1].get(type) is not None, enumerate(events)), None)
+    def find(event_type):
+        return next(filter(lambda e: e[1].get(event_type) is not None, enumerate(events)), None)
 
     request = find("http_server_request")
     assert request is not None
