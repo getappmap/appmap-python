@@ -5,6 +5,7 @@ Manage Configuration AppMap recorder for Python.
 import ast
 import importlib.metadata
 import inspect
+import json
 import os
 import sys
 from os.path import realpath
@@ -143,6 +144,9 @@ class Config(metaclass=SingletonMeta):
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
+
+    def __repr__(self):
+        return json.dumps(self._config["packages"])
 
     @property
     def name(self):
@@ -483,6 +487,7 @@ if _startup_messages_shown is None:
     # pylint: disable=protected-access
     c._load_config(show_warnings=True)
     logger.info("file: %s", c._file if c.file_present else "[no appmap.yml]")
+    logger.info("config: %r", c)
     logger.debug("package_functions: %s", c.package_functions)
     logger.info("env: %r", os.environ)
     os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"
