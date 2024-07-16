@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/getappmap/appmap-python/compare/v2.1.1...v2.1.2) (2024-07-16)
+
+
+### Bug Fixes
+
+* catch BaseException from instrumented code ([c927f9c](https://github.com/getappmap/appmap-python/commit/c927f9cbbd809f683e8028505ef38bc3311fcf36))
+
 ## [2.1.1](https://github.com/getappmap/appmap-python/compare/v2.1.0...v2.1.1) (2024-07-15)
 
 
