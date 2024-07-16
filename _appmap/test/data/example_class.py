@@ -5,6 +5,7 @@ and called. Used for testing appmap instrumentation.
 
 import time
 from functools import lru_cache, wraps
+from typing import NoReturn
 
 import appmap
 
@@ -155,6 +156,8 @@ class ExampleClass(Super, ClassMethodMixin):
 
     write_only = property(None, set_write_only, del_write_only, "Write-only")
 
+    def raise_base_exception(self) -> NoReturn:
+        raise BaseException("not derived from Exception") # pylint: disable=broad-exception-raised
 
 def modfunc():
     return "Hello world!"

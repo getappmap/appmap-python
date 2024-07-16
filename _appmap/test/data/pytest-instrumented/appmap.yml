@@ -1,0 +1,12 @@
+name: Simple
+packages:
+- path: simple
+- path: _pytest
+  exclude:
+  # - _py.path
+  - compat.safe_getattr
+  - config.PytestPluginManager
+  - fixtures.getfixturemarker
+  - config.argparsing
+  - config.Config.rootpath
+- path: pytest

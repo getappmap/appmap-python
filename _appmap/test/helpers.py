@@ -44,7 +44,19 @@ def check_call_stack(events):
         if e.get("event") == "call":
             stack.append(e)
         elif e.get("event") == "return":
-            assert len(stack) > 0, "return without call"
+            assert len(stack) > 0, f"return without call, {e.get('id')}"
             call = stack.pop()
-            assert call.get("id") == e.get("parent_id")
-    assert len(stack) == 0, "leftover events"
+            assert call.get("id") == e.get(
+                "parent_id"
+            ), f"parent mismatch, {call.get('id')} != {e.get('parent_id')}"
+    assert len(stack) == 0, f"leftover events, {len(stack)}"
+
+
+if __name__ == "__main__":
+    import json
+    from pathlib import Path
+    import sys
+
+    with Path(sys.argv[1]).open(encoding="utf-8") as f:
+        appmap = json.load(f)
+        check_call_stack(appmap["events"])
