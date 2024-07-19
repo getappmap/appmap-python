@@ -44,7 +44,7 @@ class _params:
         static_fn = inspect.getattr_static(C, fnname)
         fn = getattr(C, fnname)
         fc = FilterableCls(C)
-        ffn = FilterableFn(fc, fn, static_fn)
+        ffn = FilterableFn(fc, fn.__name__, fn, static_fn)
         wrapped = self.prepare(ffn)
         wrapt.wrap_function_wrapper(C, fnname, wrapped)
 

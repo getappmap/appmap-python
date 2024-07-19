@@ -516,6 +516,7 @@ class _FunctionWrapperBase(ObjectProxy):
     def __init__(self, wrapped, instance, wrapper, enabled=None,
             binding='function', parent=None):
 
+        "_appmap_instrumented",
         super(_FunctionWrapperBase, self).__init__(wrapped)
 
         object.__setattr__(self, '_self_instance', instance)
@@ -524,6 +525,7 @@ class _FunctionWrapperBase(ObjectProxy):
         object.__setattr__(self, '_self_binding', binding)
         object.__setattr__(self, '_self_parent', parent)
         object.__setattr__(self, '_bfws', list())
+        object.__setattr__(self, "_appmap_instrumented", False)
 
     def __get__(self, instance, owner):
         # This method is actually doing double duty for both unbound and

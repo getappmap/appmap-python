@@ -423,8 +423,8 @@ class MatcherFilter(Filter):
         # appropriate.
         #
         rule = self.match(filterable)
-        wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
-        if wrapped is None:
+        wrapped = getattr(filterable.obj, "_appmap_instrumented", None)
+        if not wrapped:
             logger.trace("  wrapping %s", filterable.fqname)
             Config.current.labels.apply(filterable)
             ret = instrument(filterable)
