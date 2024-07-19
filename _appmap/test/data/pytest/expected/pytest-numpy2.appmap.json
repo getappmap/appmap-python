@@ -8,95 +8,69 @@
       "name": "appmap",
       "url": "https://github.com/applandinc/appmap-python"
     },
+    "source_location": "tests/test_simple.py:5",
+    "name": "hello world",
+    "feature": "Hello world",
     "app": "Simple",
     "recorder": {
       "name": "pytest",
       "type": "tests"
     },
-    "source_location": "test_simple.py:5",
-    "name": "hello world",
-    "feature": "Hello world",
     "test_status": "succeeded"
   },
   "events": [
     {
-      "defined_class": "simple.Simple",
-      "method_id": "hello_world",
-      "path": "simple.py",
-      "lineno": 8,
-      "static": false,
-      "receiver": {
-        "class": "simple.Simple",
-        "kind": "req",
-        "name": "self",
-        "value": "<simple.Simple object at 0xabcdef>"
-      },
+      "static": true,
       "parameters": [],
       "id": 1,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "tests.test_simple",
+      "method_id": "test_hello_world",
+      "path": "tests/test_simple.py",
+      "lineno": 6
     },
     {
-      "defined_class": "simple.Simple",
-      "method_id": "hello",
-      "path": "simple.py",
-      "lineno": 2,
       "static": false,
       "receiver": {
-        "class": "simple.Simple",
         "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
         "name": "self",
-        "value": "<simple.Simple object at 0xabcdef>"
+        "class": "simple.Simple"
       },
       "parameters": [],
       "id": 2,
       "event": "call",
-      "thread_id": 1
-    },
-    {
-      "return_value": {
-        "class": "builtins.str",
-        "value": "'Hello'"
-      },
-      "parent_id": 2,
-      "id": 3,
-      "event": "return",
-      "thread_id": 1
-    },
-    {
+      "thread_id": 1,
       "defined_class": "simple.Simple",
-      "method_id": "world",
+      "method_id": "hello_world",
       "path": "simple.py",
-      "lineno": 5,
+      "lineno": 8
+    },
+    {
       "static": false,
       "receiver": {
-        "class": "simple.Simple",
         "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
         "name": "self",
-        "value": "<simple.Simple object at 0xabcdef>"
+        "class": "simple.Simple"
       },
       "parameters": [],
-      "id": 4,
+      "id": 3,
       "event": "call",
-      "thread_id": 1
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "hello",
+      "path": "simple.py",
+      "lineno": 2
     },
     {
       "return_value": {
-        "class": "builtins.str",
-        "value": "'world!'"
+        "value": "'Hello'",
+        "class": "builtins.str"
       },
-      "parent_id": 4,
-      "id": 5,
-      "event": "return",
-      "thread_id": 1
-    },
-    {
-      "return_value": {
-        "class": "builtins.str",
-        "value": "'Hello world!'"
-      },
-      "parent_id": 1,
-      "id": 6,
+      "parent_id": 3,
+      "id": 4,
       "event": "return",
       "thread_id": 1
     },
@@ -109,7 +83,44 @@
         "class": "simple.Simple"
       },
       "parameters": [],
+      "id": 5,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "world",
+      "path": "simple.py",
+      "lineno": 5
+    },
+    {
+      "return_value": {
+        "value": "'world!'",
+        "class": "builtins.str"
+      },
+      "parent_id": 5,
+      "id": 6,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "value": "'Hello world!'",
+        "class": "builtins.str"
+      },
+      "parent_id": 2,
       "id": 7,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [],
+      "id": 8,
       "event": "call",
       "thread_id": 1,
       "defined_class": "simple.Simple",
@@ -144,7 +155,7 @@
           "size": 2
         }
       ],
-      "id": 8,
+      "id": 9,
       "event": "call",
       "thread_id": 1,
       "defined_class": "simple.Simple",
@@ -168,8 +179,8 @@
         ],
         "size": 2
       },
-      "parent_id": 8,
-      "id": 9,
+      "parent_id": 9,
+      "id": 10,
       "event": "return",
       "thread_id": 1
     },
@@ -189,8 +200,18 @@
         ],
         "size": 2
       },
-      "parent_id": 7,
-      "id": 10,
+      "parent_id": 8,
+      "id": 11,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "value": "None",
+        "class": "builtins.NoneType"
+      },
+      "parent_id": 1,
+      "id": 12,
       "event": "return",
       "thread_id": 1
     }
@@ -233,6 +254,24 @@
               "type": "function",
               "location": "simple.py:5",
               "static": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tests",
+      "type": "package",
+      "children": [
+        {
+          "name": "test_simple",
+          "type": "class",
+          "children": [
+            {
+              "name": "test_hello_world",
+              "type": "function",
+              "location": "tests/test_simple.py:6",
+              "static": true
             }
           ]
         }

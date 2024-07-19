@@ -1,3 +1,4 @@
 name: Simple
+record_test_cases: true
 packages:
 - path: simple

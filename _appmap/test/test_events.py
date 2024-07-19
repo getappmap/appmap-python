@@ -149,4 +149,3 @@ def check_call_return_stack_order(events):
         return True
 
     return False
-

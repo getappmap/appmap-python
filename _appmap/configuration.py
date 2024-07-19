@@ -7,12 +7,14 @@ import importlib.metadata
 import inspect
 import json
 import os
+import re
 import sys
 from os.path import realpath
 from pathlib import Path
 from textwrap import dedent
 
 import yaml
+from yaml import SafeLoader
 from yaml.parser import ParserError
 
 from _appmap.labels import LabelSet
@@ -50,20 +52,19 @@ def _get_sys_prefix():
     return realpath(sys.prefix)
 
 
+_EXCLUDE_PATTERN = re.compile(r"\..*|node_modules|.*test.*|site-packages")
+
+
 def find_top_packages(rootdir):
     """
-    Scan a directory tree for packages that should appear in the
-    default config file.
+    Scan a directory tree for packages that should appear in the default config file.
 
-    Examine directories in rootdir, to see if they contains an
-    __init__.py.  If it does, add it to the list of packages and don't
-    scan any of its subdirectories.  If it doesn't, scan its
+    Examine each directory in rootdir, to see if it contains an __init__.py.  If it does, add it to
+    the list of packages and don't scan any of its subdirectories.  If it doesn't, scan its
     subdirectories to find __init__.py.
 
-    Some directories are automatically excluded from the search:
-      * sys.prefix
-      * Hidden directories (i.e. those that start with a '.')
-      * node_modules
+    Directory traversal will stop at directories that match _EXCLUDE_PATTERN. Such a directory (and
+    its subdirectories) will not be added to the returned packages.
 
     For example, in a directory like this
 
@@ -71,7 +72,7 @@ def find_top_packages(rootdir):
         LICENSE Makefile appveyor.yml docs/ src/ tests/
         MANIFEST.in README.rst blog/ setup.py tddium.yml tox.ini
 
-    docs, src, tests, and blog will get scanned.
+    docs, src, blog will get scanned. tests will be ignored.
 
     Only src has a subdirectory containing an __init__.py:
 
@@ -105,7 +106,7 @@ def find_top_packages(rootdir):
     packages = set()
 
     def excluded(d):
-        excluded = d == "node_modules" or d[0] == "."
+        excluded = _EXCLUDE_PATTERN.search(d) is not None
         if excluded:
             logger.trace("excluding dir %s", d)
         return excluded
@@ -129,6 +130,19 @@ def find_top_packages(rootdir):
 
 class AppMapInvalidConfigException(Exception):
     pass
+
+# We don't have any control over the PyYAML class hierarchy, so we can't control how many ancestors
+# SafeLoader has....
+class _ConfigLoader(SafeLoader):  # pylint: disable=too-many-ancestors
+    def construct_mapping(self, node, deep=False):
+        mapping = super().construct_mapping(node, deep=deep)
+        # Allow record_test_cases to be set using a string (in addition to allowing a boolean).
+        if "record_test_cases" in mapping:
+            val = mapping["record_test_cases"]
+            if isinstance(val, str):
+                mapping["record_test_cases"] = val.lower() == "true"
+        return mapping
+
 
 class Config(metaclass=SingletonMeta):
     """Singleton Config class"""
@@ -157,10 +171,15 @@ class Config(metaclass=SingletonMeta):
         return self._config["packages"]
 
     @property
+    def record_test_cases(self):
+        return self._config.get("record_test_cases", False)
+
+    @property
     def default(self):
         ret = {
             "name": self.default_name,
             "language": "python",
+            "record_test_cases": False,
             "packages": self.default_packages,
         }
         env = Env.current
@@ -233,7 +252,7 @@ class Config(metaclass=SingletonMeta):
             Env.current.enabled = False
             self.file_valid = False
             try:
-                self._config = yaml.safe_load(path.read_text(encoding="utf-8"))
+                self._config = yaml.load(path.read_text(encoding="utf-8"), Loader=_ConfigLoader)
                 if not self._config:
                     # It parsed, but was (effectively) empty.
                     self._config = self.default
@@ -334,7 +353,6 @@ It will be created with this configuration:
         except SyntaxError:
             return False
 
-
 def startswith(prefix, sequence):
     """
     Check if a sequence starts with the prefix.
@@ -377,7 +395,8 @@ class DistMatcher(PathMatcher):
     def __init__(self, dist, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dist = dist
-        self.files = [str(pp.locate()) for pp in importlib.metadata.files(dist)]
+        dist_files = importlib.metadata.files(dist)
+        self.files = [str(pp.locate()) for pp in dist_files] if dist_files is not None else []
 
     def matches(self, filterable):
         try:

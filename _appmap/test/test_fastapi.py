@@ -24,11 +24,9 @@ class TestRecordRequests(_TestRecordRequests):
 
 @pytest.mark.app(remote_enabled=True)
 class TestRemoteRecording(_TestRemoteRecording):
-    def __init__(self):
-        self.expected_thread_id = None
-        self.expected_content_type = None
-
     def setup_method(self):
+        # Can't add __init__, pytest won't collect test classes that have one
+        # pylint: disable=attribute-defined-outside-init
         self.expected_thread_id = 1
         self.expected_content_type = "application/json"
 

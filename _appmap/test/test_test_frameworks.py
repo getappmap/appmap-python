@@ -67,6 +67,14 @@ class TestUnittestRunner(_TestTestRunner):
         verify_expected_appmap(testdir)
         verify_expected_metadata(testdir)
 
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+
+        self.run_tests(testdir)
+
+        assert len(list(testdir.output().iterdir())) == 7
+        verify_expected_appmap(testdir, "-no-test-cases")
+        verify_expected_metadata(testdir)
 
 class TestPytestRunnerUnittest(_TestTestRunner):
     @classmethod
@@ -105,6 +113,16 @@ class TestPytestRunnerPytest(_TestTestRunner):
         verify_expected_appmap(testdir, f"-numpy{numpy_version.major}")
         verify_expected_metadata(testdir)
 
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+
+        self.run_tests(testdir)
+        assert len(list(testdir.output().iterdir())) == 6
+        numpy_version = package_version("numpy")
+        verify_expected_appmap(testdir, f"-numpy{numpy_version.major}-no-test-cases")
+        verify_expected_metadata(testdir)
+
+
 @pytest.mark.example_dir("trial")
 class TestPytestRunnerTrial(_TestTestRunner):
     @classmethod
@@ -122,9 +140,14 @@ class TestPytestRunnerTrial(_TestTestRunner):
         # unclean.
         result.assert_outcomes(xfailed=1)
 
-    def test_pytest_trial(self, testdir):
+    def test_enabled(self, testdir):
         self.run_tests(testdir)
         verify_expected_appmap(testdir)
+
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+        self.run_tests(testdir)
+        verify_expected_appmap(testdir, "-no-test-cases")
 
 
 EMPTY_APPMAP = types.SimpleNamespace(events=[])
