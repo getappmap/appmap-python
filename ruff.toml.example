@@ -1,0 +1,5 @@
+line-length = 100
+extend-exclude = ["sitecustomize.py"]
+
+[lint.isort]
+known-first-party = ['appmap', '_appmap']

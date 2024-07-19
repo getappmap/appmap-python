@@ -19,4 +19,4 @@ htmlcov/
 
 /.tox
 /node_modules
-
+/ruff.toml
