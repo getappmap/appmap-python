@@ -52,6 +52,7 @@ packaging = ">=19.0"
 
 [tool.poetry.group.dev.dependencies]
 Twisted = "^22.4.0"
+incremental = "<24.7.0"
 asgiref = "^3.7.2"
 black = "^24.2.0"
 coverage = "^5.3"
