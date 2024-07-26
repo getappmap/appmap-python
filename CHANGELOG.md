@@ -1,3 +1,14 @@
+## [2.1.3](https://github.com/getappmap/appmap-python/compare/v2.1.2...v2.1.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* add APPMAP_INSTRUMENT_PROPERTIES ([11b6307](https://github.com/getappmap/appmap-python/commit/11b6307cf2bdbfae50f30d4f329e6ba3ac6f4035))
+* add ruff ([ac94204](https://github.com/getappmap/appmap-python/commit/ac94204d9bd35bf238865a7bf44cea039f8282fb))
+* improve property handling ([5cce0f0](https://github.com/getappmap/appmap-python/commit/5cce0f0644eebf7d19bad5cda61726393cd7ba68))
+* show config packages on startup ([feec761](https://github.com/getappmap/appmap-python/commit/feec761fefd5596c4fd7bde0cd9c3901e02791b3))
+* try to avoid recording tests ([1847b0e](https://github.com/getappmap/appmap-python/commit/1847b0e7177327adc080854fbbec17b89166d516))
+
 ## [2.1.2](https://github.com/getappmap/appmap-python/compare/v2.1.1...v2.1.2) (2024-07-16)
 
 
