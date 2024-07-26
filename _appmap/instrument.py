@@ -138,5 +138,5 @@ def instrument(filterable):
             return call_instrumented(f, instance, args, kwargs)
 
     ret = instrumented_fn
-    setattr(ret, "_appmap_wrapped", True)
+    setattr(ret, "_appmap_instrumented", True)
     return ret

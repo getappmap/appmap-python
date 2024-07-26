@@ -509,21 +509,26 @@ class PartialCallableObjectProxy(ObjectProxy):
         return self.__wrapped__(*_args, **_kwargs)
 
 class _FunctionWrapperBase(ObjectProxy):
+    __slots__ = (
+        "_self_instance",
+        "_self_wrapper",
+        "_self_enabled",
+        "_self_binding",
+        "_self_parent",
+        "_bfws",
+        "_appmap_instrumented",
+    )
 
-    __slots__ = ('_self_instance', '_self_wrapper', '_self_enabled',
-                 '_self_binding', '_self_parent', '_bfws')
-
-    def __init__(self, wrapped, instance, wrapper, enabled=None,
-            binding='function', parent=None):
-
+    def __init__(self, wrapped, instance, wrapper, enabled=None, binding="function", parent=None):
         super(_FunctionWrapperBase, self).__init__(wrapped)
 
-        object.__setattr__(self, '_self_instance', instance)
-        object.__setattr__(self, '_self_wrapper', wrapper)
-        object.__setattr__(self, '_self_enabled', enabled)
-        object.__setattr__(self, '_self_binding', binding)
-        object.__setattr__(self, '_self_parent', parent)
-        object.__setattr__(self, '_bfws', list())
+        object.__setattr__(self, "_self_instance", instance)
+        object.__setattr__(self, "_self_wrapper", wrapper)
+        object.__setattr__(self, "_self_enabled", enabled)
+        object.__setattr__(self, "_self_binding", binding)
+        object.__setattr__(self, "_self_parent", parent)
+        object.__setattr__(self, "_bfws", list())
+        object.__setattr__(self, "_appmap_instrumented", False)
 
     def __get__(self, instance, owner):
         # This method is actually doing double duty for both unbound and

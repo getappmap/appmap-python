@@ -58,6 +58,7 @@ if not Env.current.is_appmap_repo and Env.current.enables("tests"):
                 True,
             )
             if not noappmap.disables(item.obj, item.cls):
+                testing_framework.disable_test_case(item.obj)
                 item.obj = recorded_testcase(item)(item.obj)
 
     @pytest.hookimpl(hookwrapper=True)
@@ -76,6 +77,7 @@ if not Env.current.is_appmap_repo and Env.current.enables("tests"):
             method_id=pyfuncitem.originalname,
             location=pyfuncitem.location,
         ) as metadata:
+            testing_framework.disable_test_case(pyfuncitem.obj)
             result = yield
             try:
                 with testing_framework.collect_result_metadata(metadata):

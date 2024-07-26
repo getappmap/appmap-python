@@ -34,7 +34,7 @@ def _add_api_route(wrapped, _, args, kwargs):
     fqn = utils.FqFnName(fn)
     scope = Filterable(fqn.scope, fqn.fqclass, None)
 
-    filterable_fn = FilterableFn(scope, fn, fn)
+    filterable_fn = FilterableFn(scope, fn.__name__, fn, fn)
     logger.debug("_add_api_route, fn: %s", filterable_fn.fqname)
     instrumented_fn = Importer.instrument_function(fqn.fn_name, filterable_fn)
 

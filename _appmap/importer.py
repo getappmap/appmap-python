@@ -42,8 +42,8 @@ class FilterableFn(
 ):
     __slots__ = ()
 
-    def __new__(cls, scope, fn, static_fn, auxtype=None):
-        fqname = "%s.%s" % (scope.fqname, fn.__name__)
+    def __new__(cls, scope, fn_name, fn, static_fn, auxtype=None):  # pylint: disable=too-many-arguments
+        fqname = "%s.%s" % (scope.fqname, fn_name)
         self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn, auxtype)
         return self
 
@@ -132,7 +132,9 @@ def get_members(cls):
         if key.startswith("__"):
             continue
         static_value = inspect.getattr_static(cls, key)
-        if isinstance(static_value, property):
+        # Don't use isinstance to check the type of static_value -- we don't want to invoke the
+        # descriptor protocol.
+        if Importer.instrument_properties and type(static_value) is property:  # pylint: disable=unidiomatic-typecheck
             properties[key] = (
                 static_value,
                 {
@@ -164,6 +166,9 @@ class Importer:
         cls.filter_stack = []
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
+        cls.instrument_properties = (
+            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
+        )
 
     @classmethod
     def use_filter(cls, filter_class):
@@ -191,27 +196,34 @@ class Importer:
             cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
 
         def instrument_functions(filterable, selected_functions=None):
+            # pylint: disable=too-many-locals
             logger.trace("  looking for members of %s", filterable.obj)
             functions, properties = get_members(filterable.obj)
             logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                filterableFn = FilterableFn(filterable, fn, static_fn)
+                filterableFn = FilterableFn(filterable, fn.__name__, fn, static_fn)
                 new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
                 if new_fn != fn:
-                    wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+                    fw = wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+                    fw._appmap_instrumented = True  # pylint: disable=protected-access
+
             # Now that we've instrumented all the functions, go through the properties and update
             # them
             for prop_name, (prop, prop_fns) in properties.items():
                 instrumented_fns = {}
                 for k, (fn, auxtype) in prop_fns.items():
-                    if fn is None or getattr(fn, "_appmap_wrapped", None):
+                    if fn is None:
                         continue
-                    filterableFn = FilterableFn(filterable, fn, fn, auxtype)
-                    new_fn = cls.instrument_function(fn.__name__, filterableFn, selected_functions)
+                    filterableFn = FilterableFn(filterable, prop_name, fn, fn, auxtype)
+                    if getattr(fn, "_appmap_instrumented", None):
+                        continue
+                    new_fn = cls.instrument_function(prop_name, filterableFn, selected_functions)
                     if new_fn != fn:
                         new_fn = wrapt.FunctionWrapper(fn, new_fn)
-                        setattr(new_fn, "_appmap_wrapped", True)
+                        # Set _appmap_instrumented on the FunctionWrapper, not on the wrapped function
+                        new_fn._appmap_instrumented = True  # pylint: disable=protected-access
+
                     instrumented_fns[k] = new_fn
                 if len(instrumented_fns) > 0:
                     instrumented_fns["doc"] = prop.__doc__

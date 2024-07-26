@@ -139,8 +139,10 @@ class TestConfiguration:
 
 class DefaultHelpers:
     def check_default_packages(self, actual_packages):
+        # Project directory has a "test" subdirectory, so actual_packages may have it (indicating a
+        # bug in the way directories are excluded).
         pkgs = [p["path"] for p in actual_packages if p["path"] in ("package", "test")]
-        assert ["package", "test"] == sorted(pkgs)
+        assert ["package"] == sorted(pkgs)
 
     def check_default_config(self, expected_name):
         assert appmap.enabled()
@@ -149,6 +151,7 @@ class DefaultHelpers:
         assert default_config.name == expected_name
         self.check_default_packages(default_config.packages)
         assert default_config.default["appmap_dir"] == "tmp/appmap"
+        assert default_config.default["record_test_cases"] is False
 
 
 class TestDefaultConfig(DefaultHelpers):
@@ -249,7 +252,7 @@ class TestEmpty(DefaultHelpers):
 
     def test_missing_name(self, tmpdir):
         with self.incomplete_config() as f:
-            print('packages: [{"path": "package"}, {"path": "test"}]', file=f)
+            print('packages: [{"path": "package"}]', file=f)
             _appmap.initialize(
                 cwd=tmpdir,
                 env={"APPMAP_CONFIG": "appmap-incomplete.yml"},

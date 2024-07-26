@@ -8,7 +8,8 @@ from pathlib import PurePath
 
 import inflection
 
-from _appmap import configuration, env, recording
+from _appmap import env, recording
+from _appmap.configuration import Config
 from _appmap.recording import Recording
 from _appmap.utils import fqname, root_relative_path
 
@@ -104,15 +105,13 @@ class session:  # pylint: disable=too-few-public-methods
         item = FuncItem(klass, method, **kwds)
 
         metadata = item.metadata
-        metadata.update(
-            {
-                "app": configuration.Config.current.name,
-                "recorder": {
-                    "name": self.name,
-                    "type": self.recorder_type,
-                },
-            }
-        )
+        metadata.update({
+            "app": Config.current.name,
+            "recorder": {
+                "name": self.name,
+                "type": self.recorder_type,
+            },
+        })
 
         rec = Recording()
         environ = env.Env.current
@@ -174,3 +173,9 @@ def failure_location(exn: Exception) -> str:
         if relative:
             break
     return loc
+
+
+def disable_test_case(fn):
+    record_test_cases = Config.current.record_test_cases
+    if not record_test_cases and hasattr(fn, "_self_enabled"):  # it's instrumented
+        fn._self_enabled = False  # pylint: disable=protected-access
