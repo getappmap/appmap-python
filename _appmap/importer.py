@@ -167,7 +167,7 @@ class Importer:
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
         cls.instrument_properties = (
-            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
+            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "false").lower() == "true"
         )
 
     @classmethod
