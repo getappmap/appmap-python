@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/getappmap/appmap-python/compare/v2.1.3...v2.1.4) (2024-07-26)
+
+
+### Bug Fixes
+
+* disable property instrumentation by default ([a280300](https://github.com/getappmap/appmap-python/commit/a2803003a57b1aabc87cadc755786613e2709ff2))
+
 ## [2.1.3](https://github.com/getappmap/appmap-python/compare/v2.1.2...v2.1.3) (2024-07-26)
 
 
