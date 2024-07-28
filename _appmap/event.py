@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 import inspect
 import logging
+import operator
 import threading
 from functools import lru_cache, partial
 from inspect import Parameter, Signature
@@ -180,18 +181,19 @@ class CallEvent(Event):
     __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels", "auxtype"]
 
     @staticmethod
-    def make(fn, fntype):
+    def make(filterable):
         """
         Return a factory for creating new CallEvents based on
         introspecting the given function.
         """
 
         # Delete the labels so the app doesn't see them.
+        fn = filterable.obj
         labels = getattr(fn, "_appmap_labels", None)
         if labels:
             del fn._appmap_labels
 
-        return partial(CallEvent, fn, fntype, labels=labels)
+        return partial(CallEvent, filterable, labels=labels)
 
     @staticmethod
     def make_params(filterable):
@@ -312,10 +314,28 @@ class CallEvent(Event):
             comment = inspect.getcomments(self._fn)
         return comment
 
-    def __init__(self, fn, fntype, parameters, labels):
+    def __init__(self, filterable, parameters, labels):
         super().__init__("call")
+        fn = filterable.obj
         self._fn = fn
-        self._fqfn = FqFnName(fn)
+        if type(fn) is not operator.attrgetter:
+            # fn is a regular function
+            modname = fn.__module__
+            qualname = fn.__qualname__
+        elif (parts := filterable.fqname.split(".")) and len(parts) > 2:
+            # fn is an attrgetter, which will is being used as the getter for a property. If
+            # filterable.fqname has enough components to be the fully-qualified name of a class
+            # member, set the module name and qualname based on those components.
+            modname = ".".join(parts[:-2])
+            qualname = ".".join(parts[-2:])
+        else:
+            # The two previous cases should handle all known possibilities, but don't crash if
+            # somethign else sneaks in.
+            modname = "unknown"
+            qualname = "unknown"
+        self._fqfn = FqFnName(modname, qualname)
+
+        fntype = filterable.fntype
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
         if fntype in FnType.CLASS | FnType.INSTANCE:

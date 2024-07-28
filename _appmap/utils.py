@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum, IntFlag, auto
 from pathlib import Path
-from typing import Any, Callable
 
 from .env import Env
 
@@ -79,10 +78,8 @@ class FqFnName:
     FqFnName makes it easy to reference the parts of the fully-qualified name of a callable.
     """
 
-    def __init__(self, fn: Callable[..., Any]):
-
-        self._modname = fn.__module__
-        qualname = fn.__qualname__
+    def __init__(self, modname, qualname):
+        self._modname = modname
         if "." in qualname:
             self._scope = Scope.CLASS
             self._class_name, self._fn_name = qualname.rsplit(".", 1)
@@ -111,8 +108,6 @@ class FqFnName:
     @property
     def fn_name(self):
         return self._fn_name
-
-FqFnName(fqname)
 
 def root_relative_path(path):
     """Returns the path relative to the current root_dir.
