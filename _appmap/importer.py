@@ -98,13 +98,13 @@ def get_classes(module):
 
 def get_members(cls):
     """
-    Get the function members of the given class.  Unlike
+    Get the function members of the given class or object.  Unlike
     inspect.getmembers, this function only calls getattr on functions,
     to avoid potential side effects.
 
     Returns a list of tuples of the form (key, dict_value, attr_value):
       * key is the attribute name
-      * dict_value is cls.__dict__[key]
+      * dict_value is cls.__dict__[key] if __dict__ exists, otherwise None
       * and attr_value is getattr(cls, key)
     """
 
@@ -119,21 +119,22 @@ def get_members(cls):
             or FnType.classify(m) in FnType.STATIC | FnType.CLASS
         )
 
-    # Note that we only want to instrument the functions that are
-    # defined within the class itself, i.e. those which get added to
-    # the class' __dict__ when the class is created. If we were to
-    # instead iterate over dir(cls), we would see functions from
-    # superclasses, too. Those don't need to be instrumented here,
-    # they'll get taken care of when the superclass is imported.
     functions = []
     properties = {}
-    modname = cls.__module__ if hasattr(cls, "__module__") else cls.__name__
-    for key in cls.__dict__:
+    modname = cls.__module__ if hasattr(cls, "__module__") else getattr(cls, '__name__', '')
+
+    # Use dir(cls) instead of cls.__dict__ to get all attributes, including inherited ones
+    for key in dir(cls):
         if key.startswith("__"):
             continue
-        static_value = inspect.getattr_static(cls, key)
-        # Don't use isinstance to check the type of static_value -- we don't want to invoke the
-        # descriptor protocol.
+
+        try:
+            # Don't use isinstance to check the type of static_value -- we don't want to invoke the
+            # descriptor protocol.
+            static_value = inspect.getattr_static(cls, key)
+        except AttributeError:
+            continue
+
         if Importer.instrument_properties and type(static_value) is property:  # pylint: disable=unidiomatic-typecheck
             properties[key] = (
                 static_value,
@@ -146,10 +147,18 @@ def get_members(cls):
         else:
             if not is_member_func(static_value):
                 continue
-            value = getattr(cls, key)
-            if value.__module__ != modname:
+            try:
+                value = getattr(cls, key)
+            except AttributeError:
                 continue
-            functions.append((key, static_value, value))
+
+            # Check if the value has a __module__ attribute before comparing
+            if getattr(value, '__module__', None) != modname:
+                continue
+
+            # Use getattr to safely get the __dict__ value, defaulting to None if it doesn't exist
+            dict_value = getattr(cls, '__dict__', {}).get(key, None)
+            functions.append((key, dict_value, value))
 
     return (functions, properties)
 

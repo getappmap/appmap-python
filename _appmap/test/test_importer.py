@@ -1,10 +1,11 @@
 # pylint: disable=missing-function-docstring
 
 import sys
+from functools import partial
 
 import pytest
 
-from _appmap.importer import Importer, wrap_exec_module
+from _appmap.importer import Importer, wrap_exec_module, get_members
 from _appmap.wrapt.wrappers import BoundFunctionWrapper
 
 
@@ -46,3 +47,24 @@ def test_excluded(verify_example_appmap):
         assert not isinstance(ExampleClass.another_method, BoundFunctionWrapper)
 
     verify_example_appmap(check_imports, "instance_method")
+
+
+def test_get_members_with_partial():
+    """
+    Test that get_members handles functools.partial objects without a __module__ attribute.
+    """
+
+    def sample_function():
+        pass
+
+    class ExampleClass:
+        def example_method():
+            pass
+
+    # Previously, this function would raise an exception in `get_members`
+    # https://github.com/getappmap/appmap-python/issues/320
+    ExampleClass.static_partial_method = staticmethod(partial(sample_function))
+
+    functions, _ = get_members(ExampleClass)
+    assert len(functions) == 1
+    assert functions[0][0] == 'example_method'
