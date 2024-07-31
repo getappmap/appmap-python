@@ -109,3 +109,40 @@ def test_operator_attrgetter(events):
         "defined_class": "properties_class.PropertiesClass",
         "method_id": "operator_read_only (get)",
     })
+
+def test_operator_itemgetter(events):
+    from properties_class import PropertiesClass
+
+    ec = PropertiesClass()
+    assert ec.taste == "yum"
+    assert len(events) == 2
+    assert events[0].to_dict() == DictIncluding({
+        "event": "call",
+        # operator.itemgetter.__module__ isn't available before 3.10
+        # "defined_class": "operator",
+        "method_id": "itemgetter (get)",
+    })
+
+
+def test_free_function(events):
+    from properties_class import PropertiesClass
+
+    ec = PropertiesClass()
+    assert ec.free_read_only_prop == "read only"
+    assert len(events) == 2
+    assert events[0].to_dict() == DictIncluding({
+        "event": "call",
+        "defined_class": "properties_class",
+        "method_id": "free_read_only (get)",
+    })
+
+
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="needs fix for https://github.com/getappmap/appmap-python/issues/365",
+)
+def test_functools_partial(events):
+    from properties_class import PropertiesClass
+
+    PropertiesClass.static_partial_method()
+    assert len(events) > 0

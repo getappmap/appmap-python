@@ -1,8 +1,12 @@
-from functools import cached_property
+from functools import cached_property, partial
 import operator
 from typing import NoReturn
 
+def free_read_only(self):
+    return self._read_only
 
+def free_func():
+    return "hello world"
 class PropertiesClass:
     def __init__(self):
         self._read_only = "read only"
@@ -54,3 +58,14 @@ class PropertiesClass:
         return self._read_only
 
     operator_read_only = property(operator.attrgetter("cached_read_only"))
+
+    tastes = {"bacon": "yum"}
+
+    def __getitem__(self, key):
+        return self.tastes[key]
+
+    taste = property(operator.itemgetter("bacon"))
+
+    free_read_only_prop = property(free_read_only)
+
+    static_partial_method = staticmethod(partial(free_func))

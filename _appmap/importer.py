@@ -5,7 +5,7 @@ import types
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
-from functools import reduce
+from functools import partial, reduce
 
 from _appmap import wrapt
 
@@ -147,7 +147,7 @@ def get_members(cls):
             if not is_member_func(static_value):
                 continue
             value = getattr(cls, key)
-            if value.__module__ != modname:
+            if (m := getattr(value, "__module__", None)) and (m is None or m != modname):
                 continue
             functions.append((key, static_value, value))
 
@@ -202,7 +202,7 @@ class Importer:
             logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                filterableFn = FilterableFn(filterable, fn.__name__, fn, static_fn)
+                filterableFn = FilterableFn(filterable, fn_name, fn, static_fn)
                 new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
                 if new_fn != fn:
                     fw = wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)

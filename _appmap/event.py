@@ -6,6 +6,7 @@ import threading
 from functools import lru_cache, partial
 from inspect import Parameter, Signature
 from itertools import chain
+import types
 
 from .env import Env
 from .recorder import Recorder
@@ -175,6 +176,31 @@ class Param:
         ret.update(describe_value(self.name, value))
         return ret
 
+def _get_name_parts(filterable):
+    """
+    Return the module name and qualname for filterable.obj.
+
+    If filterable.obj is an operator.attrgetter that we've determined is associated with a property,
+    compute the names from the fqname of the filterable. If it's anything else, try to get its
+    __module__ and __qualname__, falling back to default values if they're not available.
+    """
+    fn = filterable.obj
+    assert callable(fn), f"{filterable} doesn't have a callable obj"
+
+    if (
+        type(fn) is operator.attrgetter
+        and (parts := filterable.fqname.split("."))
+        and len(parts) > 2
+    ):
+        # filterable.fqname was set when we identified this filterable as a property
+        modname = ".".join(parts[:-2])
+        qualname = ".".join(parts[-2:])
+    else:
+        modname = getattr(fn, "__module__", "unknown")
+        qualname = getattr(fn, "__qualname__", None)
+        if qualname is None:
+            qualname = getattr(fn.__class__, "__name__", "unknown")
+    return modname, qualname
 
 class CallEvent(Event):
     # pylint: disable=method-cache-max-size-none
@@ -318,21 +344,7 @@ class CallEvent(Event):
         super().__init__("call")
         fn = filterable.obj
         self._fn = fn
-        if type(fn) is not operator.attrgetter:
-            # fn is a regular function
-            modname = fn.__module__
-            qualname = fn.__qualname__
-        elif (parts := filterable.fqname.split(".")) and len(parts) > 2:
-            # fn is an attrgetter, which will is being used as the getter for a property. If
-            # filterable.fqname has enough components to be the fully-qualified name of a class
-            # member, set the module name and qualname based on those components.
-            modname = ".".join(parts[:-2])
-            qualname = ".".join(parts[-2:])
-        else:
-            # The two previous cases should handle all known possibilities, but don't crash if
-            # somethign else sneaks in.
-            modname = "unknown"
-            qualname = "unknown"
+        modname, qualname = _get_name_parts(filterable)
         self._fqfn = FqFnName(modname, qualname)
 
         fntype = filterable.fntype
