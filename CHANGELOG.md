@@ -1,3 +1,10 @@
+## [2.1.5](https://github.com/getappmap/appmap-python/compare/v2.1.4...v2.1.5) (2024-08-05)
+
+
+### Bug Fixes
+
+* reenable instrumentation of properties ([7b3119a](https://github.com/getappmap/appmap-python/commit/7b3119a4fdf60e19a28a279d4ba6afe379925e14))
+
 ## [2.1.4](https://github.com/getappmap/appmap-python/compare/v2.1.3...v2.1.4) (2024-07-26)
 
 
