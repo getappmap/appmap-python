@@ -31,7 +31,7 @@ def _add_api_route(wrapped, _, args, kwargs):
 
     fn = args[1]
 
-    fqn = utils.FqFnName(fn)
+    fqn = utils.FqFnName(fn.__module__, fn.__qualname__)
     scope = Filterable(fqn.scope, fqn.fqclass, None)
 
     filterable_fn = FilterableFn(scope, fn.__name__, fn, fn)

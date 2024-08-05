@@ -121,7 +121,7 @@ def instrument(filterable):
     logger.debug("hooking %s", filterable.fqname)
     fn = filterable.obj
 
-    make_call_event = event.CallEvent.make(fn, filterable.fntype)
+    make_call_event = event.CallEvent.make(filterable)
     params = CallEvent.make_params(filterable)
 
     # django depends on being able to find the cache_clear attribute

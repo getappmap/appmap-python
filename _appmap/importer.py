@@ -5,7 +5,7 @@ import types
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
-from functools import reduce
+from functools import partial, reduce
 
 from _appmap import wrapt
 
@@ -134,7 +134,7 @@ def get_members(cls):
         static_value = inspect.getattr_static(cls, key)
         # Don't use isinstance to check the type of static_value -- we don't want to invoke the
         # descriptor protocol.
-        if Importer.instrument_properties and type(static_value) is property:  # pylint: disable=unidiomatic-typecheck
+        if Importer.instrument_properties and type(static_value) is property:
             properties[key] = (
                 static_value,
                 {
@@ -147,7 +147,7 @@ def get_members(cls):
             if not is_member_func(static_value):
                 continue
             value = getattr(cls, key)
-            if value.__module__ != modname:
+            if (m := getattr(value, "__module__", None)) and (m is None or m != modname):
                 continue
             functions.append((key, static_value, value))
 
@@ -167,7 +167,7 @@ class Importer:
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
         cls.instrument_properties = (
-            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "false").lower() == "true"
+            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
         )
 
     @classmethod
@@ -202,7 +202,7 @@ class Importer:
             logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                filterableFn = FilterableFn(filterable, fn.__name__, fn, static_fn)
+                filterableFn = FilterableFn(filterable, fn_name, fn, static_fn)
                 new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
                 if new_fn != fn:
                     fw = wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
@@ -221,7 +221,8 @@ class Importer:
                     new_fn = cls.instrument_function(prop_name, filterableFn, selected_functions)
                     if new_fn != fn:
                         new_fn = wrapt.FunctionWrapper(fn, new_fn)
-                        # Set _appmap_instrumented on the FunctionWrapper, not on the wrapped function
+                        # Set _appmap_instrumented on the FunctionWrapper, not on the wrapped
+                        # function.
                         new_fn._appmap_instrumented = True  # pylint: disable=protected-access
 
                     instrumented_fns[k] = new_fn

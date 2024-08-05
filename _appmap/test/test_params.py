@@ -28,8 +28,7 @@ class _params:
 
     @classmethod
     def prepare(cls, ffn):
-        fn = ffn.obj
-        make_call_event = CallEvent.make(fn, ffn.fntype)
+        make_call_event = CallEvent.make(ffn)
         params = CallEvent.make_params(ffn)
 
         def wrapped_fn(_, instance, args, kwargs):
