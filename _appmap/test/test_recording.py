@@ -6,9 +6,9 @@ import os
 from shutil import copy, copytree
 from threading import Thread
 
-import appmap
 import pytest
 
+import appmap
 from _appmap.configuration import Config
 from _appmap.event import Event
 from _appmap.recorder import Recorder, ThreadRecorder
@@ -59,9 +59,9 @@ class TestRecordingWhenEnabled:
         ), f"expected path {expected_path}"
 
     def test_recording_clears(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         rec = appmap.Recording()
         with rec:
@@ -81,9 +81,9 @@ class TestRecordingWhenEnabled:
         assert rec.events[2].method_id == "instance_method"
 
     def test_recording_shallow(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         rec = appmap.Recording()
         with rec:
@@ -95,9 +95,9 @@ class TestRecordingWhenEnabled:
         assert len(rec.events) == 8
 
     def test_recording_wrapped(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         rec = appmap.Recording()
         with rec:
@@ -136,9 +136,9 @@ class TestRecordingWhenEnabled:
 
         from multiprocessing import Process, Queue
 
-        from example_class import (
-            modfunc,  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-        )
+        #  pylint: disable=import-error
+        from example_class import modfunc  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         assert isinstance(modfunc, FunctionWrapper), "modfunc isn't instrumented?"
 

@@ -62,6 +62,7 @@ class NoopRecording:
 
     def __init__(self, exit_hook=None):
         self.exit_hook = exit_hook
+        self.events = []
 
     def start(self):
         pass
