@@ -5,7 +5,7 @@ import types
 from abc import ABC, abstractmethod
 from collections import namedtuple
 from collections.abc import MutableSequence
-from functools import partial, reduce
+from functools import reduce
 
 from _appmap import wrapt
 
