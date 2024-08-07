@@ -6,7 +6,6 @@ import threading
 from functools import lru_cache, partial
 from inspect import Parameter, Signature
 from itertools import chain
-import types
 
 from .env import Env
 from .recorder import Recorder
