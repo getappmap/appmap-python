@@ -119,7 +119,6 @@ def call_instrumented(f, instance, args, kwargs):
 def instrument(filterable):
     """return an instrumented function"""
     logger.debug("hooking %s", filterable.fqname)
-    fn = filterable.obj
 
     make_call_event = event.CallEvent.make(filterable)
     params = CallEvent.make_params(filterable)
