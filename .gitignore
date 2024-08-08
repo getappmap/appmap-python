@@ -20,3 +20,5 @@ htmlcov/
 /.tox
 /node_modules
 /ruff.toml
+
+appmap.log

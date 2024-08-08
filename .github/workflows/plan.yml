@@ -1,0 +1,27 @@
+name: Plan issue with Navie
+
+on:
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  plan:
+    if: contains(github.event.issue.labels.*.name, 'navie-plan')
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Plan with Navie
+        uses: getappmap/navie-editor/plan@main
+        with:
+          issue_id: ${{ github.event.issue.number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
