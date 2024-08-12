@@ -198,7 +198,7 @@ class TestDjangoApp:
         # To really check middleware reset, the tests must run in order,
         # so disable randomly.
         result = pytester.runpytest("-svv", "-p", "no:randomly")
-        result.assert_outcomes(passed=5, failed=0, errors=0)
+        result.assert_outcomes(passed=6, failed=0, errors=0)
         # Look for the http_server_request event in test_app's appmap. If
         # middleware reset is broken, it won't be there.
         appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
@@ -212,7 +212,7 @@ class TestDjangoApp:
     def test_disabled(self, pytester, monkeypatch):
         monkeypatch.setenv("_APPMAP", "false")
         result = pytester.runpytest("-svv", "-p", "no:randomly", "-k", "test_request")
-        result.assert_outcomes(passed=2, failed=0, errors=0)
+        result.assert_outcomes(passed=3, failed=0, errors=0)
         assert not (pytester.path / "tmp").exists()
 
     def test_disabled_for_process(self, pytester, monkeypatch):
@@ -222,7 +222,7 @@ class TestDjangoApp:
 
         # There are two tests for remote recording. They should both fail,
         # because process recording should disable remote recording.
-        result.assert_outcomes(passed=3, failed=2, errors=0)
+        result.assert_outcomes(passed=4, failed=2, errors=0)
 
         assert (pytester.path / "tmp" / "appmap" / "process").exists()
         assert not (pytester.path / "tmp" / "appmap" / "requests").exists()

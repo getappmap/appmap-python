@@ -122,6 +122,20 @@ class TestPytestRunnerPytest(_TestTestRunner):
         verify_expected_appmap(testdir, f"-numpy{numpy_version.major}-no-test-cases")
         verify_expected_metadata(testdir)
 
+@pytest.mark.example_dir("django")
+def test_pytest_django(testdir):
+    result = testdir.runpytest("-svv", "-k", "test_request_test")
+    result.assert_outcomes(passed=1)
+    # django.test.TestCase is a subclass of unittest.TestCase, so recorder type is unittest
+    assert (
+        testdir.path
+        / "tmp"
+        / "appmap"
+        / "unittest"
+        / "test_test_request_TestRequest_test_request_test.appmap.json"
+    ).exists()
+    assert not (testdir.path / "tmp" / "appmap" / "requests").exists()
+
 
 @pytest.mark.example_dir("trial")
 class TestPytestRunnerTrial(_TestTestRunner):
