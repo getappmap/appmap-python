@@ -1,6 +1,13 @@
 from importlib.metadata import version
 
 import pytest
+try:
+    from pytest_django.django_compat import is_django_unittest
+except ImportError:
+
+    def is_django_unittest(item):
+        return False
+
 
 from _appmap import noappmap, testing_framework, wrapt
 from _appmap.env import Env
@@ -51,7 +58,7 @@ if not Env.current.is_appmap_repo and Env.current.enables("tests"):
         # running the test case. (This nesting of function calls is
         # verified by the expected appmap in the test for a unittest
         # TestCase run by pytest.)
-        if hasattr(item, "_testcase"):
+        if hasattr(item, "_testcase") and not is_django_unittest(item):
             setattr(
                 item._testcase,  # pylint: disable=protected-access
                 "_appmap_pytest_recording",
