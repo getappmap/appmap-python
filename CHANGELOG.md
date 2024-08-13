@@ -1,3 +1,11 @@
+## [2.1.6](https://github.com/getappmap/appmap-python/compare/v2.1.5...v2.1.6) (2024-08-13)
+
+
+### Bug Fixes
+
+* generate AppMap data from django tests ([ea0918c](https://github.com/getappmap/appmap-python/commit/ea0918cf4e952a9e1ab4a48253ec16e4484b78a0))
+* make wrapt function objects pickleable ([3561e3b](https://github.com/getappmap/appmap-python/commit/3561e3b13a1f004b793073a9f9f7e1345b192fa1))
+
 ## [2.1.5](https://github.com/getappmap/appmap-python/compare/v2.1.4...v2.1.5) (2024-08-05)
 
 
