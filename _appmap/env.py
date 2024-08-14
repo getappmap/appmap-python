@@ -39,13 +39,13 @@ class Env(metaclass=SingletonMeta):
 
         self.log_file_creation_failed = False
         self._configure_logging()
-        # This uses _APPMAP, rather than APPMAP, to control whether instrumentation is enabled. The
-        # tests use this split to make it easier to control recording.
-        enabled = self._env.get("_APPMAP", "false")
-        self._enabled = enabled is None or enabled.lower() != "false"
-
-        self._root_dir = str(self._cwd) + "/"
-        self._root_dir_len = len(self._root_dir)
+        # This uses the underscore-decorated, rather than the undecorated variants, to control
+        # whether these settings are enabled. The tests use this split to make it easier to control
+        # them.
+        enabled = self._env.get("_APPMAP", None)
+        self._enabled = enabled is not None and enabled.lower() != "false"
+        display_params = self._env.get("_APPMAP_DISPLAY_PARAMS", None)
+        self._display_params = display_params is not None and display_params.lower() != "false"
 
         logger = logging.getLogger(__name__)
         # The user shouldn't set APPMAP_OUTPUT_DIR, but some tests depend on being able to use it.
@@ -131,7 +131,7 @@ class Env(metaclass=SingletonMeta):
 
     @property
     def display_params(self):
-        return self.get("APPMAP_DISPLAY_PARAMS", "true").lower() == "true"
+        return self._display_params
 
     def getLogger(self, name) -> trace_logger.TraceLogger:
         return cast(trace_logger.TraceLogger, logging.getLogger(name))

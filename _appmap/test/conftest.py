@@ -68,6 +68,8 @@ def pytest_runtest_setup(item):
         elif appmap_enabled is None:
             env.pop("_APPMAP", None)
 
+    env["_APPMAP_DISPLAY_PARAMS"] = env.get("APPMAP_DISPLAY_PARAMS", "true")
+
     _appmap.initialize(env=env)  # pylint: disable=protected-access
 
     # Some tests want yaml instrumented, others don't.
