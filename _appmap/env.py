@@ -1,5 +1,6 @@
 """Initialize from the environment"""
 
+from functools import cached_property
 import logging
 import logging.config
 import os
@@ -69,13 +70,13 @@ class Env(metaclass=SingletonMeta):
     def delete(self, name):
         del self._env[name]
 
-    @property
+    @cached_property
     def root_dir(self):
-        return self._root_dir
+        return str(self._cwd) + "/"
 
-    @property
+    @cached_property
     def root_dir_len(self):
-        return self._root_dir_len
+        return len(self.root_dir)
 
     @property
     def output_dir(self):
@@ -123,7 +124,7 @@ class Env(metaclass=SingletonMeta):
             if value:
                 self.set(key, value)
 
-    @property
+    @cached_property
     def is_appmap_repo(self):
         return os.path.exists("appmap/__init__.py") and os.path.exists(
             "_appmap/__init__.py"
