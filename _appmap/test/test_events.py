@@ -9,7 +9,6 @@ from threading import Thread
 import pytest
 
 import appmap
-from _appmap.env import Env
 from _appmap.event import _EventIds
 
 
@@ -84,8 +83,8 @@ class TestEvents:
         actual_value = r.events[0].parameters[0]["value"]
         assert re.fullmatch(expected_re, actual_value)
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "false"})
     def test_when_display_disabled(self, mocker):
-        Env.current.set("APPMAP_DISPLAY_PARAMS", "false")
         r = appmap.Recording()
         with r:
             from example_class import ExampleClass  # pylint: disable=import-outside-toplevel

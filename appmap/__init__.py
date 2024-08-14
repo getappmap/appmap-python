@@ -11,8 +11,11 @@ _enabled = os.environ.get("APPMAP", None)
 _recording_exported = False
 if _enabled is None or _enabled.upper() == "TRUE":
     if _enabled is not None:
-        # Use setdefault so tests can manage _APPMAP as necessary
+        # Use setdefault so tests can manage settings as necessary
         os.environ.setdefault("_APPMAP", _enabled)
+        _display_params = os.environ.get("APPMAP_DISPLAY_PARAMS", "false")
+        os.environ.setdefault("_APPMAP_DISPLAY_PARAMS", _display_params)
+
         from _appmap import generation  # noqa: F401
         from _appmap.env import Env  # noqa: F401
         from _appmap.importer import instrument_module  # noqa: F401
@@ -52,8 +55,10 @@ if _enabled is None or _enabled.upper() == "TRUE":
             return Env.current.enabled
     else:
         os.environ.pop("_APPMAP", None)
+        os.environ.pop("_APPMAP_DISPLAY_PARAMS", None)
 else:
     os.environ.setdefault("_APPMAP", "false")
+    os.environ.setdefault("_APPMAP_DISPLAY_PARAMS", "false")
 
 if not _recording_exported:
     # Client code that imports appmap.Recording should run correctly

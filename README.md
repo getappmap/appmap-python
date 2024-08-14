@@ -90,16 +90,15 @@ Note that you must install the dependencies contained in
 [requirements-dev.txt](requirements-dev.txt) before running tests. See the explanation in
 [pyproject.toml](pyproject.toml) for details.
 
-Additionally, the tests currently require that you set `APPMAP=true`. You can
-either run `pytest` with `appmap-python` (see [tox.ini](tox.ini)), or you can explicitly
-set the environment variable.
+Additionally, the tests currently require that you set `APPMAP=true` and
+`APPMAP_DISPLAY_PARAMS=true`. 
 
 [pytest](https://docs.pytest.org/en/stable/) for testing:
 
 ```
 % cd appmap-python
 % pip install -r requirements-test.txt
-% poetry run pytest
+% APPMAP=true APPMAP_DISPLAY_PARAMS=true poetry run pytest
 ```
 
 ### tox
