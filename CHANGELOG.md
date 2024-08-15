@@ -1,3 +1,11 @@
+## [2.1.7](https://github.com/getappmap/appmap-python/compare/v2.1.6...v2.1.7) (2024-08-15)
+
+
+### Bug Fixes
+
+* cache Env.root_dir, is_appmap_repo ([5122d76](https://github.com/getappmap/appmap-python/commit/5122d7659722663cecf4d203883a48d136e19618))
+* disable parameter rendering by  default ([91f1364](https://github.com/getappmap/appmap-python/commit/91f136445c16bcb55912549d8512bea7732d8218))
+
 ## [2.1.6](https://github.com/getappmap/appmap-python/compare/v2.1.5...v2.1.6) (2024-08-13)
 
 
