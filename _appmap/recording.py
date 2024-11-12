@@ -115,7 +115,9 @@ def initialize():
             nonlocal r
             r.stop()
             now = datetime.now(timezone.utc)
-            appmap_name = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+            iso_time = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+            process_id = os.getpid()
+            appmap_name = f"{iso_time}_{process_id}"
             recorder_type = "process"
             metadata = {
                 "name": appmap_name,
