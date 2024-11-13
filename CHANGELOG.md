@@ -1,3 +1,10 @@
+## [2.1.8](https://github.com/getappmap/appmap-python/compare/v2.1.7...v2.1.8) (2024-11-13)
+
+
+### Bug Fixes
+
+* Prevent process recordings from clobbering one another ([0347af1](https://github.com/getappmap/appmap-python/commit/0347af18d69f5f3be6a8c0789400bacd3fff42b9))
+
 ## [2.1.7](https://github.com/getappmap/appmap-python/compare/v2.1.6...v2.1.7) (2024-08-15)
 
 
