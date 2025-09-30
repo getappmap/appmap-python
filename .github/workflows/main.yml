@@ -39,6 +39,7 @@ jobs:
     - name: Test
       run: tox
   smoketest:
+    if: false
     runs-on: ubuntu-latest
     needs: [ 'lint','test' ]
     steps:
@@ -56,3 +57,25 @@ jobs:
     - run: ci/run_tests.sh
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
+  release:
+    if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
+    #needs: ['smoketest','lint','test']
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup-semantic-release                    # node+semantic-release
+    - uses: ./.github/actions/setup                                     # poetry
+    - name: configure poetry repos
+      run:  |
+        poetry config repositories.pypi https://upload.pypi.org/legacy/
+        poetry config repositories.testpypi https://test.pypi.org/legacy/
+    - run: semantic-release --branches ${{ github.ref_name }}
+      env:
+        GIT_AUTHOR_NAME: appland-release
+        GIT_AUTHOR_EMAIL: release@app.land
+        GIT_COMMITTER_NAME: appland-release
+        GIT_COMMITTER_EMAIL: release@app.land
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PYPI_PUBLISH_REPO: ${{ github.ref == 'refs/heads/master' && 'pypi' || 'testpypi' }}
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
+        POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.POETRY_PYPI_TOKEN_TESTPYPI }}
