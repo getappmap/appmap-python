@@ -15,6 +15,7 @@ runs:
       restore-keys: |
         ${{ runner.os }}-poetry-
     - name: install Rust and Poetry 
+      shell: bash
       run : |
         curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
         source "$HOME/.cargo/env"
