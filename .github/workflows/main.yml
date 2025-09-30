@@ -52,6 +52,7 @@ jobs:
       env:
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME    }}
+      continue-on-error: true
     - id: setup
       uses: ./.github/actions/setup
 
