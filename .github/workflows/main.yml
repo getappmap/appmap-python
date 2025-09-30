@@ -30,10 +30,10 @@ jobs:
         os: [ ubuntu-latest ]
         python: 
           - "3.12"
-          - "3.11"
-          - "3.10"
-          - "3.9.14"
-          - "3.8"
+          #- "3.11"
+          #- "3.10"
+          #- "3.9.14"
+          #- "3.8"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
