@@ -10,7 +10,6 @@ on:
         - "master"
 jobs:
   lint: 
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -18,7 +17,12 @@ jobs:
       with:
         python: 3.12
     - name: Lint
+      id: lint
       run: tox -e lint  
+      continue-on-error: true
+    - name: Emit warning if lint failed
+      if: ${{ steps.lint.outcome != 'success' }}
+      run: echo "::warning::Lint step failed, check logs"
   test:
     strategy:
       fail-fast: false
