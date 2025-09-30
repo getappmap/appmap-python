@@ -51,7 +51,7 @@ jobs:
       uses: ./.github/actions/dockerhub-login
       env:
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME    }}
     - id: setup
       uses: ./.github/actions/setup
 
