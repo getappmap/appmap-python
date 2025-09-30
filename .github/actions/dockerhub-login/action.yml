@@ -1,0 +1,8 @@
+name: login to Dockerhub  (to prevent image pull trottling)
+runs:
+  using: composite
+  steps:
+    - name: docker login
+      run: |
+        docker login -u "$DOCKERHUB_USERNAME" --password-stdin <<< "$DOCKERHUB_PASSWORD"
+      shell: bash
