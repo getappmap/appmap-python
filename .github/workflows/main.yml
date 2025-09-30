@@ -38,5 +38,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup
+      with:
+        python: ${{ matrix.python }}
     - name: Test
       run: tox
