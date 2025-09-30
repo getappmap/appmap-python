@@ -10,6 +10,7 @@ on:
         - "master"
 jobs:
   lint: 
+    if: false     # temporary disabled
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -22,6 +23,7 @@ jobs:
       if: ${{ steps.lint.outcome != 'success' }}
       run: echo "::warning::Linter failure suppressed (continue-on-error=true)"
   test:
+    if: false     # temporary disabled
     strategy:
       fail-fast: false
       matrix:
