@@ -6,7 +6,7 @@ inputs:
     type: string
     default: 3.12
 outputs:
-  'python-version': ${{ inputs.python }}
+  'python-version': ${{ steps.python.outputs.python-version }}
 runs:
   using: "composite"
   steps:
@@ -32,6 +32,7 @@ runs:
           ${{ runner.os }}-poetry-
 
     - uses: actions/setup-python@v6
+      id: python
       with:
         python-version: ${{ inputs.python }}
 
