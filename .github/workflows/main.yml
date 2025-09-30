@@ -4,9 +4,8 @@ on:
     schedule:
         - cron: "0 0 * * 0"
     push:
-      branches: # CI debugging
+      branches:   # CI debugging
         - "ci/**"
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
