@@ -1,11 +1,11 @@
 name: Setup base (python, pip cache, tox)
+inputs:
+  python:
+    description: "Python version to use"
+    required: true
+    type: string
 runs:
   using: "composite"
-  inputs:
-    python:
-      description: "Python version to use"
-      required: true
-      type: string
   steps:
     - name: pip cache
       uses: actions/cache@v4
