@@ -6,7 +6,8 @@ inputs:
     type: string
     default: 3.12
 outputs:
-  'python-version': ${{ steps.python.outputs.python-version }}
+  'python-version':
+    value: ${{ steps.python.outputs.python-version }}
 runs:
   using: "composite"
   steps:
