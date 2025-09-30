@@ -1,8 +1,11 @@
 name: Build
 on:
-    pull_request:
+    pull_request: # to master
     schedule:
         - cron: "0 0 * * 0"
+    push:
+      branches: # CI debugging
+        - "ci/**"
 
 jobs:
   build:
