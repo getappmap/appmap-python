@@ -11,7 +11,7 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-latest
     steps:
-    - uses: ./github/actions/setup-python-pip-tox
+    - uses: ./.github/actions/setup-python-pip-tox
       with:
         python: 3.12
     - name: Lint
@@ -29,10 +29,10 @@ jobs:
           - "3.8"
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: ./github/actions/setup-python-pip-tox
+    - uses: ./.github/actions/setup-python-pip-tox
       with:
         python: ${{ matrix.python }}
-    - uses: ./github/actions/setup-rust-poetry
+    - uses: ./.github/actions/setup-rust-poetry
       with:
         python: ${{ matrix.python }}
     - name: Test
