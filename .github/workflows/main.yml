@@ -22,7 +22,7 @@ jobs:
       continue-on-error: true
     - name: Emit warning if lint failed
       if: ${{ steps.lint.outcome != 'success' }}
-      run: echo "::warning::Lint step failed, check logs"
+      run: echo "::warning::Linter failure suppressed (continue-on-error=true)"
   test:
     strategy:
       fail-fast: false
