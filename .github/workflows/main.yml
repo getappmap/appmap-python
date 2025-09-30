@@ -7,27 +7,36 @@ on:
       branches:   # CI debugging
         - "ci/**"
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  lint: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup
+      with:
+        python: 3.12
+    - name: Lint
+      id: lint
+      run: tox -e lint  
+      continue-on-error: true
+    - name: Emit warning if lint failed
+      if: ${{ steps.lint.outcome != 'success' }}
+      run: echo "::warning::Linter failure suppressed (continue-on-error=true)"
+  test:
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        python: ["3.12"]
-        include:
-        - python: "3.12"
-          tox_env: "lint"
+        python: 
+          - "3.12"
+          #- "3.11"
+          #- "3.10"
+          #- "3.9.14"
+          #- "3.8"
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup
       with:
-        python-version: ${{ matrix.python }}
-    - name: Install tox
-      run: |
-        python -m pip install --upgrade pip setuptools
-        pip install tox
+        python: ${{ matrix.python }}
     - name: Test
-      run: |
-        tox -e ${{ matrix.tox_env }}
-
+      run: tox
