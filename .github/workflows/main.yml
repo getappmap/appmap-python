@@ -47,9 +47,14 @@ jobs:
     #needs: [ 'lint','test' ]
     steps:
     - uses: actions/checkout@v5
-    - uses: ./.github/actions/dockerhub-login
+    - name: dockerhub login (for seamless docker pulling)
+      uses: ./.github/actions/dockerhub-login
+      env:
+        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     - id: setup
       uses: ./.github/actions/setup
+
     - run: poetry build
     - run: ci/run_tests.sh
       env:
