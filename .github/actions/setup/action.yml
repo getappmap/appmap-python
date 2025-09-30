@@ -1,8 +1,14 @@
-name: setup Rust and Poetry
+name: Setup base (checkout, python, pip cache, tox)
 runs:
-  using: composite
+  using: "composite"
   steps:
-
+    - name: pip cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ inputs.python }}
+    
     - name: Cargo cache
       uses: actions/cache/@v4   
       with: 
@@ -17,6 +23,16 @@ runs:
         restore-keys: |
           ${{ runner.os }}-poetry-
 
+    - uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python }}
+
+    - name: upgrade pip and install tox
+      shell: bash
+      run: |
+        python -m pip -q install --upgrade pip "setuptools==65.6.2"
+        pip -q install "tox<4" tox-gh-actions
+    
     - name: install Rust and Poetry 
       shell: bash
       run : |
