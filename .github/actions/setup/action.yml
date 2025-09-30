@@ -4,6 +4,9 @@ inputs:
     description: "Python version to use"
     required: true
     type: string
+    default: 3.12
+outputs:
+  'python-version': ${{ inputs.python }}
 runs:
   using: "composite"
   steps:

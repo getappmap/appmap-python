@@ -1,0 +1,7 @@
+name: login to Dockerhub  (to prevent image trottling)
+runs:
+  - name: docker login
+    run: bash -ce 'echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin'
+    env:
+      DOCKERHUB_PASSWORD: {{ secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_USERNAME: {{ secrets.DOCKERHUB_USERNAME }}

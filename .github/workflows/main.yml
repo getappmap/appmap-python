@@ -14,8 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup
-      with:
-        python: 3.12
     - name: Lint
       id: lint
       run: tox -e lint  
@@ -42,3 +40,15 @@ jobs:
         python: ${{ matrix.python }}
     - name: Test
       run: tox
+  smoketest:
+    runs-on: ubuntu-latest
+    needs: [ 'lint','test' ]
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup
+      id: setup
+    - uses: ./.github/action/dockerhub-login
+    - run: poetry build
+    - run: ci/run_tests.sh
+      env:
+        SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
