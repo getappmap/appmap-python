@@ -2,18 +2,21 @@ name: setup Rust and Poetry
 runs:
   using: composite
   steps:
+
     - name: Cargo cache
       uses: actions/cache/@v4   
       with: 
         path: "~/.cargo"
-      key: ${{ runner.os }}-cargo
+        key: ${{ runner.os }}-cargo
+
     - name: Poetry cache
       uses: actions/cache/@v4   
       with: 
         path: "~/.cache/pypoetry"
-      key: ${{ runner.os }}-poetry-${{ inputs.python }}
-      restore-keys: |
-        ${{ runner.os }}-poetry-
+        key: ${{ runner.os }}-poetry-${{ inputs.python }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+
     - name: install Rust and Poetry 
       shell: bash
       run : |
