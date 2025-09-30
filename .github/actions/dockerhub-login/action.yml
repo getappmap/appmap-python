@@ -4,5 +4,5 @@ runs:
   steps:
     - name: docker login
       run: |
-        docker login -u "$DOCKERHUB_USERNAME" --password-stdin <<< "$DOCKERHUB_PASSWORD"
+        docker login -u "$DOCKERHUB_USERNAME" --password-stdin <<< "$DOCKERHUB_PASSWORD" || echo "::warning::docker-login failed, ignoring"
       shell: bash
