@@ -47,7 +47,7 @@ jobs:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup
       id: setup
-    - uses: ./.github/action/dockerhub-login
+    - uses: ./.github/actions/dockerhub-login
     - run: poetry build
     - run: ci/run_tests.sh
       env:
