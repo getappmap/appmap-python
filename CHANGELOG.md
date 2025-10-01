@@ -1,3 +1,11 @@
+## [2.1.15](https://github.com/getappmap/appmap-python/compare/v2.1.14...v2.1.15) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci/github:** remarks in comments ([0ded56a](https://github.com/getappmap/appmap-python/commit/0ded56ae5cac1caf835d20fcea2f45ed079c28c0))
+* **ci:** restore all dependencies and full testing matrix ([1b0110e](https://github.com/getappmap/appmap-python/commit/1b0110e8044cd90a8c786c1e92448e1551b20608))
+
 ## [2.1.14](https://github.com/getappmap/appmap-python/compare/v2.1.13...v2.1.14) (2025-10-01)
 
 
