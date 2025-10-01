@@ -59,6 +59,7 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
+    # TODO: disable ci glob when CI is stabilized
     if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
     needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
@@ -70,6 +71,7 @@ jobs:
       run:  |
         poetry config repositories.pypi https://upload.pypi.org/legacy/
         poetry config repositories.testpypi https://test.pypi.org/legacy/
+    # NOTE: this effectively allows any branch, relying only on the guardrails above
     - run: semantic-release --branches ${{ github.ref_name }}
       env:
         GIT_AUTHOR_NAME: appland-release
