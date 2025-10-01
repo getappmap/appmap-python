@@ -68,6 +68,10 @@ jobs:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup-semantic-release                    # node+semantic-release
     - uses: ./.github/actions/setup                                     # poetry
+    - name: configure poetry repos
+      run:  |
+        poetry config repositories.pypi https://upload.pypi.org/legacy/
+        poetry config repositories.testpypi https://test.pypi.org/legacy/
     - run: semantic-release --branches ${{ github.ref_name }}
       env:
         GIT_AUTHOR_NAME: appland-release
@@ -78,5 +82,3 @@ jobs:
         PYPI_PUBLISH_REPO: ${{ github.ref == 'refs/heads/master' && 'pypi' || 'testpypi' }}
         POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
         POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.POETRY_PYPI_TOKEN_TESTPYPI }}
-        POETRY_REPOSITORIES_PYPI:     https://upload.pypi.org/legacy/
-        POETRY_REPOSITORIES_TESTPYPI: https://test.pypi.org/legacy/
