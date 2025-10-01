@@ -1,3 +1,10 @@
+## [2.1.9](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci/github:** enable back linter and trigger test release ([25abe9b](https://github.com/getappmap/appmap-python/commit/25abe9b44794381e69aad3086405f23c93afd5ef))
+
 ## [2.1.8](https://github.com/getappmap/appmap-python/compare/v2.1.7...v2.1.8) (2024-11-13)
 
 
