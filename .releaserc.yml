@@ -18,4 +18,4 @@ plugins:
     - CHANGELOG.md
     - pyproject.toml
 - - '@semantic-release/exec'
-  - publishCmd: "poetry publish --build -r <%= process.env.PUBLISH_REPO ? process.env.PUBLISH_REPO : 'pypi' %>"
+  - publishCmd: "poetry publish --build -r <%= process.env.PYPI_PUBLISH_REPO ? process.env.PYPI_PUBLISH_REPO : 'pypi' %>"
