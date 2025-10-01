@@ -1,3 +1,10 @@
+## [2.1.11](https://github.com/getappmap/appmap-python/compare/v2.1.10...v2.1.11) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci/github/release:** forgotten setup step ([2ca81cc](https://github.com/getappmap/appmap-python/commit/2ca81cc4f237a7bbba96b6804485d674a5ce09af))
+
 ## [2.1.10](https://github.com/getappmap/appmap-python/compare/v2.1.9...v2.1.10) (2025-10-01)
 
 
