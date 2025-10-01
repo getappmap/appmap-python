@@ -10,7 +10,6 @@ on:
         - "master"
 jobs:
   lint: 
-    if: false     # temporary disabled
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
