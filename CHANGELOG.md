@@ -1,3 +1,10 @@
+## [2.1.14](https://github.com/getappmap/appmap-python/compare/v2.1.13...v2.1.14) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci/github/release:** consistent naming of repo variable ([6ca415d](https://github.com/getappmap/appmap-python/commit/6ca415d091ee91d38711baaa32921b5c99d653dd))
+
 ## [2.1.13](https://github.com/getappmap/appmap-python/compare/v2.1.12...v2.1.13) (2025-10-01)
 
 
