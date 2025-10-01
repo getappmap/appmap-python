@@ -1,3 +1,10 @@
+## [2.1.12](https://github.com/getappmap/appmap-python/compare/v2.1.11...v2.1.12) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci:** explicitly declare all pypi repository urls ([525f688](https://github.com/getappmap/appmap-python/commit/525f6889babca3601e31f75faeaabf37f60e8bae))
+
 ## [2.1.11](https://github.com/getappmap/appmap-python/compare/v2.1.10...v2.1.11) (2025-10-01)
 
 
