@@ -62,13 +62,13 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
-    if: ( github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/ci/')  )
+    if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
     #needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup-semantic-release
-    - run: semantic-release
+    - run: semantic-release --branches ${{ github.ref_name }}
       env:
         GIT_AUTHOR_NAME: appland-release
         GIT_AUTHOR_EMAIL: release@app.land
