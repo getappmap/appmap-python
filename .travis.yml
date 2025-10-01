@@ -8,8 +8,11 @@ python:
 - "3.9.14"
 - "3.8"
 
+# Travis CI disabled in October 2025; this file is kept temporary for reference and possibility of rollback; can be deleted safely after migration
+if: false
+
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
-if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
+#if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
 before_install: |
   curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
