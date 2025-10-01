@@ -1,12 +1,12 @@
 name: Build
 on:
-    pull_request: # to master
-    schedule:
-        - cron: "0 0 * * 0"
+    pull_request: # to master only; tests/lint only;
+    #schedule:
+    #    - cron: "0 0 * * 0"
     push:
       branches:
-        - "ci/**"   # CI debugging
-        - "v*"      # version branches
+        - "ci/**"   # CI debugging -- release job normally disabled (see below)
+        - "v*"      # version branches (was in Travis; but how exactly we manage them?)
         - "master"
 jobs:
   lint: 
@@ -59,8 +59,8 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
-    # TODO: disable ci glob when CI is stabilized
-    if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
+    #if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
+    if: github.ref_name == 'master'
     needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
     steps:
