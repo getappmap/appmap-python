@@ -62,10 +62,20 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
-    #if: github.ref == 'refs/heads/master'
+    if: ( github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/ci/')  )
     #needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/setup-semantic-release
     - run: semantic-release
+      env:
+        GIT_AUTHOR_NAME: appland-release
+        GIT_AUTHOR_EMAIL: release@app.land
+        GIT_COMMITTER_NAME: appland-release
+        GIT_COMMITTER_EMAIL: release@app.land
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PYPI_PUBLISH_REPO: ${{ github.ref == 'refs/heads/master' && 'pypi' || 'testpypi' }}
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
+        POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.POETRY_PYPI_TOKEN_TESTPYPI }}
+        POETRY_REPOSITORIES_TESTPYPI: https://test.pypi.org/legacy/

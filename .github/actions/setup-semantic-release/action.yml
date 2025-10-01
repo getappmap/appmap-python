@@ -1,5 +1,7 @@
 name: setup semantic-release with plugins
 runs:
+  using: composite
+  steps:
   - uses: actions/setup_node@v5
     id: setup_node
   - uses: actions/cache@v4
