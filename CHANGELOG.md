@@ -1,3 +1,10 @@
+## [2.1.10](https://github.com/getappmap/appmap-python/compare/v2.1.9...v2.1.10) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci:** experimenting with envvars interpolations inside semantic-release/publishCmd ([59a2d30](https://github.com/getappmap/appmap-python/commit/59a2d30ad8fc078c82d57916f01308cd048fac85))
+
 ## [2.1.9](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9) (2025-10-01)
 
 
