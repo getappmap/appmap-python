@@ -1,11 +1,20 @@
-name: Build
+name: CI & Release
+
+# Requires secrets:
+#   DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD -- optional (for seamless pulls)
+#   GITHUB_TOKEN                           -- implicitly injected
+#   POETRY_PYPI_TOKEN_PYPI                 -- Pypi token, required for release
+#   POETRY_PYPI_TOKEN_TESTPYPI             -- testpypi token, for CI debugging
+
 on:
-    pull_request: # to master
-    schedule:
-        - cron: "0 0 * * 0"
-    push:
-      branches:   # CI debugging
-        - "ci/**"
+  # NOTE: Release job includes extra guardrails (see job condition below)
+  #       Without them, only linting and testing run
+  pull_request:
+  push:
+    branches:
+      - "master"
+      - "ci/**"   # CI debugging branches
+      #- "v*.*"   # optional: support for independent major release branches (e.g., 2.x, 3.x)
 jobs:
   lint: 
     runs-on: ubuntu-latest
@@ -26,10 +35,10 @@ jobs:
         os: [ ubuntu-latest ]
         python: 
           - "3.12"
-          #- "3.11"
-          #- "3.10"
-          #- "3.9.14"
-          #- "3.8"
+          - "3.11"
+          - "3.10"
+          - "3.9.14"
+          - "3.8"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -39,7 +48,6 @@ jobs:
     - name: Test
       run: tox
   smoketest:
-    if: false
     runs-on: ubuntu-latest
     needs: [ 'lint','test' ]
     steps:
@@ -58,8 +66,14 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
-    if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
-    #needs: ['smoketest','lint','test']
+
+    # NOTE: release is allowed only on selected branches
+    # NOTE: publishing target (prod or testpypi) is derived as PYPI_PUBLISH_REPO below
+    # full example:
+    # if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/') || startsWith(github.ref_name,'v') )
+    if: github.ref_name == 'master'
+
+    needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -76,6 +90,6 @@ jobs:
         GIT_COMMITTER_NAME: appland-release
         GIT_COMMITTER_EMAIL: release@app.land
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PYPI_PUBLISH_REPO: ${{ github.ref == 'refs/heads/master' && 'pypi' || 'testpypi' }}
         POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
         POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.POETRY_PYPI_TOKEN_TESTPYPI }}
+        PYPI_PUBLISH_REPO: ${{ github.ref == 'refs/heads/master' && 'pypi' || 'testpypi' }}
