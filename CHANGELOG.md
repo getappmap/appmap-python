@@ -1,3 +1,10 @@
+## [2.1.13](https://github.com/getappmap/appmap-python/compare/v2.1.12...v2.1.13) (2025-10-01)
+
+
+### Bug Fixes
+
+* **ci:** explicitly configure poetry repos, not relying on env vars ([a8498c1](https://github.com/getappmap/appmap-python/commit/a8498c1d336cd0d7bf5549143981498816c604bb))
+
 ## [2.1.12](https://github.com/getappmap/appmap-python/compare/v2.1.11...v2.1.12) (2025-10-01)
 
 
