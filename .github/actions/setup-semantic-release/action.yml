@@ -10,9 +10,9 @@ runs:
       key: ${{ runner.os }}-npm-${{ steps.setup_node.node-version }}
   - shell: bash
     run: |
-    - npm i -g
-      semantic-release
-      @semantic-release/exec
-      @semantic-release/git
-      @semantic-release/changelog
+      npm i -g                                  \
+      semantic-release                          \
+      @semantic-release/exec                    \
+      @semantic-release/git                     \
+      @semantic-release/changelog               \
       @google/semantic-release-replace-plugin
