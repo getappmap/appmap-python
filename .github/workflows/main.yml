@@ -22,17 +22,16 @@ jobs:
       if: ${{ steps.lint.outcome != 'success' }}
       run: echo "::warning::Linter failure suppressed (continue-on-error=true)"
   test:
-    if: false     # temporary disabled
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
         python: 
           - "3.12"
-          #- "3.11"
-          #- "3.10"
-          #- "3.9.14"
-          #- "3.8"
+          - "3.11"
+          - "3.10"
+          - "3.9.14"
+          - "3.8"
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v5
@@ -42,9 +41,8 @@ jobs:
     - name: Test
       run: tox
   smoketest:
-    if: false
     runs-on: ubuntu-latest
-    #needs: [ 'lint','test' ]
+    needs: [ 'lint','test' ]
     steps:
     - uses: actions/checkout@v5
     - name: dockerhub login (for seamless docker pulling)
@@ -62,7 +60,7 @@ jobs:
         SMOKETEST_DOCKER_IMAGE: python:${{ steps.setup.outputs.python-version }}
   release:
     if: ( github.ref_name == 'master' || startsWith(github.ref_name, 'ci/')  )
-    #needs: ['smoketest','lint','test']
+    needs: ['smoketest','lint','test']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
