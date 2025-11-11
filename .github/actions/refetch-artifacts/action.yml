@@ -1,0 +1,17 @@
+name: Refetch artifacts
+runs:
+  using: "composite"
+  steps:
+    - name: download wheel.zip
+      uses: actions/download-artifact@v4
+      with:
+        name: wheel
+        path: ./dist
+    - name: download sdist.zip
+      uses: actions/download-artifact@v4
+      with:
+        name: sdist
+        path: ./dist
+    - name: inspect
+      shell: bash
+      run: ls dist/
