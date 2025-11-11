@@ -1,3 +1,10 @@
+## [2.1.9-dev.3](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.2...v2.1.9-dev.3) (2025-11-11)
+
+
+### Bug Fixes
+
+* **ci/smoketest:** prevent failure by exposing git into image (as required by recent appmap) ([c68d759](https://github.com/getappmap/appmap-python/commit/c68d759535302d23cf9ff78f514088fd112070a2))
+
 ## [2.1.9-dev.2](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.1...v2.1.9-dev.2) (2025-11-11)
 
 
