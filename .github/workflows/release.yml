@@ -82,7 +82,7 @@ jobs:
       continue-on-error: true
     - run: ci/run_tests.sh
       env:
-        SMOKETEST_DOCKER_IMAGE: python:3.12-alpine
+        SMOKETEST_DOCKER_IMAGE: python:3.12-slim
 
   pypi:
     name: upload release to PyPI
