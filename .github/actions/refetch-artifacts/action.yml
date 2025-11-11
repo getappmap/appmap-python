@@ -8,5 +8,5 @@ runs:
         path: ./dist
     - uses: actions/download-artifact@v4
       with:
-        name: sdist 
+        name: sdist
         path: ./dist

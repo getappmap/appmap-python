@@ -1,5 +1,5 @@
 branches:
-  - main
+  - master
   - name: ci/*
     prerelease: ci
   #- name: develop
