@@ -1,0 +1,41 @@
+name: Lint and test
+on: 
+  pull_request:
+  push:
+    branches:
+      - master
+      - 'ci/**'         # ci testing, pre-releases
+      #- 'feature/**'    
+
+jobs:
+  lint: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup
+    - name: Lint
+      id: lint
+      run: tox -e lint  
+      continue-on-error: true
+    - name: Emit warning if lint failed
+      if: ${{ steps.lint.outcome != 'success' }}
+      run: echo "::warning::Linter failure suppressed (continue-on-error=true)"
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        python: 
+          - "3.12"
+          - "3.11"
+          - "3.10"
+          - "3.9.14"
+          - "3.8"
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v5
+    - uses: ./.github/actions/setup
+      with:
+        python: ${{ matrix.python }}
+    - name: Test
+      run: tox

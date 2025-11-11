@@ -1,3 +1,11 @@
+branches:
+  - main
+  - name: develop
+    prerelease: dev
+  - name: ci
+    prerelease: ci
+  - name: feature/*
+    prerelease: rc
 plugins:
 - '@semantic-release/commit-analyzer'
 - '@semantic-release/release-notes-generator'
@@ -18,4 +26,9 @@ plugins:
     - CHANGELOG.md
     - pyproject.toml
 - - '@semantic-release/exec'
-  - publishCmd: "poetry publish --build -r <%= process.env.PYPI_PUBLISH_REPO ? process.env.PYPI_PUBLISH_REPO : 'pypi' %>"
+  - prepareCmd: poetry build
+- - '@semantic-release/github'
+  - assets:
+      - dist/*.whl
+      - dist/*.tar.gz
+    branches: master
