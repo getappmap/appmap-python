@@ -28,12 +28,12 @@ plugins:
         hasChanged: true
         numMatches: 1
         numReplacements: 1
-    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440 
-        from: '^version = "(\\d+\\.\\d+\\.\\d+)-(dev|post)\\.(\\d+)"'
-        to: 'version = "\\1.\\2\\3"'
-    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440 
-        from: '^version = "(\\d+\\.\\d+\\.\\d+)-(a|b|rc)\\.(\\d+)"'
-        to: 'version = "\\1\\2\\3"
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-dev.1" -> "1.2.3.dev1")
+      from: '^version = "(\\d+\\.\\d+\\.\\d+)-(dev|post)\\.(\\d+)"'
+      to: 'version = "\\1.\\2\\3"'
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-rc.10" -> "1.2.3rc10" )
+      from: '^version = "(\\d+\\.\\d+\\.\\d+)-(a|b|rc)\\.(\\d+)"'
+      to: 'version = "\\1\\2\\3"
 - - '@semantic-release/git'
   - assets:
     - CHANGELOG.md
