@@ -1,7 +1,14 @@
+# Allowed number of prerelease rules: 1..3
+# While semantic-release allows globs, they must be combined with `prerelease: true` and suffix is derived from name than. It conflicts with PEP440 
+# PEP440 version rules (not compatible with SemVer): [N!]N(.N)*[{a|b|rc}N][.postN][.devN]
+# Consequences:
+#   - prerelease branches must be explicitly specified, no asterisks
+#   - prerelease parameter should be one of: a,b,rc,dev,post
+#   - translation from SemVer prerelease notation to PEP440 is tone in 'replacements' section
 branches: # only branches listed here will create releases
   - master
   - name: ci/trusted_publishing_test
-    prerelease: ci
+    prerelease: dev
   #- name: develop
   #  prerelease: dev
   #- name: feature/*
@@ -21,6 +28,12 @@ plugins:
         hasChanged: true
         numMatches: 1
         numReplacements: 1
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440 
+        from: '^version = "(\\d+\\.\\d+\\.\\d+)-(dev|post)\\.(\\d+)"'
+        to: 'version = "\\1.\\2\\3"'
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440 
+        from: '^version = "(\\d+\\.\\d+\\.\\d+)-(a|b|rc)\\.(\\d+)"'
+        to: 'version = "\\1\\2\\3"
 - - '@semantic-release/git'
   - assets:
     - CHANGELOG.md
