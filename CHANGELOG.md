@@ -1,3 +1,10 @@
+## [2.1.9-dev.2](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.1...v2.1.9-dev.2) (2025-11-11)
+
+
+### Bug Fixes
+
+* **workflows/release:** use python3.12-slim for smoketest (alpine has no bash) ([7939b19](https://github.com/getappmap/appmap-python/commit/7939b19b13eceadb0ea96c0c3131e08827a1be3b))
+
 ## [2.1.9-dev.1](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9-dev.1) (2025-11-11)
 
 
