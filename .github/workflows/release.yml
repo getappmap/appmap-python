@@ -30,7 +30,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'master' || startsWith(github.event.workflow_run.head_branch, 'ci/') ) )
+    if: github.event_name == 'workflow_dispatch' || (github.event_name=='push' && startsWith(github.ref_name,'ci/') ) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'master' || startsWith(github.event.workflow_run.head_branch, 'ci/') ) )
     permissions:
       contents: write
       issues: write
