@@ -1,3 +1,20 @@
+## [2.1.9-dev.1](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9-dev.1) (2025-11-11)
+
+
+### Bug Fixes
+
+* **ci:** correctly name release branch in releaserc, +eliminate some trailing spaces ([40352b0](https://github.com/getappmap/appmap-python/commit/40352b0bfd0b01017b9859680fb82ce87b4d4144))
+* **ci:** one more syntax fix, do not use .env in job conditionals ([1075528](https://github.com/getappmap/appmap-python/commit/10755284d92aae9d451ba0cdc1059583d17f0f39))
+* **ci:** one more syntax fix, stray double-quotes ([3eafbbf](https://github.com/getappmap/appmap-python/commit/3eafbbf4448612ce1fa3b40c2498d76bf14c9e08))
+* **ci:** pin specific testing branch to trigger a prerelease ([ed79ac4](https://github.com/getappmap/appmap-python/commit/ed79ac4ab928cb10f4a701fbde0d5188f33511f9))
+* **ci:** syntax issue (also this commit triggers semantic-release version bump) ([3a0327a](https://github.com/getappmap/appmap-python/commit/3a0327a83f34f0703bde6c34182873e0fda88e17))
+* **ci:** temporary enable release workflow run on pushes to ci/** ([87c8938](https://github.com/getappmap/appmap-python/commit/87c8938a722b6261298a7a507078b778e48dcf3f))
+* **ci:** unblock first step of release (relax guard condition to allow execution on push to ci/*) ([5539f33](https://github.com/getappmap/appmap-python/commit/5539f334e93b8a6eca125f5eb86c5dc12817a884))
+* **releaserc:** add missing closing quote, removed redundant branch qualifier ([3d140b2](https://github.com/getappmap/appmap-python/commit/3d140b26c5888a881034ba444bd2895f696b1c9b))
+* **releaserc:** indentation + comments ([0688f75](https://github.com/getappmap/appmap-python/commit/0688f7528825d608d4cb0e4e67d490bfebb98890))
+* **releaserc:** remove non-existing branch references ([b7ccb2e](https://github.com/getappmap/appmap-python/commit/b7ccb2e3d4b80db6366a8da04fab5d665e962770))
+* **semantic-release:** PEP440 compatibility for prereleases ([f8bedfc](https://github.com/getappmap/appmap-python/commit/f8bedfcdfb9e67e603033fb6e862c33a13aa1336))
+
 ## [2.1.9-ci.1](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9-ci.1) (2025-11-11)
 
 
