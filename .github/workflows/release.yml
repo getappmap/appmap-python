@@ -1,7 +1,7 @@
 name: Release
 
 on:
-  workflow_run:
+  workflow_run: # would only fire after file is merged to master
     workflows: ["Lint and test"]
     types:
       - completed
@@ -15,6 +15,9 @@ on:
         description: "Run in dry-run mode (no publish)"
         required: false
         default: "true"
+  push:         # only temporary, until this file lands on master (see above) 
+    branches:
+      - 'ci/**'
 
 # MUSTHAVE: Trusted publisher access for both repos. 
 # NOTE: according to docs, 'test' repo accounts are ephemeral and can be wiped at any time
