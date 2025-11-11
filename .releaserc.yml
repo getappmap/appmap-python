@@ -1,11 +1,11 @@
-branches:
+branches: # only branches listed here will create releases
   - master
-  - name: ci/*
+  - name: ci/trusted_publishing_test
     prerelease: ci
   #- name: develop
   #  prerelease: dev
   #- name: feature/*
-  #  prerelease: rc
+  #  prerelease: true   # will use branch name as suffix
 plugins:
 - '@semantic-release/commit-analyzer'
 - '@semantic-release/release-notes-generator'
