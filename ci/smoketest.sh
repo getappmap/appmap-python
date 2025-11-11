@@ -36,6 +36,11 @@ EOF
 }
 
 set -ex
+
+# now appmap requires git
+apt-get update -qq \
+ && apt-get install -y --no-install-recommends git
+
 pip -q install -U pip pytest "flask>=2,<3" python-decouple
 pip -q install /dist/appmap-*-py3-none-any.whl
 
