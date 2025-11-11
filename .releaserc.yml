@@ -1,3 +1,18 @@
+# Allowed number of prerelease rules: 1..3
+# While semantic-release allows globs, they must be combined with `prerelease: true` and suffix is derived from name than. It conflicts with PEP440 
+# PEP440 version rules (not compatible with SemVer): [N!]N(.N)*[{a|b|rc}N][.postN][.devN]
+# Consequences:
+#   - prerelease branches must be explicitly specified, no asterisks
+#   - prerelease parameter should be one of: a,b,rc,dev,post
+#   - translation from SemVer prerelease notation to PEP440 is tone in 'replacements' section
+branches: # only branches listed here will create releases
+  - master
+  - name: ci/trusted_publishing_test
+    prerelease: dev
+  #- name: develop
+  #  prerelease: dev
+  #- name: feature/*
+  #  prerelease: true   # will use branch name as suffix
 plugins:
 - '@semantic-release/commit-analyzer'
 - '@semantic-release/release-notes-generator'
@@ -13,9 +28,22 @@ plugins:
         hasChanged: true
         numMatches: 1
         numReplacements: 1
+- - '@google/semantic-release-replace-plugin' # optional SemVer -> PEP440 coercion
+  - replacements:
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-dev.1" -> "1.2.3.dev1")
+      from: '^version = "(\\d+\\.\\d+\\.\\d+)-(dev|post)\\.(\\d+)"'
+      to: 'version = "\\1.\\2\\3"'
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-rc.10" -> "1.2.3rc10" )
+      from: '^version = "(\\d+\\.\\d+\\.\\d+)-(a|b|rc)\\.(\\d+)"'
+      to: 'version = "\\1\\2\\3"'
 - - '@semantic-release/git'
   - assets:
     - CHANGELOG.md
     - pyproject.toml
 - - '@semantic-release/exec'
-  - publishCmd: "poetry publish --build -r <%= process.env.PYPI_PUBLISH_REPO ? process.env.PYPI_PUBLISH_REPO : 'pypi' %>"
+  - prepareCmd: |
+      /bin/bash ./ci/scripts/build_with_poetry.sh
+- - '@semantic-release/github':
+  - assets:
+      - dist/*.whl
+      - dist/*.tar.gz
