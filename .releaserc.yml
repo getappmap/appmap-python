@@ -1,11 +1,11 @@
 branches:
   - main
-  - name: develop
-    prerelease: dev
-  - name: ci
+  - name: ci/*
     prerelease: ci
-  - name: feature/*
-    prerelease: rc
+  #- name: develop
+  #  prerelease: dev
+  #- name: feature/*
+  #  prerelease: rc
 plugins:
 - '@semantic-release/commit-analyzer'
 - '@semantic-release/release-notes-generator'
