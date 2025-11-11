@@ -83,7 +83,7 @@ jobs:
   pypi:
     name: upload release to PyPI
     needs: ['release','smoketest']
-    if:  ((  github.event.inputs.dry_run != 'true' ) && ((github.ref_name == 'master') || startsWith(github.ref_name,"ci/")))
+    if:  ((  github.event.inputs.dry_run != 'true' ) && ((github.ref_name == 'master') || startsWith(github.ref_name,'ci/') ))
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
