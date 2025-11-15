@@ -39,7 +39,12 @@ plugins:
     - CHANGELOG.md
     - pyproject.toml
 - - '@semantic-release/exec'
-  - prepareCmd: poetry build
+  - prepareCmd: |
+      # alt name patch is done for publication only, therefore after canonical version of pyproject.toml is commited
+      if [ -n "$ALT_PYPI_PROJECT_NAME" ]; then
+        sed -i "s/^name = \".*\"/name = \"$ALT_PYPI_PROJECT_NAME\"/" pyproject.toml
+      fi
+      poetry build
 - - '@semantic-release/github'
   - assets:
       - dist/*.whl

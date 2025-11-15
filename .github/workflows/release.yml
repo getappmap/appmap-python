@@ -21,10 +21,13 @@ on:
 
 # MUSTHAVE: Trusted publisher access for both repos.
 # NOTE: according to docs, 'test' repo accounts are ephemeral and can be wiped at any time
+# NOTE: 'test' accs are not that ephmeperal -- losing access to sandbox account (2FA issue) effectively locked us out of project; good test for workarounds though
+# NOTE: as a part of regaining-control scenario we may use distinct project names in pyroject.toml (e.g. appmap-dev, appmap-ng)
 env:
   DRY_RUN:        ${{ github.event.inputs.dry_run || 'false' }}
-  pypi_main_repo: https://upload.pypi.org/legacy/
-  pypi_test_repo: https://test.pypi.org/legacy/
+  pypi_project:     appmap
+  testpypi_project: appmap-dev # workaround for lost-access scenario
+
 
 jobs:
 
@@ -41,17 +44,19 @@ jobs:
       - uses: ./.github/actions/setup                                     # poetry
       - id: semantic-release                                              # branch policies defined in .releaserc
         env:
-          GIT_AUTHOR_NAME: appland-release
-          GIT_AUTHOR_EMAIL: release@app.land
-          GIT_COMMITTER_NAME: appland-release
-          GIT_COMMITTER_EMAIL: release@app.land
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_NAME:       appland-release
+          GIT_AUTHOR_EMAIL:      release@app.land
+          GIT_COMMITTER_NAME:    appland-release
+          GIT_COMMITTER_EMAIL:   release@app.land
+          GITHUB_TOKEN:          ${{ secrets.GITHUB_TOKEN }}
+          ALT_PYPI_PROJECT_NAME: ${{ github.ref_name=='master' && env.pypi_project || env.testpypi_project }}
         run: |
           if [ "$DRY_RUN" = "true" ]; then
             semantic-release --dry-run
           else
             semantic-release
           fi
+
       - name: Upload wheel
         if: env.DRY_RUN != 'true'
         uses: actions/upload-artifact@v4
@@ -84,6 +89,7 @@ jobs:
       env:
         SMOKETEST_DOCKER_IMAGE: python:3.12-slim
 
+  # as a workaround to ownership issues (lost access to project)
   pypi:
     name: upload release to PyPI
     needs: ['release','smoketest']
@@ -95,7 +101,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/refetch-artifacts
-      - name: Publish package distributions to PyPI
+
+      - name: Publish to PyPI
+        if: github.ref_name == 'master'
         uses: pypa/gh-action-pypi-publish@release/v1
+        environment:
+          name: pypi
+          url:  https://pypi.org/project/${{ env.pypi_project }}
+
+      - name: Publish to TestPyPI
+        if: github.ref_name != 'master'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        environment:
+          name: testpypi
+          url: https://test.pypi.org/project/${{ env.testpypi_project_name }}
         with:
-          repository-url: ${{ github.ref_name == 'master' && env.pypi_main_repo || env.pypi_test_repo }}
+          repository-url: https://test.pypi.org/uploads/legacy
