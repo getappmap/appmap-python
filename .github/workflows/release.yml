@@ -95,7 +95,9 @@ jobs:
     needs: ['release','smoketest']
     if:  ((  github.event.inputs.dry_run != 'true' ) && ((github.ref_name == 'master') || startsWith(github.ref_name,'ci/') ))
     runs-on: ubuntu-latest
-    environment: pypi
+    environment:
+      name: ( github.ref_name=='master' && 'pypi' || 'testpypi' )
+      url:  ( github.ref_name=='master' && 'https://pypi.org/project/${{ env.pypi_project }}' || 'https://test.pypi.org/project/${{ env.testpypi_project }}' )
     permissions:
       id-token: write
     steps:
@@ -105,15 +107,9 @@ jobs:
       - name: Publish to PyPI
         if: github.ref_name == 'master'
         uses: pypa/gh-action-pypi-publish@release/v1
-        environment:
-          name: pypi
-          url:  https://pypi.org/project/${{ env.pypi_project }}
 
       - name: Publish to TestPyPI
         if: github.ref_name != 'master'
         uses: pypa/gh-action-pypi-publish@release/v1
-        environment:
-          name: testpypi
-          url: https://test.pypi.org/project/${{ env.testpypi_project_name }}
         with:
           repository-url: https://test.pypi.org/uploads/legacy
