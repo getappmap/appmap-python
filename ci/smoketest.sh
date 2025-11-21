@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-APPMAP_PACKAGE_NAME=${APPMAP_PACKAGE_NAME:-appmap}
 
 test_recording_when_appmap_not_true()
 {
