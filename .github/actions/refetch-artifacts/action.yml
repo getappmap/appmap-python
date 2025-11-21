@@ -2,11 +2,18 @@ name: Refetch artifacts
 runs:
   using: "composite"
   steps:
-    - uses: actions/download-artifact@v4
+    - name: download wheel.zip
+      uses: actions/download-artifact@v4
       with:
         name: wheel
         path: ./dist
-    - uses: actions/download-artifact@v4
+    - name: download sdist.zip
+      uses: actions/download-artifact@v4
       with:
         name: sdist
         path: ./dist
+    - name: unpack
+      run: |
+        cd dist
+        unzip wheel.zip
+        unzip sdist.zip
