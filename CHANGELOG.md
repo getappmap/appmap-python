@@ -1,3 +1,10 @@
+# [2.2.0-dev.7](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.6...v2.2.0-dev.7) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** use underscores in alt package names ([d58c848](https://github.com/getappmap/appmap-python/commit/d58c8485cf280d377541dd1ed1acfa53f849e4b7))
+
 # [2.2.0-dev.6](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.5...v2.2.0-dev.6) (2025-11-21)
 
 
