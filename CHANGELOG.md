@@ -1,3 +1,10 @@
+# [2.2.0-dev.5](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.4...v2.2.0-dev.5) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** troubleshooting artifacts fetcher ([798310c](https://github.com/getappmap/appmap-python/commit/798310c2f413bad6f529b6ddb46693b3bf97f1f0))
+
 # [2.2.0-dev.4](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.3...v2.2.0-dev.4) (2025-11-21)
 
 
