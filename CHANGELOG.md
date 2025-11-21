@@ -1,3 +1,10 @@
+# [2.2.0-dev.2](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.1...v2.2.0-dev.2) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci/github/actions:** unzip artifacts after fetching ([4ce4f4d](https://github.com/getappmap/appmap-python/commit/4ce4f4d61f0a81196aa9735ce7192f2aae618be0))
+
 # [2.2.0-dev.1](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.3...v2.2.0-dev.1) (2025-11-21)
 
 
