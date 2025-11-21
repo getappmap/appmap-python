@@ -12,9 +12,6 @@ runs:
       with:
         name: sdist
         path: ./dist
-    - name: unpack
+    - name: inspect
       shell: bash
-      run: |
-        cd dist
-        unzip wheel.zip
-        unzip sdist.zip
+      run: ls dist/
