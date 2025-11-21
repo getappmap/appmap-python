@@ -1,3 +1,10 @@
+# [2.2.0-dev.8](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.7...v2.2.0-dev.8) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** patch artifacts with Provides-Dist if distribution name is altered ([206971b](https://github.com/getappmap/appmap-python/commit/206971ba444bdb3b77eb8a6ec46a7bbeb14328ee))
+
 # [2.2.0-dev.7](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.6...v2.2.0-dev.7) (2025-11-21)
 
 
