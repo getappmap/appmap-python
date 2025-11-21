@@ -1,3 +1,10 @@
+# [2.2.0-dev.4](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.3...v2.2.0-dev.4) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** missing shell directive on an action ([d10dee2](https://github.com/getappmap/appmap-python/commit/d10dee2cf9ae62e35e7cfb039c26e85af58af643))
+
 # [2.2.0-dev.3](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.2...v2.2.0-dev.3) (2025-11-21)
 
 
