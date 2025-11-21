@@ -88,7 +88,7 @@ jobs:
     - run: ci/run_tests.sh
       env:
         SMOKETEST_DOCKER_IMAGE: python:3.12-slim
-        APPMAP_PACKAGE_NAME: ${{ github.ref_name=="master" && env.pypi_project || env.testpypi_project }}
+        APPMAP_PACKAGE_NAME: ${{ github.ref_name=='master' && env.pypi_project || env.testpypi_project }}
 
   # as a workaround to ownership issues (lost access to project)
   pypi:
