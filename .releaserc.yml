@@ -40,11 +40,32 @@ plugins:
     - pyproject.toml
 - - '@semantic-release/exec'
   - prepareCmd: |
-      # alt name patch is done for publication only, therefore after canonical version of pyproject.toml is commited
-      if [ -n "$ALT_PYPI_PROJECT_NAME" ]; then
-        sed -i "s/^name = \".*\"/name = \"$ALT_PYPI_PROJECT_NAME\"/" pyproject.toml
+      #!/bin/bash
+      PYPI_PROJECT_NAME=${ALT_PYPI_PROJECT_NAME:-appmap}
+      poetry build --config-settings name="$PYPI_PROJECT_NAME"
+
+      if [ -n "$ALT_PYPI_PROJECT_NAME" ] ; then
+        echo "Altered distribution name detected, applying Provides-Dist patch"
+        WHEEL=$(ls dist/*.whl | head -n1)
+        SDIST=$(ls dist/*.tar.gz | head -n1)
+        for artifact in "$WHEEL" "$SDIST"; do
+          TMP=$(mktemp -d)
+          ARTIFACT_PATH="$artifact"
+          if [[ $artifact == *.whl ]]; then
+              unzip -q "$ARTIFACT_PATH" -d "$TMP"
+              DISTINFO=$(find "$TMP" -type d -name "*.dist-info")
+              echo "Provides-Dist: appmap" >> "$DISTINFO/METADATA"
+              (cd "$TMP" && zip -qr "$ARTIFACT_PATH" .)
+          else
+              tar -xzf "$ARTIFACT_PATH" -C "$TMP"
+              PKGDIR=$(find "$TMP" -maxdepth 1 -type d -name "*")
+              echo "Provides-Dist: appmap" >> "$PKGDIR/PKG-INFO"
+              (cd "$TMP" && tar -czf "$ARTIFACT_PATH" .)
+          fi
+          echo "(Provides-Dist: appmap): patched $ARTIFACT_PATH"
+          rm -rf "$TMP"
+        done
       fi
-      poetry build
 - - '@semantic-release/github'
   - assets:
       - dist/*.whl
