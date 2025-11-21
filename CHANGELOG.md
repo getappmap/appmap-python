@@ -1,3 +1,10 @@
+# [2.2.0-dev.6](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.5...v2.2.0-dev.6) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** correctly expose APPMAP_PACKAGE_NAME into the smoketest container ([9cc399f](https://github.com/getappmap/appmap-python/commit/9cc399f1aba54b1a12adfcaf2ced7b2704409467))
+
 # [2.2.0-dev.5](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.4...v2.2.0-dev.5) (2025-11-21)
 
 
