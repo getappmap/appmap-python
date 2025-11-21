@@ -1,3 +1,11 @@
+# [2.2.0-dev.3](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.2...v2.2.0-dev.3) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci/smoketest:** account for possible altering of package name ([890629f](https://github.com/getappmap/appmap-python/commit/890629fbac99eaa858b7e69737eb0282a0b5a98d))
+* **ci:** typo (double-quotes in interpolation) ([4730fc0](https://github.com/getappmap/appmap-python/commit/4730fc052b5d5454a2f821488cc6cd2508cbc783))
+
 # [2.2.0-dev.2](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.1...v2.2.0-dev.2) (2025-11-21)
 
 
