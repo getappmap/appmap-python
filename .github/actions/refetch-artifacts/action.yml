@@ -13,6 +13,7 @@ runs:
         name: sdist
         path: ./dist
     - name: unpack
+      shell: bash
       run: |
         cd dist
         unzip wheel.zip
