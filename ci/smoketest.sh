@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+APPMAP_PACKAGE_NAME=${APPMAP_PACKAGE_NAME:-appmap}
+
 test_recording_when_appmap_not_true()
 {
   cat <<EOF > test_client.py
@@ -42,7 +44,7 @@ apt-get update -qq \
  && apt-get install -y --no-install-recommends git
 
 pip -q install -U pip pytest "flask>=2,<3" python-decouple
-pip -q install /dist/appmap-*-py3-none-any.whl
+pip -q install /dist/${APPMAP_PACKAGE_NAME}-*-py3-none-any.whl
 
 cp -R /_appmap/test/data/unittest/simple ./.
 
