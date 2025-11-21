@@ -1,3 +1,15 @@
+# [2.2.0-dev.1](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.3...v2.2.0-dev.1) (2025-11-21)
+
+
+### Bug Fixes
+
+* **ci:** mistake in declaration -- environment belongs to workflow level not job level ([cf04dbe](https://github.com/getappmap/appmap-python/commit/cf04dbe43c88f23b6f1b85772866fcde00b69746))
+
+
+### Features
+
+* **ci:** support altering package names before publication (useful in rare occasions) ([d8f45d4](https://github.com/getappmap/appmap-python/commit/d8f45d4d3df462df7df145c366b8d954138b4fc2))
+
 ## [2.1.9-dev.3](https://github.com/getappmap/appmap-python/compare/v2.1.9-dev.2...v2.1.9-dev.3) (2025-11-11)
 
 
