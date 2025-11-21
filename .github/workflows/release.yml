@@ -26,7 +26,7 @@ on:
 env:
   DRY_RUN:        ${{ github.event.inputs.dry_run || 'false' }}
   pypi_project:     appmap
-  testpypi_project: appmap-dev # workaround for lost-access scenario
+  testpypi_project: appmap_dev # workaround for lost-access scenario; use underscores not dashes for consistency! (build enforces them anyway)
 
 
 jobs:
