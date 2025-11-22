@@ -40,7 +40,7 @@ plugins:
     - pyproject.toml
 - - '@semantic-release/exec'
   - prepareCmd: |
-      poetry build --config-settings name="$PYPI_PROJECT_NAME" && /bin/bash ./ci/scripts/patch_artifacts_if_distribution_name_is_altered.sh dist/*.whl dist/*.tar.gz 
+      poetry build --config-settings name="$DISTRIBUTION_NAME" && /bin/bash ./ci/scripts/patch_artifacts_if_distribution_name_is_altered.sh dist/*.whl dist/*.tar.gz 
 - - '@semantic-release/github'
   - assets:
       - dist/*.whl

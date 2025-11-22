@@ -2,7 +2,7 @@
 
 artifacts=$*
 injection_string="Provides-Dist: appmap"
-if [ -n "$artifacts" ] && [ -n "$PYPI_PROJECT_NAME" ] && [ "$PYPI_PROJECT_NAME" != "appmap" ]; then
+if [ -n "$artifacts" ] && [ -n "$DISTRIBUTION_NAME" ] && [ "$DISTRIBUTION_NAME" != "appmap" ]; then
   echo "Altered distribution name detected, injecting '$injection_string' into artifacts: $artifacts"
   for artifact in $artifacts ; do
     TMP=$(mktemp -d)
