@@ -36,13 +36,18 @@ plugins:
     - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-rc.10" -> "1.2.3rc10" )
       from: '^version = "(\\d+\\.\\d+\\.\\d+)-(a|b|rc)\\.(\\d+)"'
       to: 'version = "\\1\\2\\3"'
+- - '@google/semantic-release-replace-plugin' # optional enforcement of distribution name
+  - replacements:
+    - files: [pyproject.toml] # optional: SemVer prerelease -> PEP440  ("1.2.3-dev.1" -> "1.2.3.dev1")
+      from: ^name = ".*?"
+      to: name = "${process.env.DISTRIBUTION_NAME}"
 - - '@semantic-release/git'
   - assets:
     - CHANGELOG.md
     - pyproject.toml
 - - '@semantic-release/exec'
   - prepareCmd: |
-      poetry build --config-settings name="$DISTRIBUTION_NAME" && /bin/bash ./ci/scripts/patch_artifacts_if_distribution_name_is_altered.sh dist/*.whl dist/*.tar.gz 
+      poetry build && /bin/bash ./ci/scripts/patch_artifacts_if_distribution_name_is_altered.sh dist/*.whl dist/*.tar.gz 
 - - '@semantic-release/github'
   - assets:
       - dist/*.whl
