@@ -1,3 +1,10 @@
+# [2.2.0-dev.9](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.8...v2.2.0-dev.9) (2025-11-23)
+
+
+### Bug Fixes
+
+* **ci:** update invocation of smoketest script to conform with new ci scripts layout ([b1fc2bf](https://github.com/getappmap/appmap-python/commit/b1fc2bf682e462a1e7ce5a6192267bfa712d986d))
+
 # [2.2.0-dev.8](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.7...v2.2.0-dev.8) (2025-11-23)
 
 
