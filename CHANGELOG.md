@@ -3,6 +3,15 @@
 
 ### Bug Fixes
 
+* **ci:** correctly patch sdist for altered names ([0661304](https://github.com/getappmap/appmap-python/commit/0661304bc89ef293cce220271d435995d11d3596))
+* **ci:** errors in Provides-Dist injector ([41dbb08](https://github.com/getappmap/appmap-python/commit/41dbb08ae731fca5604f098da56c241b9beec193))
+* **ci:** manual fix -- rollback version in pyproject.toml to the last fully released dev version ([9b1161b](https://github.com/getappmap/appmap-python/commit/9b1161b7f4bb3b4b167ca06d9424af2db0315a80))
+
+# [2.2.0-dev.11](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.10...v2.2.0-dev.11) (2025-11-23)
+
+
+### Bug Fixes
+
 * **ci:** errors in Provides-Dist injector ([41dbb08](https://github.com/getappmap/appmap-python/commit/41dbb08ae731fca5604f098da56c241b9beec193))
 
 # [2.2.0-dev.10](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.9...v2.2.0-dev.10) (2025-11-23)
