@@ -1,3 +1,10 @@
+# [2.2.0-dev.10](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.9...v2.2.0-dev.10) (2025-11-23)
+
+
+### Bug Fixes
+
+* **ci:** enforce distribution name via pyproject.toml patching ([b43835f](https://github.com/getappmap/appmap-python/commit/b43835f75f4950023aab6e9ea3ca18455484f0a3))
+
 # [2.2.0-dev.9](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.8...v2.2.0-dev.9) (2025-11-23)
 
 
