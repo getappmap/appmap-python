@@ -1,3 +1,10 @@
+# [2.2.0-dev.11](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.10...v2.2.0-dev.11) (2025-11-23)
+
+
+### Bug Fixes
+
+* **ci:** errors in Provides-Dist injector ([41dbb08](https://github.com/getappmap/appmap-python/commit/41dbb08ae731fca5604f098da56c241b9beec193))
+
 # [2.2.0-dev.10](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.9...v2.2.0-dev.10) (2025-11-23)
 
 
