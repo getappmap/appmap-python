@@ -84,7 +84,7 @@ jobs:
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME    }}
       continue-on-error: true
-    - run: ci/run_tests.sh
+    - run: ci/scripts/run_tests.sh
       env:
         SMOKETEST_DOCKER_IMAGE: python:3.12-slim
         DISTRIBUTION_NAME: ${{ github.ref_name=='master' && env.pypi_project || env.testpypi_project }}
