@@ -1,3 +1,20 @@
+# [2.2.0-dev.8](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.7...v2.2.0-dev.8) (2025-11-23)
+
+
+### Bug Fixes
+
+* **ci/releaserc:** perform SemVer->PEP440 coercion in a separate step ([b64fd4a](https://github.com/getappmap/appmap-python/commit/b64fd4a54ae8717c352bb9755ce277c03d0d098d))
+* **ci:** dedicated script for artifacts patching in case distribution name is altered; +reorganizing scripts in ci/ ([5a42170](https://github.com/getappmap/appmap-python/commit/5a4217015ec5d1f81e7e025ab29c814dfa812b6f))
+* **ci:** eliminate overlooked uses of renamed variables in release script ([386a57f](https://github.com/getappmap/appmap-python/commit/386a57f6fbdcf4675a7738960b52a10d4b26b573))
+* **ci:** manually revert pyproject.toml to the last dev version properly tagged (v2.2.0-dev.7) ([f43aff7](https://github.com/getappmap/appmap-python/commit/f43aff7436403a45a5773379bf5e7d2683498417))
+* **ci:** no semantic-release expectations on optional replacements (release suffix coercions) ([220c7c2](https://github.com/getappmap/appmap-python/commit/220c7c225e8a5e8698e142a0eff1c83b804dd6f3))
+* **ci:** patch artifacts with Provides-Dist if distribution name is altered ([206971b](https://github.com/getappmap/appmap-python/commit/206971ba444bdb3b77eb8a6ec46a7bbeb14328ee))
+
+
+### Features
+
+* **ci/releaserc:** rollback previous change and trigger minor release instead of patch ([cdc2d58](https://github.com/getappmap/appmap-python/commit/cdc2d585849eff7f8902063b956f13d206800bfa))
+
 # [2.2.0-dev.8](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.7...v2.2.0-dev.8) (2025-11-21)
 
 
