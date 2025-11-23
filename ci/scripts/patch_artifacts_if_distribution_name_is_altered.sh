@@ -16,9 +16,12 @@ if [ -n "$artifacts" ] && [ -n "$DISTRIBUTION_NAME" ] && [ "$DISTRIBUTION_NAME" 
         (cd "$TMP" && zip -qr "$ARTIFACT_PATH" .)
     else
         tar -xzf "$ARTIFACT_PATH" -C "$TMP"
-        PKGDIR=$(find "$TMP" -maxdepth 1 -type d -name "*.egg-info" -o -name "*" -type d | grep -v "^\.$")
-        echo "$injection_string" >> "$PKGDIR/PKG-INFO"
-        (cd "$TMP" && tar -czf "$ARTIFACT_PATH" .)
+        PKG_INFO_FILE=$(find "$TMP" -type f -name "PKG-INFO")
+        echo "$injection_string" >> "$PKG_INFO_FILE"
+        
+        # Get the top-level directory to repack correctly
+        PKGDIR=$(find "$TMP" -mindepth 1 -maxdepth 1 -type d)
+        (cd "$TMP" && tar -czf "$ARTIFACT_PATH" "$(basename "$PKGDIR")")
     fi
     echo "($injection_string): patched $ARTIFACT_PATH"
     rm -rf "$TMP"
