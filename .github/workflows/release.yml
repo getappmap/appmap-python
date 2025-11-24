@@ -126,8 +126,8 @@ jobs:
     if:  ((  github.event.inputs.dry_run != 'true' ) && ( (needs.setup.outputs.publish_env == 'pypi') || (needs.setup.outputs.publish_env == 'testpypi') )  )
     runs-on: ubuntu-latest
     environment:
-      name: ${{ needs.setup_outputs.publish_env }}
-      url:  ${{ needs.setup_outputs.publish_to }}
+      name: ${{ needs.setup.outputs.publish_env }}
+      url:  ${{ needs.setup.outputs.publish_to }}
     permissions:
       id-token: write
     steps:
@@ -137,9 +137,12 @@ jobs:
       - name: Publish to PyPI
         if:   needs.setup.outputs.publish_env=='pypi'
         uses: pypa/gh-action-pypi-publish@release/v1
+        with: 
+          environment: pypi
 
       - name: Publish to TestPyPI
         if:   needs.setup.outputs.publish_env=='testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          environment: testpypi
           repository-url: https://test.pypi.org/uploads/legacy
