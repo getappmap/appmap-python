@@ -149,7 +149,7 @@ jobs:
         if:   needs.setup.outputs.publish_env=='testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: https://test.pypi.org/legacy
+          repository-url: https://test.pypi.org/legacy/
           verbose: true
           skip-existing: true
           attestations: false
