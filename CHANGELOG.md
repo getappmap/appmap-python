@@ -1,3 +1,10 @@
+# [2.2.0-dev.16](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.15...v2.2.0-dev.16) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/publish:** update testpypi endpoint ([9bc7729](https://github.com/getappmap/appmap-python/commit/9bc77296d0e9d2ab52b379d1188790f25b00c6b7))
+
 # [2.2.0-dev.15](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.14...v2.2.0-dev.15) (2025-11-24)
 
 
