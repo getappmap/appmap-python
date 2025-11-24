@@ -33,9 +33,9 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      distribution_name:  ${{ steps.configure.distribution_name   }}
-      publish_to:         ${{ steps.configure.publish_to          }}
-      publish_env:        ${{ steps.configure.publish_env         }}
+      distribution_name:  ${{ steps.configure.outputs.distribution_name   }}
+      publish_to:         ${{ steps.configure.outputs.publish_to          }}
+      publish_env:        ${{ steps.configure.outputs.publish_env         }}
     steps:
       - id: configure
         shell: bash
