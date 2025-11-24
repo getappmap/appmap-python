@@ -1,3 +1,11 @@
+# [2.2.0-dev.13](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.12...v2.2.0-dev.13) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release:** clean up bash snippet in setup ([37dcedd](https://github.com/getappmap/appmap-python/commit/37dcedd7f8d2521dfb2e348bd8afc8b43ba7053c))
+* **ci/release:** more explicit dependencies between jobs ([268614e](https://github.com/getappmap/appmap-python/commit/268614eea4896d738e4c8f12819cc5e5e5f6ce0d))
+
 # [2.2.0-dev.12](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.11...v2.2.0-dev.12) (2025-11-24)
 
 
