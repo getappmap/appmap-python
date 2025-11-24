@@ -26,7 +26,8 @@ on:
 env:
   DRY_RUN:        ${{ github.event.inputs.dry_run || 'false' }}
   pypi_project:     appmap
-  testpypi_project: appmap-dev # workaround for lost-access scenario
+  #testpypi_project: appmap-dev # workaround for lost-access scenario
+  testpypi_project: appmapcitest
 
 jobs:
 
