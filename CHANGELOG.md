@@ -1,3 +1,10 @@
+# [2.2.0-dev.19](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.18...v2.2.0-dev.19) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci:** no underscores ([680f758](https://github.com/getappmap/appmap-python/commit/680f7586257cd33adc5d90376d0a9313866cee08))
+
 # [2.2.0-dev.18](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.17...v2.2.0-dev.18) (2025-11-24)
 
 
