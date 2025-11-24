@@ -1,3 +1,10 @@
+# [2.2.0-dev.18](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.17...v2.2.0-dev.18) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/publish:** skip-existing=true for testPyPi (trobleshooting upload failures with 400 Bad Request) ([9c57e4b](https://github.com/getappmap/appmap-python/commit/9c57e4ba7bbb977b7919af6bafb0e10159202102))
+
 # [2.2.0-dev.17](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.16...v2.2.0-dev.17) (2025-11-24)
 
 
