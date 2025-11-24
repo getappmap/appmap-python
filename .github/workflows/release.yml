@@ -30,6 +30,33 @@ env:
 
 jobs:
 
+  setup:
+    runs-on: ubuntu-latest
+  outputs:
+    distribution_name:  ${steps.configure.distribution_name}
+    publish_to:         ${steps.configure.publish_to}
+    publish_env:        ${steps.configure.publish_env}
+  steps:
+    id: configure
+    shell: bash
+    run:  |
+      case "${github.ref_name}" in
+        "ci/"*)
+          echo "publish_env=testpypi"                                             >> $GITHUB_OUTPUT ; 
+          echo "distribution_name=${env.testpypi_project}"                        >> $GITHUB_OUTPUT ;
+          echo "publish_to=https://test.pypi.org/project/${env.testpypi_project}" >> $GITHUB_OUTPUT ;
+        ;;
+        master)
+          echo "publish_env=pypi"                                             >> $GITHUB_OUTPUT ; 
+          echo "distribution_name=${env.pypi_project}"                        >> $GITHUB_OUTPUT ;
+          echo "publish_to=https://pypi.org/project/${env.pypi_project}"      >> $GITHUB_OUTPUT ;
+        *)
+          echo "publish_env=SKIP"                                             >> $GITHUB_OUTPUT ; 
+          echo "distribution_name=${env.pypi_project}"                        >> $GITHUB_OUTPUT ;
+          echo "publish_to=https://test.pypi.org/project/${env.pypi_project}" >> $GITHUB_OUTPUT ;
+        ;;
+      esac
+
   release:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || (github.event_name=='push' && startsWith(github.ref_name,'ci/') ) || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'master' || startsWith(github.event.workflow_run.head_branch, 'ci/') ) )
@@ -48,7 +75,7 @@ jobs:
           GIT_COMMITTER_NAME:    appland-release
           GIT_COMMITTER_EMAIL:   release@app.land
           GITHUB_TOKEN:          ${{ secrets.GITHUB_TOKEN }}
-          DISTRIBUTION_NAME: ${{ github.ref_name=='master' && env.pypi_project || env.testpypi_project }}
+          DISTRIBUTION_NAME:     ${{ needs.setup.outputs.distribution_name }}
         run: |
           if [ "$DRY_RUN" = "true" ]; then
             semantic-release --dry-run
@@ -74,7 +101,8 @@ jobs:
   smoketest:
     runs-on: ubuntu-latest
     needs: release
-    if: github.event.inputs.dry_run!='true'
+    if: github.event.inputs.dry_run!='true' 
+    continue-on-error: needs.setup.outputs.distribution_name!='appmap'   # altered names won't work anyway
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/refetch-artifacts
@@ -87,17 +115,17 @@ jobs:
     - run: ci/scripts/run_tests.sh
       env:
         SMOKETEST_DOCKER_IMAGE: python:3.12-slim
-        DISTRIBUTION_NAME: ${{ github.ref_name=='master' && env.pypi_project || env.testpypi_project }}
+        DISTRIBUTION_NAME: ${{ needs.setup.outputs.distribution_name }}
 
   # as a workaround to ownership issues (lost access to project)
-  pypi:
-    name: upload release to PyPI
+  publish:
+    name: publish package on PyPI
     needs: ['release','smoketest']
-    if:  ((  github.event.inputs.dry_run != 'true' ) && ((github.ref_name == 'master') || startsWith(github.ref_name,'ci/') ))
+    if:  ((  github.event.inputs.dry_run != 'true' ) && (needs.setup.outputs.publish_env != 'SKIP') )
     runs-on: ubuntu-latest
     environment:
-      name: ( github.ref_name=='master' && 'pypi' || 'testpypi' )
-      url:  ( github.ref_name=='master' && 'https://pypi.org/project/${{ env.pypi_project }}' || 'https://test.pypi.org/project/${{ env.testpypi_project }}' )
+      name: needs.setup_outputs.publish_env
+      url:  needs.setup_outputs.publish_to
     permissions:
       id-token: write
     steps:
@@ -105,11 +133,11 @@ jobs:
       - uses: ./.github/actions/refetch-artifacts
 
       - name: Publish to PyPI
-        if: github.ref_name == 'master'
+        if:   needs.setup.outputs.publish_env=='pypi'
         uses: pypa/gh-action-pypi-publish@release/v1
 
       - name: Publish to TestPyPI
-        if: github.ref_name != 'master'
+        if:   needs.setup.outputs.publish_env='testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/uploads/legacy
