@@ -40,20 +40,21 @@ jobs:
       - id: configure
         shell: bash
         run:  |
-          case "${github.ref_name}" in
-            "ci/"*)
-              echo "publish_env=testpypi"                                             >> $GITHUB_OUTPUT ;
-              echo "distribution_name=${env.testpypi_project}"                        >> $GITHUB_OUTPUT ;
-              echo "publish_to=https://test.pypi.org/project/${env.testpypi_project}" >> $GITHUB_OUTPUT ;
+          case "${{ github.ref_name }}" in
+            ci/*)
+              echo "publish_env=testpypi"                                                 >> $GITHUB_OUTPUT 
+              echo "distribution_name=${{ env.testpypi_project }}"                        >> $GITHUB_OUTPUT 
+              echo "publish_to=https://test.pypi.org/project/${{ env.testpypi_project }}" >> $GITHUB_OUTPUT 
             ;;
             master)
-              echo "publish_env=pypi"                                             >> $GITHUB_OUTPUT ;
-              echo "distribution_name=${env.pypi_project}"                        >> $GITHUB_OUTPUT ;
-              echo "publish_to=https://pypi.org/project/${env.pypi_project}"      >> $GITHUB_OUTPUT ;
+              echo "publish_env=pypi"                                                 >> $GITHUB_OUTPUT 
+              echo "distribution_name=${{ env.pypi_project }}"                        >> $GITHUB_OUTPUT 
+              echo "publish_to=https://pypi.org/project/${{ env.pypi_project }}"      >> $GITHUB_OUTPUT 
+            ;;
             *)
-              echo "publish_env=SKIP"                                             >> $GITHUB_OUTPUT ;
-              echo "distribution_name=${env.pypi_project}"                        >> $GITHUB_OUTPUT ;
-              echo "publish_to=https://test.pypi.org/project/${env.pypi_project}" >> $GITHUB_OUTPUT ;
+              echo "publish_env=SKIP"                                                 >> $GITHUB_OUTPUT 
+              echo "distribution_name=${{ env.pypi_project }}"                        >> $GITHUB_OUTPUT 
+              echo "publish_to=https://test.pypi.org/project/${{ env.pypi_project }}" >> $GITHUB_OUTPUT 
             ;;
           esac
 
