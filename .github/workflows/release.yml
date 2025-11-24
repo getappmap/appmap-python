@@ -137,12 +137,9 @@ jobs:
       - name: Publish to PyPI
         if:   needs.setup.outputs.publish_env=='pypi'
         uses: pypa/gh-action-pypi-publish@release/v1
-        with: 
-          environment: pypi
 
       - name: Publish to TestPyPI
         if:   needs.setup.outputs.publish_env=='testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          environment: testpypi
           repository-url: https://test.pypi.org/uploads/legacy
