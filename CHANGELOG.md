@@ -1,3 +1,10 @@
+# [2.2.0-dev.20](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.19...v2.2.0-dev.20) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/publish:** try publishing without attestations ([7095ecc](https://github.com/getappmap/appmap-python/commit/7095ecc15f12c172a0a3ac77bfd71dc9a8708cff))
+
 # [2.2.0-dev.19](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.18...v2.2.0-dev.19) (2025-11-24)
 
 
