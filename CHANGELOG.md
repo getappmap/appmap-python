@@ -1,3 +1,10 @@
+# [2.2.0-dev.14](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.13...v2.2.0-dev.14) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release:** typo in reference ([9bddf13](https://github.com/getappmap/appmap-python/commit/9bddf1382226f8618ef08a0fb5170a5778af9961))
+
 # [2.2.0-dev.13](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.12...v2.2.0-dev.13) (2025-11-24)
 
 
