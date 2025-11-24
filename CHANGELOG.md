@@ -1,3 +1,10 @@
+# [2.2.0-dev.23](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.22...v2.2.0-dev.23) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/publish:** revert all previous debugging tweaks, initiate fully-fledged publishing on testpypi ([bd51a9b](https://github.com/getappmap/appmap-python/commit/bd51a9b00057b128036820dc504b07bf38dc3c5e))
+
 # [2.2.0-dev.22](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.21...v2.2.0-dev.22) (2025-11-24)
 
 
