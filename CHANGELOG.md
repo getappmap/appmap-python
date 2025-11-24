@@ -1,3 +1,15 @@
+# [2.2.0-dev.12](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.11...v2.2.0-dev.12) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/setup:** correct propagation of outputs from step to job ([ef3e35c](https://github.com/getappmap/appmap-python/commit/ef3e35c1253661ccb8b4b854193f16b38c03c720))
+* **ci/release/setup:** typo in conditional ([15542b3](https://github.com/getappmap/appmap-python/commit/15542b3191616adbcfb89123cfeaf5dd470147c1))
+* **ci:** configure publishing parameters in a separate job, skip smoketest on altered packages, use altered distnames for publishing test only, restore original distribution name in pyproject.toml ([1b6143b](https://github.com/getappmap/appmap-python/commit/1b6143b72df930eee95c91616ba9ba73a225d861))
+* **ci:** indentation issue ([c6e7149](https://github.com/getappmap/appmap-python/commit/c6e71493d30e7fce05ed6116b8ee4dd431ce212f))
+* **ci:** one more syntax mistake ([01e4b90](https://github.com/getappmap/appmap-python/commit/01e4b901b35c50a89521a11d80cf8462678519ae))
+* **ci:** proper syntax for evaluations ([7adeec9](https://github.com/getappmap/appmap-python/commit/7adeec9f0884865e22e0b64a96e2584b4ed2e1d8))
+
 # [2.2.0-dev.11](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.10...v2.2.0-dev.11) (2025-11-23)
 
 
