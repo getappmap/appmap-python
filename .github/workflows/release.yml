@@ -33,9 +33,9 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      distribution_name:  ${steps.configure.distribution_name}
-      publish_to:         ${steps.configure.publish_to}
-      publish_env:        ${steps.configure.publish_env}
+      distribution_name:  ${{ steps.configure.distribution_name   }}
+      publish_to:         ${{ steps.configure.publish_to          }}
+      publish_env:        ${{ steps.configure.publish_env         }}
     steps:
       - id: configure
         shell: bash
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: release
     if: github.event.inputs.dry_run!='true' 
-    continue-on-error: needs.setup.outputs.distribution_name!='appmap'   # altered names won't work anyway
+    continue-on-error: ${{ needs.setup.outputs.distribution_name!='appmap' }}   # altered names won't work anyway
     steps:
     - uses: actions/checkout@v5
     - uses: ./.github/actions/refetch-artifacts
@@ -124,8 +124,8 @@ jobs:
     if:  ((  github.event.inputs.dry_run != 'true' ) && (needs.setup.outputs.publish_env != 'SKIP') )
     runs-on: ubuntu-latest
     environment:
-      name: needs.setup_outputs.publish_env
-      url:  needs.setup_outputs.publish_to
+      name: ${{ needs.setup_outputs.publish_env }}
+      url:  ${{ needs.setup_outputs.publish_to }}
     permissions:
       id-token: write
     steps:
