@@ -133,13 +133,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-
-      #- uses: ./.github/actions/refetch-artifacts
-      - name: fetch wheel only
-        uses: actions/download-artifact@v4
-        with:
-          name: wheel
-          path: ./dist
+      - uses: ./.github/actions/refetch-artifacts
 
       - name: Publish to PyPI
         if:   needs.setup.outputs.publish_env=='pypi'
@@ -149,7 +143,4 @@ jobs:
         if:   needs.setup.outputs.publish_env=='testpypi'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          repository-url: https://test.pypi.org/legacy/
-          verbose: true
-          skip-existing: true
-          attestations: false
+          repository-url: https://test.pypi.org/legacy/     # trailing slash matters!
