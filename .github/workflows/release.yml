@@ -133,7 +133,13 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-      - uses: ./.github/actions/refetch-artifacts
+
+      #- uses: ./.github/actions/refetch-artifacts
+      - name: fetch wheel only
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel
+          path: ./dist
 
       - name: Publish to PyPI
         if:   needs.setup.outputs.publish_env=='pypi'
