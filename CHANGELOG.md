@@ -1,3 +1,10 @@
+# [2.2.0-dev.17](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.16...v2.2.0-dev.17) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci/release/publish:** verbose upload to testPyPi (trobleshooting upload failures with 400 Bad Request) ([500a3c8](https://github.com/getappmap/appmap-python/commit/500a3c89fb7aad02bd3be751e92254bfe2a2126c))
+
 # [2.2.0-dev.16](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.15...v2.2.0-dev.16) (2025-11-24)
 
 
