@@ -1,3 +1,10 @@
+# [2.2.0-dev.15](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.14...v2.2.0-dev.15) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci:** remove inappropriate step parameter which was not there before and should not be there ([2cd2f1c](https://github.com/getappmap/appmap-python/commit/2cd2f1cc2b60942550bfedfc36fc491d9a1abc11))
+
 # [2.2.0-dev.14](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.13...v2.2.0-dev.14) (2025-11-24)
 
 
