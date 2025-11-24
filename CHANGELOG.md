@@ -1,3 +1,10 @@
+# [2.2.0-dev.22](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.21...v2.2.0-dev.22) (2025-11-24)
+
+
+### Bug Fixes
+
+* **ci:** try endpoint with trailing slash ([e8976bc](https://github.com/getappmap/appmap-python/commit/e8976bc82fbd2ab1b95c47110867b3a71911aaf8))
+
 # [2.2.0-dev.21](https://github.com/getappmap/appmap-python/compare/v2.2.0-dev.20...v2.2.0-dev.21) (2025-11-24)
 
 
