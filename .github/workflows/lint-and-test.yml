@@ -39,3 +39,17 @@ jobs:
         python: ${{ matrix.python }}
     - name: Test
       run: tox
+  validation:
+    name: Validation
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: always()
+    steps:
+      - name: Validate matrix test success
+        run: |
+          # Check the status of the 'test' job (which includes all matrix variations)
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more matrix test jobs failed."
+            exit 1
+          fi
+          echo "All matrix test jobs passed."
