@@ -98,7 +98,7 @@ def test_template(events):
 class ClientAdaptor(django.test.Client):
     """Adaptor for the client request parameters used in .web_framework tests."""
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def generic(
         self,
         method,

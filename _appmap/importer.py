@@ -42,7 +42,9 @@ class FilterableFn(
 ):
     __slots__ = ()
 
-    def __new__(cls, scope, fn_name, fn, static_fn, auxtype=None):  # pylint: disable=too-many-arguments
+    def __new__(
+        cls, scope, fn_name, fn, static_fn, auxtype=None
+    ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
         fqname = "%s.%s" % (scope.fqname, fn_name)
         self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn, auxtype)
         return self

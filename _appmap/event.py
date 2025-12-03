@@ -446,7 +446,7 @@ class HttpServerRequestEvent(MessageEvent):
 
     __slots__ = ["http_server_request"]
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         request_method,

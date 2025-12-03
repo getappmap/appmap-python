@@ -59,7 +59,9 @@ class ExecuteWrapper:  # pylint: disable=too-few-public-methods
         self.recorder = Recorder.get_current()
 
     # This signature is correct, the implementation confuses pylint:
-    def __call__(self, execute, sql, params, many, context):  # pylint: disable=too-many-arguments
+    def __call__(
+        self, execute, sql, params, many, context
+    ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
         start = time.monotonic()
         try:
             return execute(sql, params, many, context)
