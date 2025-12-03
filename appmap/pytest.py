@@ -5,7 +5,7 @@ try:
     from pytest_django.django_compat import is_django_unittest
 except ImportError:
 
-    def is_django_unittest(item):
+    def is_django_unittest(_item):
         return False
 
 

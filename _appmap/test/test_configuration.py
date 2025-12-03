@@ -269,7 +269,7 @@ class TestEmpty(DefaultHelpers):
             self.check_default_config(Path(tmpdir).name)
 
 class TestSearchConfig:
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
 
     def test_config_in_parent_folder(self, data_dir, tmpdir, monkeypatch):
         copytree(data_dir / "config-up", str(tmpdir), dirs_exist_ok=True)

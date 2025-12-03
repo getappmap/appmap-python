@@ -13,7 +13,7 @@ from _appmap.recorder import Recorder
 
 
 @event.listens_for(Engine, "before_cursor_execute")
-# pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument,too-many-positional-arguments
 def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
     """Capture SQL query call into appmap."""
     if is_instrumentation_disabled():
@@ -45,7 +45,7 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
 
 
 @event.listens_for(Engine, "after_cursor_execute")
-# pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument,too-many-positional-arguments
 def capture_sql(conn, cursor, statement, parameters, context, executemany):
     """Capture SQL query return into appmap."""
     if is_instrumentation_disabled():
