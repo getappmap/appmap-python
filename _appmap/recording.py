@@ -117,7 +117,7 @@ def initialize():
             now = datetime.now(timezone.utc)
             iso_time = now.isoformat(timespec="seconds").replace("+00:00", "Z")
             process_id = os.getpid()
-            appmap_name = f"{iso_time}_{process_id}"
+            appmap_name = f"{iso_time}-{process_id}".replace(":","-")
             recorder_type = "process"
             metadata = {
                 "name": appmap_name,

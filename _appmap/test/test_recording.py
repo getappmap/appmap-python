@@ -226,3 +226,27 @@ def test_process_recording(data_dir, shell, tmp_path):
     actual = json.loads(appmap_files[0].read_text())
     assert len(actual["events"]) > 0
     assert len(actual["classMap"]) > 0
+
+
+def test_process_recording_filename_is_sanitized(data_dir, shell, tmp_path):
+    fixture = data_dir / "package1"
+    tmp = tmp_path / "process"
+    copytree(fixture, str(tmp / "package1"), dirs_exist_ok=True)
+    copy(data_dir / "appmap.yml", str(tmp))
+    copytree(data_dir / "flask" / "init", str(tmp / "init"), dirs_exist_ok=True)
+
+    ret = shell.run(
+        "python",
+        "-m",
+        "package1.package2",
+        env={"PYTHONPATH": "init", "APPMAP_RECORD_PROCESS": "true"},
+        cwd=tmp,
+    )
+    assert ret.returncode == 0
+
+    appmap_dir = tmp / "tmp" / "appmap" / "process"
+    appmap_files = list(appmap_dir.glob("*.appmap.json"))
+    assert len(appmap_files) == 1, "this only fails when run from VS Code?"
+
+    filename = appmap_files[0].name
+    assert ":" not in filename
