@@ -1,4 +1,5 @@
-name: Setup base (python, pip cache, tox)
+name: Setup base (python, uv, tox)
+description: "Setup Python, uv and tox for further steps"
 inputs:
   python:
     description: "Python version to use"
@@ -11,41 +12,17 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: pip cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ inputs.python }}
-    
-    - name: Cargo cache
-      uses: actions/cache/@v4   
-      with: 
-        path: "~/.cargo"
-        key: ${{ runner.os }}-cargo
-
-    - name: Poetry cache
-      uses: actions/cache/@v4   
-      with: 
-        path: "~/.cache/pypoetry"
-        key: ${{ runner.os }}-poetry-${{ inputs.python }}
-        restore-keys: |
-          ${{ runner.os }}-poetry-
-
     - uses: actions/setup-python@v6
       id: python
       with:
         python-version: ${{ inputs.python }}
 
-    - name: upgrade pip and install tox
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install tox, tox-uv and tox-gh-actions
       shell: bash
       run: |
-        python -m pip -q install --upgrade pip "setuptools==65.6.2"
-        pip -q install "tox<4" tox-gh-actions
-    
-    - name: install Rust and Poetry 
-      shell: bash
-      run : |
-        curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable --profile minimal
-        source "$HOME/.cargo/env"
-        pip -q install poetry>=1.2.0
+        uv tool install tox --with tox-uv --with tox-gh-actions

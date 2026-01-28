@@ -42,6 +42,6 @@ plugins:
     - pyproject.toml
 - - '@semantic-release/exec'
   - prepareCmd: |
-      /bin/bash ./ci/scripts/build_with_poetry.sh
+      /bin/bash ./ci/scripts/build_with_uv.sh
 # NOTE: @semantic-release/github plugin removed - GitHub release creation
 # now happens in the publish job after smoke tests pass
