@@ -43,7 +43,5 @@ plugins:
 - - '@semantic-release/exec'
   - prepareCmd: |
       /bin/bash ./ci/scripts/build_with_poetry.sh
-- - '@semantic-release/github':
-  - assets:
-      - dist/*.whl
-      - dist/*.tar.gz
+# NOTE: @semantic-release/github plugin removed - GitHub release creation
+# now happens in the publish job after smoke tests pass

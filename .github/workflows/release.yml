@@ -90,6 +90,13 @@ jobs:
             semantic-release
           fi
 
+      - name: Get version
+        if: env.DRY_RUN != 'true'
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Upload wheel
         if: env.DRY_RUN != 'true'
         uses: actions/upload-artifact@v4
@@ -102,16 +109,24 @@ jobs:
         with:
           name: sdist
           path: dist/*.tar.gz
-    outputs:  # not reused in fact
-      release_tag: ${{ steps.semantic-release.outputs.next_release_tag }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
   smoketest:
     runs-on: ubuntu-latest
     needs: ['setup', 'release']
-    if: github.event.inputs.dry_run!='true' 
+    if: github.event.inputs.dry_run!='true'
     continue-on-error: ${{ needs.setup.outputs.distribution_name!='appmap' }}   # altered names won't work anyway
     steps:
+    - name: Generate token
+      uses: actions/create-github-app-token@v1
+      id: app-token
+      with:
+        app-id: ${{ secrets.RELEASE_APP_ID }}
+        private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
     - uses: actions/checkout@v5
+      with:
+        token: ${{ steps.app-token.outputs.token }}
     - uses: ./.github/actions/refetch-artifacts
     - name: dockerhub login (for seamless docker pulling)
       uses: ./.github/actions/dockerhub-login
@@ -119,15 +134,42 @@ jobs:
         DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME    }}
       continue-on-error: true
-    - run: ci/scripts/run_tests.sh
+    - name: Run smoke tests
+      id: smoketest
+      run: ci/scripts/run_tests.sh
+      continue-on-error: true
       env:
         SMOKETEST_DOCKER_IMAGE: python:3.12-slim
         DISTRIBUTION_NAME: ${{ needs.setup.outputs.distribution_name }}
 
+    - name: Cleanup on failure
+      if: steps.smoketest.outcome == 'failure'
+      run: |
+        echo "::error::Smoke tests failed, cleaning up release v${{ needs.release.outputs.version }}"
+
+        # Sanity check: verify HEAD commit is the release commit
+        COMMIT_MSG=$(git log -1 --pretty=%s)
+        if [[ "$COMMIT_MSG" != "chore(release): ${{ needs.release.outputs.version }}"* ]]; then
+          echo "::error::HEAD commit message doesn't match expected release commit!"
+          echo "::error::Expected: chore(release): ${{ needs.release.outputs.version }}"
+          echo "::error::Got: $COMMIT_MSG"
+          echo "::error::Aborting cleanup - manual intervention required"
+          exit 1
+        fi
+
+        # Delete the tag from remote
+        git push --delete origin "v${{ needs.release.outputs.version }}" || true
+
+        # Reset to commit before the release commit and force push
+        git reset --hard HEAD~1
+        git push --force origin HEAD:${{ github.ref_name }}
+
+        exit 1
+
   # as a workaround to ownership issues (lost access to project)
   publish:
-    name: publish package on PyPI
-    needs: ['setup', 'release','smoketest']
+    name: publish package on PyPI and create GitHub release
+    needs: ['setup', 'release', 'smoketest']
     if:  ((  github.event.inputs.dry_run != 'true' ) && ( (needs.setup.outputs.publish_env == 'pypi') || (needs.setup.outputs.publish_env == 'testpypi') )  )
     runs-on: ubuntu-latest
     environment:
@@ -135,9 +177,21 @@ jobs:
       url:  ${{ needs.setup.outputs.publish_to }}
     permissions:
       id-token: write
+      contents: write  # needed for creating GitHub releases
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.release.outputs.version }}  # checkout the tag
+
       - uses: ./.github/actions/refetch-artifacts
+
+      - name: Create GitHub release
+        run: |
+          gh release create "v${{ needs.release.outputs.version }}" \
+            dist/*.whl dist/*.tar.gz \
+            --notes-from-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Publish to PyPI
         if:   needs.setup.outputs.publish_env=='pypi'
