@@ -6,4 +6,4 @@ pip -q install pipenv
 mkdir /pipenv || true
 cd /pipenv
 
-pipenv run /ci/smoketest.sh
+pipenv run /ci/tests/smoketest.sh

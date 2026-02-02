@@ -9,4 +9,4 @@ cd /poetry
 poetry init -q
 
 # Yes, we need to set RUNNER, and we need to "poetry run" the script.
-RUNNER="poetry run" poetry run /ci/smoketest.sh
+RUNNER="poetry run" poetry run /ci/tests/smoketest.sh
