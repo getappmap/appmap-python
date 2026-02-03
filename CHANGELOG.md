@@ -1,3 +1,10 @@
+## [2.1.9](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9) (2026-02-03)
+
+
+### Bug Fixes
+
+* **recording:** sanitize process recording filenames for Windows ([eb0379f](https://github.com/getappmap/appmap-python/commit/eb0379f133b6fe8c1f69a98f4259a67de5725c95)), closes [#377](https://github.com/getappmap/appmap-python/issues/377)
+
 ## [2.1.8](https://github.com/getappmap/appmap-python/compare/v2.1.7...v2.1.8) (2024-11-13)
 
 
