@@ -1,0 +1,37 @@
+type: object
+additionalProperties: false
+required:
+  - name
+properties:
+  name:
+    type: string
+  packages:
+    type: array
+    items:
+      anyOf:
+        - type: object
+          additionalProperties: false
+          required:
+            - path
+          properties:
+            path:
+              type: string
+            shallow:
+              type: boolean
+            exclude:
+              type: array
+              items:
+                type: string
+        - type: object
+          additionalProperties: false
+          required:
+            - dist
+          properties:
+            dist:
+              type: string
+            shallow:
+              type: boolean
+            exclude:
+              type: array
+              items:
+                type: string
