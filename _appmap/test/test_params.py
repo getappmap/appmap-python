@@ -108,7 +108,7 @@ class TestStaticMethods(TestMethodBase):
             "name": "p",
             "class": "builtins.str",
             "kind": "req",
-            "value": "'static'",
+            "value": "static",
         }
 
 
@@ -131,7 +131,7 @@ class TestClassMethods(TestMethodBase):
         self.assert_parameter(
             evt,
             0,
-            {"name": "p", "class": "builtins.str", "kind": "req", "value": "'cls'"},
+            {"name": "p", "class": "builtins.str", "kind": "req", "value": "cls"},
         )
 
 
@@ -145,7 +145,7 @@ class TestInstanceMethods(TestMethodBase):
     @pytest.mark.parametrize(
         "params,arg,expected",
         [
-            ("one", "world", ("builtins.str", "'world'")),
+            ("one", "world", ("builtins.str", "world")),
             ("one", None, ("builtins.NoneType", "None")),
         ],
         indirect=["params"],
@@ -192,7 +192,7 @@ class TestInstanceMethods(TestMethodBase):
     @pytest.mark.parametrize(
         "params,arg,expected",
         [
-            ("one", "world", ("builtins.str", "'world'")),
+            ("one", "world", ("builtins.str", "world")),
             ("one", None, ("builtins.NoneType", "None")),
         ],
         indirect=["params"],

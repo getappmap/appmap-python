@@ -45,7 +45,7 @@ class _TestFormData:
         )
 
         assert events[0].message == [
-            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "example"})
         ]
 
     @staticmethod
@@ -53,7 +53,7 @@ class _TestFormData:
         client.post("/test", data={"my_param": "example"}, content_type="multipart/form-data")
 
         assert events[0].message == [
-            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "example"})
         ]
 
 
@@ -119,7 +119,7 @@ class _TestRequestCapture:
 
         assert events[0].message == [
             DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
+                {"name": "my_param", "class": "builtins.str", "value": "example"}
             )
         ]
         assert events[0].http_server_request == DictIncluding(
@@ -142,7 +142,7 @@ class _TestRequestCapture:
 
         assert events[0].message == [
             DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
+                {"name": "my_param", "class": "builtins.str", "value": "example"}
             )
         ]
 
@@ -166,7 +166,7 @@ class _TestRequestCapture:
 
         assert events[0].message == [
             DictIncluding(
-                {"name": "my_param", "class": "builtins.str", "value": "'example'"}
+                {"name": "my_param", "class": "builtins.str", "value": "example"}
             )
         ]
 
@@ -205,7 +205,7 @@ class _TestRequestCapture:
 
         assert events[0].message == [
             DictIncluding(
-                {"name": "username", "class": "builtins.str", "value": "'alice'"}
+                {"name": "username", "class": "builtins.str", "value": "alice"}
             ),
             DictIncluding({"name": "post_id", "class": "builtins.int", "value": "42"}),
         ]
@@ -222,7 +222,7 @@ class _TestFormCapture:
         )
 
         assert events[0].message == [
-            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "example"})
         ]
 
     @staticmethod
@@ -230,7 +230,7 @@ class _TestFormCapture:
         client.post("/test", data={"my_param": "example"}, content_type="multipart/form-data")
 
         assert events[0].message == [
-            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "'example'"})
+            DictIncluding({"name": "my_param", "class": "builtins.str", "value": "example"})
         ]
 
 

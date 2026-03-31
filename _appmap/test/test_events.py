@@ -132,11 +132,11 @@ class TestEvents:
 
         assert result == "hello"
         call_event = r.events[0]
-        # Parameter value should be the repr, not the opaque object string
-        assert call_event.parameters[0]["value"] == "'hello'"
+        # Parameter value should be the raw string, not repr-quoted
+        assert call_event.parameters[0]["value"] == "hello"
         # Return value should also be displayed
         return_event = r.events[1]
-        assert return_event.return_value["value"] == "'hello'"
+        assert return_event.return_value["value"] == "hello"
 
         # Unlabeled method should not have its params displayed, even in the same recording
         call_event_unlabeled = r.events[2]

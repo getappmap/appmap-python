@@ -66,7 +66,7 @@
     },
     {
       "return_value": {
-        "value": "'Hello'",
+        "value": "Hello",
         "class": "builtins.str"
       },
       "parent_id": 3,
@@ -93,7 +93,7 @@
     },
     {
       "return_value": {
-        "value": "'world!'",
+        "value": "world!",
         "class": "builtins.str"
       },
       "parent_id": 5,
@@ -103,7 +103,7 @@
     },
     {
       "return_value": {
-        "value": "'Hello world!'",
+        "value": "Hello world!",
         "class": "builtins.str"
       },
       "parent_id": 2,
