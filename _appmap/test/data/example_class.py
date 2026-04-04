@@ -56,6 +56,10 @@ class ExampleClass(Super, ClassMethodMixin):
     def labeled_method(self):
         return "super important"
 
+    @appmap.labels("super", "important")
+    def labeled_method_with_param(self, p):
+        return p
+
     @staticmethod
     @wrap_fn
     def wrapped_static_method():

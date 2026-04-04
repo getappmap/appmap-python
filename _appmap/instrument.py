@@ -70,7 +70,7 @@ def saved_shallow_rule():
 
 
 _InstrumentedFn = namedtuple(
-    "_InstrumentedFn", "fn fntype instrumented_fn make_call_event params"
+    "_InstrumentedFn", "fn fntype instrumented_fn make_call_event params display_params"
 )
 
 
@@ -84,7 +84,9 @@ def call_instrumented(f, instance, args, kwargs):
 
     with recording_disabled():
         logger.trace("%s args %s kwargs %s", f.fn, args, kwargs)
-        params = CallEvent.set_params(f.params, instance, args, kwargs)
+        params = CallEvent.set_params(
+            f.params, instance, args, kwargs, display_value=f.display_params
+        )
         call_event = f.make_call_event(parameters=params)
     Recorder.add_event(call_event)
     call_event_id = call_event.id
@@ -95,7 +97,8 @@ def call_instrumented(f, instance, args, kwargs):
         elapsed_time = time.time() - start_time
 
         return_event = event.FuncReturnEvent(
-            return_value=ret, parent_id=call_event_id, elapsed=elapsed_time
+            return_value=ret, parent_id=call_event_id, elapsed=elapsed_time,
+            display_value=f.display_params
         )
         Recorder.add_event(return_event)
         return ret
@@ -120,8 +123,15 @@ def instrument(filterable):
     """return an instrumented function"""
     logger.debug("hooking %s", filterable.fqname)
 
+    # note this has to happen before CallEvent.make, which clears this attribute
+    has_labels = hasattr(filterable.obj, "_appmap_labels")
+
     make_call_event = event.CallEvent.make(filterable)
     params = CallEvent.make_params(filterable)
+
+    display_params = Env.current.display_params or (
+        has_labels and Env.current.display_labeled_params
+    )
 
     # django depends on being able to find the cache_clear attribute
     # on functions. (You can see this by trying to map
@@ -132,7 +142,8 @@ def instrument(filterable):
     def instrumented_fn(wrapped, instance, args, kwargs):
         with saved_shallow_rule():
             f = _InstrumentedFn(
-                wrapped, filterable.fntype, instrumented_fn, make_call_event, params
+                wrapped, filterable.fntype, instrumented_fn, make_call_event, params,
+                display_params
             )
             return call_instrumented(f, instance, args, kwargs)
 

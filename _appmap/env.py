@@ -45,8 +45,16 @@ class Env(metaclass=SingletonMeta):
         # them.
         enabled = self._env.get("_APPMAP", None)
         self._enabled = enabled is not None and enabled.lower() != "false"
-        display_params = self._env.get("_APPMAP_DISPLAY_PARAMS", None)
-        self._display_params = display_params is not None and display_params.lower() != "false"
+        display_params = self._env.get("_APPMAP_DISPLAY_PARAMS", "labeled").lower()
+        if display_params == "true":
+            self._display_params = True
+            self._display_labeled_params = True
+        elif display_params == "false":
+            self._display_params = False
+            self._display_labeled_params = False
+        else: # "labeled" or "auto" or anything else defaults to labeled
+            self._display_params = False
+            self._display_labeled_params = True
 
         logger = logging.getLogger(__name__)
         # The user shouldn't set APPMAP_OUTPUT_DIR, but some tests depend on being able to use it.
@@ -133,6 +141,10 @@ class Env(metaclass=SingletonMeta):
     @property
     def display_params(self):
         return self._display_params
+
+    @property
+    def display_labeled_params(self):
+        return self._display_labeled_params
 
     def getLogger(self, name) -> trace_logger.TraceLogger:
         return cast(trace_logger.TraceLogger, logging.getLogger(name))
