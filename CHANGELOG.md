@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/getappmap/appmap-python/compare/v2.1.9...v2.2.0) (2026-04-04)
+
+
+### Features
+
+* Capture argument values of labeled functions by default ([453b697](https://github.com/getappmap/appmap-python/commit/453b697512f04d235e09629b582d1a12f1dac2cc))
+
 ## [2.1.9](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9) (2026-02-03)
 
 
