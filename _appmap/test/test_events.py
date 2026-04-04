@@ -52,6 +52,7 @@ class TestEvents:
         # is working
         assert True
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "true"})
     def test_when_str_raises(self, mocker):
         r = appmap.Recording()
         with r:
@@ -68,6 +69,7 @@ class TestEvents:
         actual_value = r.events[0].parameters[0]["value"]
         assert expected_value == actual_value
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "true"})
     def test_when_both_raise(self, mocker):
         r = appmap.Recording()
         with r:
@@ -116,6 +118,60 @@ class TestEvents:
         assert [e.method_id for e in r.events if e.event == "call" and hasattr(e, "method_id")] == [
             "return_self"
         ]
+
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": None})
+    def test_labeled_params_displayed_by_default(self):
+        """When display_params is 'labeled' (default),
+        labeled functions should still have their params displayed via repr()."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            result = ExampleClass().labeled_method_with_param("hello")
+            ExampleClass().instance_with_param("hello")
+
+        assert result == "hello"
+        call_event = r.events[0]
+        # Parameter value should be the repr, not the opaque object string
+        assert call_event.parameters[0]["value"] == "'hello'"
+        # Return value should also be displayed
+        return_event = r.events[1]
+        assert return_event.return_value["value"] == "'hello'"
+
+        # Unlabeled method should not have its params displayed, even in the same recording
+        call_event_unlabeled = r.events[2]
+        assert "object at" in call_event_unlabeled.parameters[0]["value"]
+
+    @pytest.mark.appmap_enabled(
+        env={
+            "APPMAP_DISPLAY_PARAMS": "false",
+        }
+    )
+    def test_labeled_params_not_displayed_when_disabled(self):
+        """When display_params is off, labeled functions should NOT have their params displayed."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            ExampleClass().labeled_method_with_param("hello")
+
+        call_event = r.events[0]
+        # Parameter value should be the opaque object string
+        assert "object at" in call_event.parameters[0]["value"]
+
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "labeled"})
+    def test_unlabeled_params_not_displayed(self):
+        """When display_params is 'labeled', unlabeled functions should NOT
+        have their params displayed."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            ExampleClass().instance_with_param("hello")
+
+        call_event = r.events[0]
+        # Parameter value should be the opaque object string
+        assert "object at" in call_event.parameters[0]["value"]
 
     # There should be an exception return event generated even when the raised exception is a
     # BaseException.

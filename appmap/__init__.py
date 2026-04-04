@@ -13,7 +13,7 @@ if _enabled is None or _enabled.upper() == "TRUE":
     if _enabled is not None:
         # Use setdefault so tests can manage settings as necessary
         os.environ.setdefault("_APPMAP", _enabled)
-        _display_params = os.environ.get("APPMAP_DISPLAY_PARAMS", "false")
+        _display_params = os.environ.get("APPMAP_DISPLAY_PARAMS", "labeled")
         os.environ.setdefault("_APPMAP_DISPLAY_PARAMS", _display_params)
 
         from _appmap import generation  # noqa: F401
@@ -58,7 +58,7 @@ if _enabled is None or _enabled.upper() == "TRUE":
         os.environ.pop("_APPMAP_DISPLAY_PARAMS", None)
 else:
     os.environ.setdefault("_APPMAP", "false")
-    os.environ.setdefault("_APPMAP_DISPLAY_PARAMS", "false")
+    os.environ.setdefault("_APPMAP_DISPLAY_PARAMS", "labeled")
 
 if not _recording_exported:
     # Client code that imports appmap.Recording should run correctly

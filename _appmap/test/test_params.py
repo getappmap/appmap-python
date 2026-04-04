@@ -33,7 +33,9 @@ class _params:
 
         def wrapped_fn(_, instance, args, kwargs):
             return make_call_event(
-                parameters=CallEvent.set_params(params, instance, args, kwargs)
+                parameters=CallEvent.set_params(
+                    params, instance, args, kwargs, display_value=True
+                )
             )
 
         return wrapped_fn

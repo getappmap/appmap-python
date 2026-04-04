@@ -45,13 +45,13 @@ class _EventIds:
         cls._next_thread_id = 0
 
 
-def display_string(val):
+def display_string(val, display_value=False):
     # If we're asked to display parameters, make a best-effort attempt
     # to get a string value for the parameter using repr(). If parameter
     # display is disabled, or repr() has raised, just formulate a value
     # from the class and id.
     value = None
-    if Env.current.display_params:
+    if display_value:
         try:
             value = repr(val)
         except Exception:  # pylint: disable=broad-except
@@ -79,7 +79,7 @@ def _is_list_or_dict(val_type):
     return issubclass(val_type, list), issubclass(val_type, dict)
 
 
-def _describe_schema(name, val, depth, max_depth):
+def _describe_schema(name, val, depth, max_depth, display_value=False):
 
     val_type = type(val)
 
@@ -87,6 +87,9 @@ def _describe_schema(name, val, depth, max_depth):
     if name is not None:
         ret["name"] = name
     ret["class"] = fqname(val_type)
+
+    if not display_value:
+        return ret
 
     islist, isdict = _is_list_or_dict(val_type)
     if not (islist or isdict) or (depth >= max_depth and isdict):
@@ -100,7 +103,10 @@ def _describe_schema(name, val, depth, max_depth):
         elts = val.items()
         schema_key = "properties"
 
-    schema = [_describe_schema(k, v, depth + 1, max_depth) for k, v in elts]
+    schema = [
+        _describe_schema(k, v, depth + 1, max_depth, display_value=display_value)
+        for k, v in elts
+    ]
     # schema will be [None] if depth is exceeded, don't use it
     if any(schema):
         ret[schema_key] = schema
@@ -108,15 +114,14 @@ def _describe_schema(name, val, depth, max_depth):
     return ret
 
 
-def describe_value(name, val, max_depth=5):
-    ret = {
+def describe_value(name, val, max_depth=5, display_value=False):
+    ret = _describe_schema(name, val, 0, max_depth, display_value=display_value)
+    ret.update({
         "object_id": id(val),
-        "value": display_string(val),
-    }
-    if Env.current.display_params:
-        ret.update(_describe_schema(name, val, 0, max_depth))
+        "value": display_string(val, display_value=display_value),
+    })
 
-    if any(_is_list_or_dict(type(val))):
+    if display_value and any(_is_list_or_dict(type(val))):
         ret["size"] = len(val)
 
     return ret
@@ -170,9 +175,9 @@ class Param:
     def __repr__(self):
         return "<Param name: %s kind: %s>" % (self.name, self.kind)
 
-    def to_dict(self, value):
+    def to_dict(self, value, display_value=False):
         ret = {"kind": self.kind}
-        ret.update(describe_value(self.name, value))
+        ret.update(describe_value(self.name, value, display_value=display_value))
         return ret
 
 def _get_name_parts(filterable):
@@ -247,7 +252,7 @@ class CallEvent(Event):
         return [Param(p) for p in sig.parameters.values()]
 
     @staticmethod
-    def set_params(params, instance, args, kwargs):
+    def set_params(params, instance, args, kwargs, display_value=False):
         # pylint: disable=too-many-branches
         # Note that set_params expects args and kwargs as a tuple and
         # dict, respectively. It operates on them as collections, so
@@ -295,7 +300,7 @@ class CallEvent(Event):
                 # If all the parameter types are handled, this
                 # shouldn't ever happen...
                 raise RuntimeError("Unknown parameter with desc %s" % (repr(p)))
-            ret.append(p.to_dict(value))
+            ret.append(p.to_dict(value, display_value=display_value))
         return ret
 
     @property
@@ -405,8 +410,9 @@ class MessageEvent(Event):  # pylint: disable=too-few-public-methods
 
     @message_parameters.setter
     def message_parameters(self, params):
+        display_params = Env.current.display_params
         for name, value in params.items():
-            message_object = describe_value(name, value)
+            message_object = describe_value(name, value, display_value=display_params)
             self.message.append(message_object)
 
 
@@ -497,13 +503,13 @@ class ReturnEvent(Event):
 class FuncReturnEvent(ReturnEvent):
     __slots__ = ["return_value"]
 
-    def __init__(self, parent_id, elapsed, return_value):
+    def __init__(self, parent_id, elapsed, return_value, display_value=False):
         super().__init__(parent_id, elapsed)
         # Import here to prevent circular dependency
         # pylint: disable=import-outside-toplevel
         from _appmap.instrument import recording_disabled # noqa: F401
         with recording_disabled():
-            self.return_value = describe_value(None, return_value)
+            self.return_value = describe_value(None, return_value, display_value=display_value)
 
 
 class HttpResponseEvent(ReturnEvent):
