@@ -4,7 +4,7 @@ Automatically used in pytest tests.
 """
 
 import json
-import re
+from appmap import regex_boost as re
 import sys
 import time
 

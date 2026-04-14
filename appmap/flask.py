@@ -1,4 +1,4 @@
-import re
+from appmap import regex_boost as re
 import time
 from importlib.metadata import version
 from types import SimpleNamespace
