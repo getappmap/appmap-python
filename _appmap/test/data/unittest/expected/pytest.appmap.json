@@ -53,12 +53,14 @@
         "class": "simple.Simple",
         "value": "<simple.Simple object at 0xabcdef>"
       },
-      "parameters": [{
-        "class": "builtins.str",
-        "kind": "req",
-        "name": "bang",
-        "value": "'!'"
-      }],
+      "parameters": [
+        {
+          "class": "builtins.str",
+          "kind": "req",
+          "name": "bang",
+          "value": "!"
+        }
+      ],
       "id": 2,
       "event": "call",
       "thread_id": 1
@@ -83,7 +85,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "'Hello'"
+        "value": "Hello"
       },
       "parent_id": 3,
       "id": 4,
@@ -110,7 +112,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "'world'"
+        "value": "world"
       },
       "parent_id": 5,
       "id": 6,
@@ -120,7 +122,7 @@
     {
       "return_value": {
         "class": "builtins.str",
-        "value": "'Hello world!'"
+        "value": "Hello world!"
       },
       "parent_id": 2,
       "id": 7,

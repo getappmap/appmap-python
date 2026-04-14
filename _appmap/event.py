@@ -47,13 +47,14 @@ class _EventIds:
 
 def display_string(val, display_value=False):
     # If we're asked to display parameters, make a best-effort attempt
-    # to get a string value for the parameter using repr(). If parameter
-    # display is disabled, or repr() has raised, just formulate a value
-    # from the class and id.
+    # to get a string value for the parameter. str types are returned as-is;
+    # other types use repr(). If parameter display is disabled, or repr() has
+    # raised, just formulate a value from the class and id.
     value = None
     if display_value:
         try:
-            value = repr(val)
+            # Use issubclass(type()) instead of isinstance() to avoid side effects on lazy objects
+            value = val if issubclass(type(val), str) else repr(val)
         except Exception:  # pylint: disable=broad-except
             pass
 

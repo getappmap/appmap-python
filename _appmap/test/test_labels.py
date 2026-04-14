@@ -1,5 +1,6 @@
 import pytest
 
+import appmap
 from _appmap.wrapt import BoundFunctionWrapper, FunctionWrapper
 
 
@@ -54,6 +55,22 @@ class TestLabels:
             ), "yaml.emit should not be instrumented"
 
         verify_example_appmap(check_labels, "instance_method")
+
+    @pytest.mark.appmap_enabled(config="appmap-no-pyyaml.yml")
+    def test_labeled_function_recorded_without_package(self):
+        """A labeled function is recorded even when its package is not in the config."""
+        import yaml  # pylint: disable=import-outside-toplevel
+
+        rec = appmap.Recording()
+        with rec:
+            yaml.dump({"key": "value"})
+
+        # yaml.dump should appear in the recording events because it's labeled
+        # by the formats preset, even though PyYAML is not in the packages list.
+        call_events = [e for e in rec.events if e.event == "call"]
+        assert any(
+            e.method_id == "dump" and "yaml" in e.defined_class for e in call_events
+        ), f"Expected yaml.dump in recorded events, got: {[e.method_id for e in call_events]}"
 
     def test_function_only_in_mod(self, verify_example_appmap):
         def check_labels(*_):

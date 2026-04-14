@@ -29,8 +29,8 @@ def test_http_client_capture(mock_requests, events):
     }
     message = request.message
     assert message[0] == DictIncluding({"name": "q", "value": "['one', 'two']"})
-    assert (message[1] == DictIncluding({"name": "q2", "value": "'🦠'"})) or (
-        message[1] == DictIncluding({"name": "q2", "value": "'\\U0001f9a0'"})
+    assert (message[1] == DictIncluding({"name": "q2", "value": "🦠"})) or (
+        message[1] == DictIncluding({"name": "q2", "value": "\\U0001f9a0"})
     )
 
     assert events[3].http_client_response == DictIncluding(
