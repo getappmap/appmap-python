@@ -1,3 +1,21 @@
+# [3.0.0](https://github.com/getappmap/appmap-python/compare/v2.2.0...v3.0.0) (2026-04-14)
+
+
+* feat!: Use raw string values instead of repr() for str types in display_string ([5ee53e7](https://github.com/getappmap/appmap-python/commit/5ee53e74054b9872d3f59d769598f84762b340f5))
+
+
+### BREAKING CHANGES
+
+* String values in appmap events are now recorded verbatim
+(e.g. "hello") rather than as Python repr (e.g. "'hello'"). This affects
+parameters, return values, and HTTP message fields of type builtins.str.
+The class field already identifies the type, so repr-quoting was redundant.
+
+Using raw string values also enables proper secret leak detection, since
+recorded values now match what appears in log messages.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+
 # [2.2.0](https://github.com/getappmap/appmap-python/compare/v2.1.9...v2.2.0) (2026-04-04)
 
 
