@@ -3,12 +3,18 @@ import os
 import re
 import shlex
 import subprocess
-import threading
 import types
-from collections.abc import MutableMapping
-from enum import IntFlag, auto
+from contextlib import contextmanager
+from contextvars import ContextVar
+from enum import Enum, IntFlag, auto
+from pathlib import Path
 
 from .env import Env
+
+
+class Scope(Enum):
+    MODULE = 0
+    CLASS = 1
 
 
 def compact_dict(dictionary):
@@ -28,6 +34,10 @@ class FnType(IntFlag):
     CLASS = auto()
     INSTANCE = auto()
     MODULE = auto()
+    # auxtypes
+    GET = auto()
+    SET = auto()
+    DEL = auto()
 
     @staticmethod
     def classify(fn):
@@ -40,52 +50,64 @@ class FnType(IntFlag):
         return FnType.INSTANCE
 
 
-class ThreadLocalDict(threading.local, MutableMapping):
-    def __init__(self):
-        super().__init__()
-        self.values = {}
-
-    def __getitem__(self, k):
-        return self.values[k]
-
-    def __setitem__(self, k, v):
-        self.values[k] = v
-
-    def __delitem__(self, k):
-        del self.values[k]
-
-    def __iter__(self):
-        return iter(self.values)
-
-    def __len__(self):
-        return len(self.values)
-
-
-_appmap_tls = ThreadLocalDict()
+_appmap_tls = ContextVar("tls")
 
 
 def appmap_tls():
-    return _appmap_tls
+    try:
+        return _appmap_tls.get()
+    except LookupError:
+        _appmap_tls.set({})
+        return _appmap_tls.get()
+
+
+@contextmanager
+def appmap_tls_context():
+    token = _appmap_tls.set({})
+    try:
+        yield
+    finally:
+        _appmap_tls.reset(token)
 
 
 def fqname(cls):
     return "%s.%s" % (cls.__module__, cls.__qualname__)
 
-
-def split_function_name(fn):
+class FqFnName:
     """
-    Given a method, return a tuple containing its fully-qualified
-    class name and the method name.
+    FqFnName makes it easy to reference the parts of the fully-qualified name of a callable.
     """
-    qualname = fn.__qualname__
-    if "." in qualname:
-        class_name, fn_name = qualname.rsplit(".", 1)
-        class_name = "%s.%s" % (fn.__module__, class_name)
-    else:
-        class_name = fn.__module__
-        fn_name = qualname
-    return (class_name, fn_name)
 
+    def __init__(self, modname, qualname):
+        self._modname = modname
+        if "." in qualname:
+            self._scope = Scope.CLASS
+            self._class_name, self._fn_name = qualname.rsplit(".", 1)
+        else:
+            self._scope = Scope.MODULE
+            self._class_name = None
+            self._fn_name = qualname
+
+    @property
+    def scope(self) -> Scope:
+        """The scope of the Callable, i.e. whether it's contained in a module or a class."""
+        return self._scope
+
+    @property
+    def fqmod(self):
+        return self._modname
+
+    @property
+    def fqclass(self):
+        return self._modname if self._class_name is None else f"{self._modname}.{self._class_name}"
+
+    @property
+    def fqfn(self):
+        return (self.fqclass, self._fn_name)
+
+    @property
+    def fn_name(self):
+        return self._fn_name
 
 def root_relative_path(path):
     """Returns the path relative to the current root_dir.
@@ -200,3 +222,32 @@ def scenario_filename(name, separator="_"):
     pattern = r"[^a-z0-9\-_]+"
     replacement = separator
     return re.sub(pattern, replacement, name, flags=re.IGNORECASE)
+
+
+def locate_file_up(filename, start_dir=None, stop_dir=None):
+    """
+    Search for a file in the current directory and recursively up to the root directory.
+
+    :param filename: The name of the file to locate.
+    :param start_dir: The directory to start the search from. Defaults to the current.
+    :param stop_dir: The directory to stop the search. If None search is performed until
+                     the root of the file system.
+    :return: The path to the directory containing the file or None if the file cannot be found.
+    """
+
+    if start_dir is None:
+        start_dir = Path.cwd()
+    elif isinstance(start_dir, str):
+        start_dir = Path(start_dir)
+
+    file_path = start_dir.joinpath(filename)
+    if Path.exists(file_path):
+        return start_dir
+
+    for p in start_dir.parents:
+        if Path.exists(p.joinpath(filename)):
+            return p
+        if p == stop_dir:
+            return None
+
+    return None

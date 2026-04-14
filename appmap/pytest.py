@@ -1,6 +1,15 @@
-import pytest
+from importlib.metadata import version
 
-from _appmap import testing_framework, wrapt
+import pytest
+try:
+    from pytest_django.django_compat import is_django_unittest
+except ImportError:
+
+    def is_django_unittest(_item):
+        return False
+
+
+from _appmap import noappmap, testing_framework, wrapt
 from _appmap.env import Env
 
 logger = Env.current.getLogger(__name__)
@@ -20,13 +29,13 @@ class recorded_testcase:  # pylint: disable=too-few-public-methods
                 return wrapped(*args, **kwargs)
 
 
-if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
+if not Env.current.is_appmap_repo and Env.current.enables("tests"):
     logger.debug("Test recording is enabled (Pytest)")
 
     @pytest.hookimpl
     def pytest_sessionstart(session):
         session.appmap = testing_framework.session(
-            name="pytest", recorder_type="tests", version=pytest.__version__
+            name="pytest", recorder_type="tests", version=version("pytest")
         )
 
     @pytest.hookimpl
@@ -49,13 +58,15 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
         # running the test case. (This nesting of function calls is
         # verified by the expected appmap in the test for a unittest
         # TestCase run by pytest.)
-        if hasattr(item, "_testcase"):
+        if hasattr(item, "_testcase") and not is_django_unittest(item):
             setattr(
                 item._testcase,  # pylint: disable=protected-access
                 "_appmap_pytest_recording",
                 True,
             )
-            item.obj = recorded_testcase(item)(item.obj)
+            if not noappmap.disables(item.obj, item.cls):
+                testing_framework.disable_test_case(item.obj)
+                item.obj = recorded_testcase(item)(item.obj)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
@@ -63,15 +74,20 @@ if not Env.current.is_appmap_repo and Env.current.enables("pytest"):
         # pytest test.
         assert not hasattr(pyfuncitem, "_testcase")
 
+        if noappmap.disables(pyfuncitem.function, pyfuncitem.cls):
+            yield
+            return
+
         with pyfuncitem.session.appmap.record(
             pyfuncitem.cls,
             pyfuncitem.name,
             method_id=pyfuncitem.originalname,
             location=pyfuncitem.location,
         ) as metadata:
+            testing_framework.disable_test_case(pyfuncitem.obj)
             result = yield
             try:
                 with testing_framework.collect_result_metadata(metadata):
                     result.get_result()
-            except:  # pylint: disable=bare-except
+            except:  # pylint: disable=bare-except   # noqa: E722
                 pass  # exception got recorded in metadata

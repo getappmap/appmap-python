@@ -1,3 +1,4 @@
 name: deferred
+record_test_cases: "true"
 packages:
 - path: test

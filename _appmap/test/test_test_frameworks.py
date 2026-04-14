@@ -1,16 +1,19 @@
 """Test cases dealing with various test framework runners and cases."""
+
 # pylint: disable=missing-function-docstring
 
 import json
 import re
 import sys
+import types
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import pytest
 
-from _appmap import web_framework
+from _appmap import recording
 
-from ..test.helpers import DictIncluding
+from .helpers import DictIncluding, check_call_stack, package_version
 from .normalize import normalize_appmap
 
 
@@ -29,16 +32,23 @@ class _TestTestRunner(ABC):
         """Run the tests."""
 
     def test_with_appmap_false(self, testdir, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
+        monkeypatch.setenv("_APPMAP", "false")
 
         self.run_tests(testdir)
 
         assert not testdir.output().exists()
 
     def test_disabled(self, testdir, monkeypatch):
-        monkeypatch.setenv(f"APPMAP_RECORD_{self._test_type.upper()}", "false")
+        monkeypatch.setenv("APPMAP_RECORD_TESTS", "false")
 
         self.run_tests(testdir)
+        assert not testdir.output().exists()
+
+    def test_disabled_for_process(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_RECORD_PROCESS", "true")
+
+        self.run_tests(testdir)
+        assert (testdir.path / "tmp" / "appmap" / "process").exists()
         assert not testdir.output().exists()
 
 
@@ -57,6 +67,14 @@ class TestUnittestRunner(_TestTestRunner):
         verify_expected_appmap(testdir)
         verify_expected_metadata(testdir)
 
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+
+        self.run_tests(testdir)
+
+        assert len(list(testdir.output().iterdir())) == 7
+        verify_expected_appmap(testdir, "-no-test-cases")
+        verify_expected_metadata(testdir)
 
 class TestPytestRunnerUnittest(_TestTestRunner):
     @classmethod
@@ -66,7 +84,7 @@ class TestPytestRunnerUnittest(_TestTestRunner):
     def run_tests(self, testdir):
         testdir.test_type = "pytest"
         result = testdir.runpytest("-svv")
-        result.assert_outcomes(passed=3, failed=3, xfailed=1)
+        result.assert_outcomes(passed=5, failed=3, xfailed=1)
 
     def test_enabled(self, testdir):
         self.run_tests(testdir)
@@ -85,14 +103,38 @@ class TestPytestRunnerPytest(_TestTestRunner):
         cls._test_type = "pytest"
 
     def run_tests(self, testdir):
-        result = testdir.runpytest("-vv")
-        result.assert_outcomes(passed=1, failed=2, xpassed=1, xfailed=1)
+        result = testdir.runpytest("-svv")
+        result.assert_outcomes(passed=4, failed=2, xpassed=1, xfailed=1)
 
     def test_enabled(self, testdir):
         self.run_tests(testdir)
-        assert len(list(testdir.output().iterdir())) == 5
-        verify_expected_appmap(testdir)
+        assert len(list(testdir.output().iterdir())) == 6
+        numpy_version = package_version("numpy")
+        verify_expected_appmap(testdir, f"-numpy{numpy_version.major}")
         verify_expected_metadata(testdir)
+
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+
+        self.run_tests(testdir)
+        assert len(list(testdir.output().iterdir())) == 6
+        numpy_version = package_version("numpy")
+        verify_expected_appmap(testdir, f"-numpy{numpy_version.major}-no-test-cases")
+        verify_expected_metadata(testdir)
+
+@pytest.mark.example_dir("django")
+def test_pytest_django(testdir):
+    result = testdir.runpytest("-svv", "-k", "test_request_test")
+    result.assert_outcomes(passed=1)
+    # django.test.TestCase is a subclass of unittest.TestCase, so recorder type is unittest
+    assert (
+        testdir.path
+        / "tmp"
+        / "appmap"
+        / "unittest"
+        / "test_test_request_TestRequest_test_request_test.appmap.json"
+    ).exists()
+    assert not (testdir.path / "tmp" / "appmap" / "requests").exists()
 
 
 @pytest.mark.example_dir("trial")
@@ -112,71 +154,68 @@ class TestPytestRunnerTrial(_TestTestRunner):
         # unclean.
         result.assert_outcomes(xfailed=1)
 
-    def test_pytest_trial(self, testdir):
+    def test_enabled(self, testdir):
         self.run_tests(testdir)
         verify_expected_appmap(testdir)
 
+    def test_enabled_no_test_cases(self, testdir, monkeypatch):
+        monkeypatch.setenv("APPMAP_CONFIG", "appmap-no-test-cases.yml")
+        self.run_tests(testdir)
+        verify_expected_appmap(testdir, "-no-test-cases")
 
-def test_overwrites_existing(tmp_path):
-    foo_file = tmp_path / "foo.appmap.json"
+
+EMPTY_APPMAP = types.SimpleNamespace(events=[])
+
+RECORDER_TYPE = "test"
+
+
+@pytest.fixture(name="recorder_outdir")
+def _recorder_outdir(tmp_path) -> Path:
+    ret = tmp_path / RECORDER_TYPE
+    ret.mkdir(parents=True)
+    return ret
+
+
+def test_overwrites_existing(recorder_outdir):
+    foo_file = recorder_outdir / "foo.appmap.json"
     foo_file.write_text("existing")
-    web_framework.write_appmap(tmp_path, "foo", "replacement")
-    assert foo_file.read_text() == "replacement"
+    recording.write_appmap(EMPTY_APPMAP, "foo", RECORDER_TYPE, None, recorder_outdir.parent)
+    assert foo_file.read_text().startswith('{"version"')
 
 
-def test_write_appmap(tmp_path):
-    web_framework.write_appmap(tmp_path, "foo", "bar")
-    assert (tmp_path / "foo.appmap.json").read_text() == "bar"
+def test_write_appmap(recorder_outdir):
+    recording.write_appmap(EMPTY_APPMAP, "foo", RECORDER_TYPE, None, recorder_outdir.parent)
+    assert (recorder_outdir / "foo.appmap.json").read_text().startswith('{"version"')
 
     longname = "-".join(["testing"] * 42)
-    web_framework.write_appmap(tmp_path, longname, "bar")
+    recording.write_appmap(EMPTY_APPMAP, longname, RECORDER_TYPE, None, recorder_outdir.parent)
     expected_shortname = longname[:235] + "-5d6e10d.appmap.json"
-    assert (tmp_path / expected_shortname).read_text() == "bar"
+    assert (recorder_outdir / expected_shortname).read_text().startswith('{"version"')
+
+@pytest.mark.example_dir("pytest-instrumented")
+@pytest.mark.appmap_enabled
+def test_pytest_instrumented(testdir):
+    result = testdir.runpytest("-svv", "-p", "pytester", "test_instrumented.py")
+    result.assert_outcomes(passed=1)
+    appmap_file = testdir.path / "tmp" / "appmap" / "pytest" / "test_skipped.appmap.json"
+    appmap = json.load(appmap_file.open())
+    events = appmap["events"]
+    assert len(events) > 0
+    check_call_stack(events)
 
 
-@pytest.fixture(name="testdir")
-def fixture_runner_testdir(request, data_dir, pytester, monkeypatch):
-    # We need to set environment variables to control how tests are run. This will only work
-    # properly if pytester runs pytest in a subprocess.
-    assert (
-        pytester._method == "subprocess"  # pylint:disable=protected-access
-    ), "must run pytest in a subprocess"
-
-    # The init subdirectory contains a sitecustomize.py file that
-    # imports the appmap module. This simulates the way a real
-    # installation works, performing the same function as the the
-    # appmap.pth file that gets put in site-packages.
-    monkeypatch.setenv("PYTHONPATH", "init")
-
-    # Make sure APPMAP isn't the environment, to test that recording-by-default is working as
-    # expected. Individual test cases may set it as necessary.
-    monkeypatch.delenv("APPMAP", raising=False)
-
-    marker = request.node.get_closest_marker("example_dir")
-    test_type = "unittest" if marker is None else marker.args[0]
-    pytester.copy_example(test_type)
-
-    pytester.expected = data_dir / test_type / "expected"
-    pytester.test_type = test_type
-
-    # this is so test_type can be overriden in test cases
-    def output_dir():
-        return pytester.path / "tmp" / "appmap" / pytester.test_type
-
-    pytester.output = output_dir
-
-    return pytester
-
-
-def verify_expected_appmap(testdir):
+def verify_expected_appmap(testdir, suffix=""):
     appmap_json = list(testdir.output().glob("*test_hello_world.appmap.json"))
     assert len(appmap_json) == 1  # sanity check
     generated_appmap = normalize_appmap(appmap_json[0].read_text())
 
-    appmap_json = testdir.expected / (f"{testdir.test_type}.appmap.json")
+    appmap_json = testdir.expected / (f"{testdir.test_type}{suffix}.appmap.json")
     expected_appmap = json.loads(appmap_json.read_text())
 
-    assert generated_appmap == expected_appmap, f"expected appmap file {appmap_json}"
+    assert generated_appmap == expected_appmap, (
+        f"expected appmap file {appmap_json}\n"
+        + f"generated appmap: {json.dumps(generated_appmap, indent=2)}"
+    )
 
 
 def verify_expected_metadata(testdir):
@@ -190,4 +229,6 @@ def verify_expected_metadata(testdir):
         name = pattern.search(file.name).group(1)
         metadata = json.loads(file.read_text())["metadata"]
         expected = testdir.expected / f"{name}.metadata.json"
-        assert metadata == DictIncluding(json.loads(expected.read_text()))
+        assert metadata == DictIncluding(
+            json.loads(expected.read_text())
+        ), f"expected appmap: {file}"

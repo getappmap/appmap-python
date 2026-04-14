@@ -1,8 +1,7 @@
 import json
 import sys
 from argparse import ArgumentParser
-
-from importlib_metadata import PackageNotFoundError, distribution, version
+from importlib.metadata import PackageNotFoundError, distribution, version
 
 from _appmap.configuration import Config
 from _appmap.env import Env
@@ -69,7 +68,7 @@ def has_unittest_tests():
 
 
 def _run(*, discover_tests):
-    config = Config()
+    config = Config.current
     uses_pytest = has_dist("pytest")
 
     has_tests = None

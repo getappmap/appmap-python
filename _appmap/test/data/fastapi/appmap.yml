@@ -1,0 +1,3 @@
+name: FastAPITest
+packages:
+- path: fastapiapp

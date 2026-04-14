@@ -2,18 +2,23 @@
 Manage Configuration AppMap recorder for Python.
 """
 
+import ast
+import importlib.metadata
 import inspect
+import json
 import os
+import re
 import sys
 from os.path import realpath
 from pathlib import Path
 from textwrap import dedent
 
-import importlib_metadata
 import yaml
+from yaml import SafeLoader
 from yaml.parser import ParserError
 
 from _appmap.labels import LabelSet
+from _appmap.singleton import SingletonMeta
 from appmap.labeling import presets as label_presets
 
 from . import utils
@@ -26,33 +31,40 @@ logger = Env.current.getLogger(__name__)
 
 def default_app_name(rootdir):
     rootdir = Path(rootdir)
-    if not (rootdir / ".git").exists():
-        return rootdir.name
+    if (rootdir / ".git").exists():
+        repo_root = _get_repo_root(rootdir)
+        if repo_root:
+            return repo_root.name
+    return rootdir.name
 
+def _get_repo_root(rootdir):
     git = utils.git(cwd=str(rootdir))
     repo_root = git("rev-parse --show-toplevel")
-    return Path(repo_root).name
+    if repo_root:
+        return Path(repo_root)
+    return None
 
+def _resolve_relative_to(path1: Path, path2: Path):
+    return (path2 / path1).resolve(strict=False)
 
 # Make it easy to mock sys.prefix
 def _get_sys_prefix():
     return realpath(sys.prefix)
 
 
+_EXCLUDE_PATTERN = re.compile(r"\..*|node_modules|.*test.*|site-packages")
+
+
 def find_top_packages(rootdir):
     """
-    Scan a directory tree for packages that should appear in the
-    default config file.
+    Scan a directory tree for packages that should appear in the default config file.
 
-    Examine directories in rootdir, to see if they contains an
-    __init__.py.  If it does, add it to the list of packages and don't
-    scan any of its subdirectories.  If it doesn't, scan its
+    Examine each directory in rootdir, to see if it contains an __init__.py.  If it does, add it to
+    the list of packages and don't scan any of its subdirectories.  If it doesn't, scan its
     subdirectories to find __init__.py.
 
-    Some directories are automatically excluded from the search:
-      * sys.prefix
-      * Hidden directories (i.e. those that start with a '.')
-      * node_modules
+    Directory traversal will stop at directories that match _EXCLUDE_PATTERN. Such a directory (and
+    its subdirectories) will not be added to the returned packages.
 
     For example, in a directory like this
 
@@ -60,7 +72,7 @@ def find_top_packages(rootdir):
         LICENSE Makefile appveyor.yml docs/ src/ tests/
         MANIFEST.in README.rst blog/ setup.py tddium.yml tox.ini
 
-    docs, src, tests, and blog will get scanned.
+    docs, src, blog will get scanned. tests will be ignored.
 
     Only src has a subdirectory containing an __init__.py:
 
@@ -94,17 +106,17 @@ def find_top_packages(rootdir):
     packages = set()
 
     def excluded(d):
-        excluded = d == "node_modules" or d[0] == "."
+        excluded = _EXCLUDE_PATTERN.search(d) is not None
         if excluded:
-            logger.debug("excluding dir %s", d)
+            logger.trace("excluding dir %s", d)
         return excluded
 
     sys_prefix = _get_sys_prefix()
 
     for d, dirs, files in os.walk(rootdir):
-        logger.debug("dir %s dirs %s", d, dirs)
+        logger.trace("dir %s dirs %s", d, dirs)
         if realpath(d) == sys_prefix:
-            logger.debug("skipping sys.prefix %s", sys_prefix)
+            logger.trace("skipping sys.prefix %s", sys_prefix)
             dirs.clear()
             continue
 
@@ -116,25 +128,26 @@ def find_top_packages(rootdir):
 
     return packages
 
+class AppMapInvalidConfigException(Exception):
+    pass
 
-class Config:
+# We don't have any control over the PyYAML class hierarchy, so we can't control how many ancestors
+# SafeLoader has....
+class _ConfigLoader(SafeLoader):  # pylint: disable=too-many-ancestors
+    def construct_mapping(self, node, deep=False):
+        mapping = super().construct_mapping(node, deep=deep)
+        # Allow record_test_cases to be set using a string (in addition to allowing a boolean).
+        if "record_test_cases" in mapping:
+            val = mapping["record_test_cases"]
+            if isinstance(val, str):
+                mapping["record_test_cases"] = val.lower() == "true"
+        return mapping
+
+
+class Config(metaclass=SingletonMeta):
     """Singleton Config class"""
 
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            logger.debug("Creating the Config object")
-            cls._instance = super(Config, cls).__new__(cls)
-
-            cls._instance._initialized = False
-
-        return cls._instance
-
     def __init__(self):
-        if self._initialized:
-            return
-
         self.file_present = False
         self.file_valid = False
         self.package_functions = {}
@@ -142,17 +155,12 @@ class Config:
 
         self._load_config()
         self._load_functions()
-        logger.info("config: %s", self._config)
-        logger.info("package_functions: %s", self.package_functions)
 
         if "labels" in self._config:
             self.labels.append(self._config["labels"])
 
-        self._initialized = True
-
-    @classmethod
-    def initialize(cls):
-        cls._instance = None
+    def __repr__(self):
+        return json.dumps(self._config["packages"])
 
     @property
     def name(self):
@@ -163,10 +171,15 @@ class Config:
         return self._config["packages"]
 
     @property
+    def record_test_cases(self):
+        return self._config.get("record_test_cases", False)
+
+    @property
     def default(self):
         ret = {
             "name": self.default_name,
             "language": "python",
+            "record_test_cases": False,
             "packages": self.default_packages,
         }
         env = Env.current
@@ -192,7 +205,21 @@ class Config:
         root_dir = Env.current.root_dir
         return [{"path": p} for p in find_top_packages(root_dir)]
 
-    def _load_config(self):
+    def _update_output_dir(self, config_dir):
+        # appmap_dir must be resolved relative to the location of config file
+        # unless APPMAP_OUTPUT_DIR is set by tests.
+        if config_dir and Env.current.get("APPMAP_OUTPUT_DIR", None) is None:
+            # Is appmap_dir specified?
+            appmap_dir = (
+                self._config["appmap_dir"]
+                if "appmap_dir" in self._config else "tmp/appmap"
+            )
+            Env.current.output_dir = _resolve_relative_to(
+                Path(appmap_dir), Path(config_dir)
+            )
+
+    def _load_config(self, show_warnings=False):
+        # pylint: disable=too-many-branches
         self._config = {"name": None, "packages": []}
 
         # Only use a default config if the user hasn't specified a
@@ -203,15 +230,29 @@ class Config:
         if use_default_config:
             env_config_filename = "appmap.yml"
 
-        path = Path(env_config_filename).resolve()
+        env = Env.current
+        config_dir = env.root_dir
+
+        path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
+        if not path.is_file():
+            # search config file in parent directories up to
+            # repo root (if exists) or up to file system root
+            repo_root = _get_repo_root(env.root_dir)
+            config_dir = utils.locate_file_up(
+                env_config_filename, env.root_dir, repo_root
+            )
+            if config_dir:
+                path = _resolve_relative_to(Path(env_config_filename), Path(config_dir))
+
         if path.is_file():
+            self._file = path
             self.file_present = True
 
             should_enable = Env.current.enabled
             Env.current.enabled = False
             self.file_valid = False
             try:
-                self._config = yaml.safe_load(path.read_text(encoding="utf-8"))
+                self._config = yaml.load(path.read_text(encoding="utf-8"), Loader=_ConfigLoader)
                 if not self._config:
                     # It parsed, but was (effectively) empty.
                     self._config = self.default
@@ -221,6 +262,10 @@ class Config:
                         self._config["name"] = self.default_name
                     if "packages" not in self._config:
                         self._config["packages"] = self.default_packages
+                    else:
+                        self._drop_malformed_package_paths(show_warnings)
+
+                    self._update_output_dir(config_dir)
 
                 self.file_valid = True
                 Env.current.enabled = should_enable
@@ -271,6 +316,42 @@ It will be created with this configuration:
 
         self.package_functions.update(modules)
 
+    def _drop_malformed_package_paths(self, show_warnings):
+        invalid_items = []
+        for item in self._config["packages"]:
+            # it can be a "dist" entry
+            if "path" not in item:
+                continue
+
+            path = item.get("path")
+            if path is None:
+                if show_warnings:
+                    logger.warning("Missing path value in configuration file.")
+                invalid_items.append(item)
+                continue
+
+            if not self._check_path_value(path):
+                has_separator = isinstance(path, str) and ('/' in path or '\\' in path)
+                if show_warnings:
+                    logger.warning(
+                        f"Malformed path value '{path}' in configuration file. "
+                        "Path entries must be module names"
+                        f"{' not directory paths' if has_separator else ''}.",
+                        stack_info=False,
+                    )
+                invalid_items.append(item)
+                continue
+
+        if len(invalid_items) > 0:
+            self._config["packages"] = [item for item in self._config["packages"]
+                                        if item not in invalid_items]
+
+    def _check_path_value(self, value):
+        try:
+            ast.parse(f"import {value}")
+            return True
+        except SyntaxError:
+            return False
 
 def startswith(prefix, sequence):
     """
@@ -299,7 +380,7 @@ class PathMatcher:
                 logger.info("%r excluded", fqname)
         else:
             result = False
-        logger.debug("%r.matches(%r) -> %r", self, fqname, result)
+        logger.trace("%r.matches(%r) -> %r", self, fqname, result)
         return result
 
     def __repr__(self):
@@ -314,14 +395,13 @@ class DistMatcher(PathMatcher):
     def __init__(self, dist, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dist = dist
-        self.files = [str(pp.locate()) for pp in importlib_metadata.files(dist)]
+        dist_files = importlib.metadata.files(dist)
+        self.files = [str(pp.locate()) for pp in dist_files] if dist_files is not None else []
 
     def matches(self, filterable):
         try:
             obj = filterable.obj
-            logger.debug(
-                "%r.matches(%r): %s in %r", self, obj, inspect.getfile(obj), self.files
-            )
+            logger.trace("%r.matches(%r): %s in %r", self, obj, inspect.getfile(obj), self.files)
             if inspect.getfile(obj) not in self.files:
                 return False
         except TypeError:
@@ -347,7 +427,7 @@ class MatcherFilter(Filter):
         result = any(
             m.matches(filterable) for m in self.matchers
         ) or self.next_filter.filter(filterable)
-        logger.debug("ConfigFilter.filter(%r) -> %r", filterable.fqname, result)
+        logger.trace("ConfigFilter.filter(%r) -> %r", filterable.fqname, result)
         return result
 
     def wrap(self, filterable):
@@ -362,15 +442,15 @@ class MatcherFilter(Filter):
         # appropriate.
         #
         rule = self.match(filterable)
-        wrapped = getattr(filterable.obj, "_appmap_wrapped", None)
-        if wrapped is None:
-            logger.debug("  wrapping %s", filterable.fqname)
-            Config().labels.apply(filterable)
+        wrapped = getattr(filterable.obj, "_appmap_instrumented", None)
+        if not wrapped:
+            logger.trace("  wrapping %s", filterable.fqname)
+            Config.current.labels.apply(filterable)
             ret = instrument(filterable)
             if rule and rule.shallow:
                 setattr(ret, "_appmap_shallow", rule)
         else:
-            logger.debug("  already wrapped %s", filterable.fqname)
+            logger.trace("  already wrapped %s", filterable.fqname)
             ret = filterable.obj
         return ret
 
@@ -398,7 +478,7 @@ class ConfigFilter(MatcherFilter):
     def __init__(self, *args, **kwargs):
         matchers = []
         if Env.current.enabled:
-            matchers = [matcher_of_config(p) for p in Config().packages]
+            matchers = [matcher_of_config(p) for p in Config.current.packages]
         super().__init__(matchers, *args, **kwargs)
 
 
@@ -411,9 +491,22 @@ class BuiltinFilter(MatcherFilter):
 
 
 def initialize():
-    Config().initialize()
+    Config.reset()
     Importer.use_filter(BuiltinFilter)
     Importer.use_filter(ConfigFilter)
 
 
 initialize()
+
+c = Config.current
+# For various reasons, this code runs more than once on startup. Use an
+# environment variable to make sure the user only sees startup messages once.
+_startup_messages_shown = os.environ.get("_APPMAP_MESSAGES_SHOWN")
+if _startup_messages_shown is None:
+    # pylint: disable=protected-access
+    c._load_config(show_warnings=True)
+    logger.info("file: %s", c._file if c.file_present else "[no appmap.yml]")
+    logger.info("config: %r", c)
+    logger.debug("package_functions: %s", c.package_functions)
+    logger.info("env: %r", os.environ)
+    os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"

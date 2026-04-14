@@ -19,7 +19,7 @@ class ClassMapDict:
         return self._dict.values()
 
 
-class ClassMapEntry:
+class ClassMapEntry:  # pylint: disable=too-few-public-methods
     # pylint: disable=redefined-builtin
     def __init__(self, name, type):
         self.name = name
@@ -32,19 +32,19 @@ class ClassMapEntry:
         return {k: v for k, v in vars(self).items() if v is not None}
 
 
-class PackageEntry(ClassMapEntry):
+class PackageEntry(ClassMapEntry):  # pylint: disable=too-few-public-methods
     def __init__(self, name):
         super().__init__(name, "package")
         self.children = ClassMapDict()
 
 
-class ClassEntry(ClassMapEntry):
+class ClassEntry(ClassMapEntry):  # pylint: disable=too-few-public-methods
     def __init__(self, name):
         super().__init__(name, "class")
         self.children = ClassMapDict()
 
 
-class FuncEntry(ClassMapEntry):
+class FuncEntry(ClassMapEntry):  # pylint: disable=too-few-public-methods
     def __init__(self, e):
         super().__init__(e.method_id, "function")
         self.location = "%s:%s" % (e.path, e.lineno)
@@ -111,7 +111,10 @@ class AppMapEncoder(json.JSONEncoder):
         if isinstance(o, ClassMapEntry):
             return o.to_dict()
 
-        return json.JSONEncoder.default(self, o)
+        try:
+            return json.JSONEncoder.default(self, o)
+        except TypeError:
+            return str(o)
 
 
 def dump(recording, metadata=None, indent=None):

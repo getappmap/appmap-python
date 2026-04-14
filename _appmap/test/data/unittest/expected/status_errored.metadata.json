@@ -2,7 +2,7 @@
   "test_status": "failed",
   "test_failure": {
     "message": "RuntimeError: test error",
-    "location": "simple/test_simple.py:34"
+    "location": "simple/test_simple.py:35"
   },
   "exception": {
     "class": "RuntimeError",

@@ -40,6 +40,7 @@ class TestLabels:
 
         verify_example_appmap(check_labels, "instance_method")
 
+    @pytest.mark.appmap_enabled(config="appmap-no-pyyaml.yml")
     def test_mod_instrumented_by_preset(self, verify_example_appmap):
         def check_labels(*_):
             import yaml  # pylint: disable=import-outside-toplevel

@@ -1,21 +1,27 @@
 import re
 import time
+from importlib.metadata import version
+from types import SimpleNamespace
 
-import flask
-import flask.cli
 import jinja2
-from flask import g, request
-from flask.cli import ScriptInfo
+from blinker import signal
+from flask import g, request, request_finished, request_started
 from werkzeug.exceptions import BadRequest, UnsupportedMediaType
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 
 from _appmap import wrapt
 from _appmap.env import Env
-from _appmap.event import HttpServerRequestEvent, HttpServerResponseEvent
+from _appmap.event import HttpServerRequestEvent
 from _appmap.flask import app as remote_recording_app
 from _appmap.metadata import Metadata
 from _appmap.utils import patch_class, values_dict
-from _appmap.web_framework import JSON_ERRORS, AppmapMiddleware, MiddlewareInserter
+from _appmap.web_framework import (
+    JSON_ERRORS,
+    REMOTE_ENABLED_ATTR,
+    REQUEST_ENABLED_ATTR,
+    AppmapMiddleware,
+    MiddlewareInserter,
+)
 from _appmap.web_framework import TemplateHandler as BaseTemplateHandler
 
 try:
@@ -54,9 +60,8 @@ def request_params(req):
 
 NP_PARAMS = re.compile(r"<Rule '(.*?)'")
 NP_PARAM_DELIMS = str.maketrans("<>", "{}")
-
-_REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
-_REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
+_after_finalize = signal("_appmap_after_finalize")
+_before_exception = signal("_appmap_before_exception")
 
 
 class AppmapFlask(AppmapMiddleware):
@@ -70,35 +75,36 @@ class AppmapFlask(AppmapMiddleware):
     from appmap.flask import AppmapFlask
 
     app = new Flask(__Name__)
-    AppmapFlask().init_app(app)
+    AppmapFlask(app).init_app()
     ```
     """
 
-    def __init__(self):
+    def __init__(self, app):
         super().__init__("Flask")
+        self.app = app
 
-    def init_app(self, app):
-        enable_by_default = "true" if app.debug else "false"
+    def init_app(self):
+        enable_by_default = "true" if self.app.debug else "false"
         remote_enabled = Env.current.enables("remote", enable_by_default)
         if remote_enabled:
             logger.debug("Remote recording is enabled (Flask)")
-            app.wsgi_app = DispatcherMiddleware(
-                app.wsgi_app, {"/_appmap": remote_recording_app}
+            self.app.wsgi_app = DispatcherMiddleware(
+                self.app.wsgi_app, {"/_appmap": remote_recording_app}
             )
-        setattr(app, _REMOTE_ENABLED_ATTR, remote_enabled)
+        setattr(self.app, REMOTE_ENABLED_ATTR, remote_enabled)
 
-        app.before_request(self.before_request)
-        app.after_request(self.after_request)
-        setattr(app, _REQUEST_ENABLED_ATTR, True)
+        request_started.connect(self.request_started, self.app, weak=False)
+        request_finished.connect(self.request_finished, self.app, weak=False)
+        _after_finalize.connect(self.after_finalize, sender=self.app, weak=False)
 
-    def before_request(self):
-        if not self.should_record:
-            return
+        setattr(self.app, REQUEST_ENABLED_ATTR, True)
 
-        self.before_request_hook(request, request.path)
+    def request_started(self, _, **__):
+        # request context is bound, we can use flask.request now:
+        self.before_request_hook(request)
 
     def before_request_main(self, rec, req):
-        Metadata.add_framework("flask", flask.__version__)
+        Metadata.add_framework("flask", version("flask"))
         np = None
         if req.url_rule:
             # pragma pylint: disable=line-too-long
@@ -123,37 +129,42 @@ class AppmapFlask(AppmapMiddleware):
         )
         rec.add_event(call_event)
 
-        # Flask 2 removed the suggestion to use _app_ctx_stack.top, and instead says extensions
-        # should use g with a private property.
-        g._appmap_request_event = call_event  # pylint: disable=protected-access
-        g._appmap_request_start = time.monotonic()  # pylint: disable=protected-access
+        # Save the current recorder in flask.g, so it will be available in
+        # the got_request_exception signal handler. Flask seems to be resetting the
+        # current Context before signaling, which removes our ContextVar.
+        # TODO: enhance AppmapMiddleware so it allows subclasses to specify how
+        #       the request recording should be stored.
+        g.appmap_recorder = rec
+        g.appmap_request_event = call_event
+        g.appmap_request_start = time.monotonic()
         return None, None
 
-    def after_request(self, response):
+    def after_finalize(self, _, **__):
         if not self.should_record:
-            return response
+            return
 
-        return self.after_request_hook(
+        return_event = self.after_request_main(
+            request.path,
+            None,
+            None,
+            g.appmap_request_start,
+            g.appmap_request_event.id,
+        )
+
+        self.after_request_hook(
             request.path,
             request.method,
             request.base_url,
-            response,
-            response.headers,
-            None,
-            None,
+            g.appmap_response.status_code,
+            g.appmap_response.headers,
+            return_event,
         )
 
-    def after_request_main(self, rec, response, start, _):
-        parent_id = g._appmap_request_event.id  # pylint: disable=protected-access
-        start = g._appmap_request_start  # pylint: disable=protected-access
-        duration = time.monotonic() - start
-        return_event = HttpServerResponseEvent(
-            parent_id=parent_id,
-            elapsed=duration,
-            status_code=response.status_code,
-            headers=response.headers,
-        )
-        rec.add_event(return_event)
+    def request_finished(self, _, response, **__):
+        if not self.should_record:
+            return response
+        g.appmap_response = response
+        return response
 
 
 @patch_class(jinja2.Template)
@@ -168,13 +179,13 @@ class FlaskInserter(MiddlewareInserter):
         self.app = app
 
     def middleware_present(self):
-        return hasattr(self.app, _REQUEST_ENABLED_ATTR)
+        return hasattr(self.app, REQUEST_ENABLED_ATTR)
 
     def insert_middleware(self):
-        AppmapFlask().init_app(self.app)
+        AppmapFlask(self.app).init_app()
 
     def remote_enabled(self):
-        return getattr(self.app, _REMOTE_ENABLED_ATTR, None)
+        return getattr(self.app, REMOTE_ENABLED_ATTR, None)
 
 
 def install_extension(wrapped, _, args, kwargs):
@@ -184,11 +195,31 @@ def install_extension(wrapped, _, args, kwargs):
 
     return app
 
+def _finalize_request(wrapped, inst, args, kwargs):
+    if not Env.current.enabled or kwargs.get("from_error_handler"):
+        return wrapped(*args, **kwargs)
+
+    ret = wrapped(*args, **kwargs)
+    _after_finalize.send(inst)
+    return ret
+
+
+def _handle_user_exception(wrapped, inst, args, kwargs):
+    if not Env.current.enabled:
+        return wrapped(*args, **kwargs)
+
+    try:
+        return wrapped(*args, **kwargs)
+    except Exception:  # pylint: disable=broad-exception-caught
+        g.appmap_response = SimpleNamespace(status_code=500, headers={})
+        _after_finalize.send(inst)
+        raise
+
 
 if Env.current.enabled:
     # ScriptInfo.load_app is the function that's used by the Flask cli to load an app, no matter how
     # the app's module is specified (e.g. with the FLASK_APP env var, the `--app` flag, etc). Hook
     # it so it installs our extension on the app.
-    ScriptInfo.load_app = wrapt.wrap_function_wrapper(
-        "flask.cli", "ScriptInfo.load_app", install_extension
-    )
+    wrapt.wrap_function_wrapper("flask.cli", "ScriptInfo.load_app", install_extension)
+    wrapt.wrap_function_wrapper("flask.app", "Flask.finalize_request", _finalize_request)
+    wrapt.wrap_function_wrapper("flask.app", "Flask.handle_user_exception", _handle_user_exception)

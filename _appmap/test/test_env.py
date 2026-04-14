@@ -2,12 +2,12 @@ from _appmap.env import Env
 
 
 def test_disable_temporarily():
-    env = Env({"APPMAP": "true"})
+    env = Env({"_APPMAP": "true"})
     assert env.enables("requests")
     try:
         with env.disabled("requests"):
             assert not env.enables("requests")
-            raise 'hell'
-    except:
+            raise RuntimeError("hell")
+    except RuntimeError:
         ...
     assert env.enables("requests")

@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring
 import inspect
 import logging
+import operator
 import threading
 from functools import lru_cache, partial
 from inspect import Parameter, Signature
@@ -10,11 +11,11 @@ from .env import Env
 from .recorder import Recorder
 from .utils import (
     FnType,
+    FqFnName,
     appmap_tls,
     compact_dict,
     fqname,
     get_function_location,
-    split_function_name,
 )
 
 logger = Env.current.getLogger(__name__)
@@ -44,13 +45,13 @@ class _EventIds:
         cls._next_thread_id = 0
 
 
-def display_string(val):
+def display_string(val, display_value=False):
     # If we're asked to display parameters, make a best-effort attempt
     # to get a string value for the parameter using repr(). If parameter
     # display is disabled, or repr() has raised, just formulate a value
     # from the class and id.
     value = None
-    if Env.current.display_params:
+    if display_value:
         try:
             value = repr(val)
         except Exception:  # pylint: disable=broad-except
@@ -78,7 +79,7 @@ def _is_list_or_dict(val_type):
     return issubclass(val_type, list), issubclass(val_type, dict)
 
 
-def _describe_schema(name, val, depth, max_depth):
+def _describe_schema(name, val, depth, max_depth, display_value=False):
 
     val_type = type(val)
 
@@ -87,6 +88,9 @@ def _describe_schema(name, val, depth, max_depth):
         ret["name"] = name
     ret["class"] = fqname(val_type)
 
+    if not display_value:
+        return ret
+
     islist, isdict = _is_list_or_dict(val_type)
     if not (islist or isdict) or (depth >= max_depth and isdict):
         return ret
@@ -94,11 +98,15 @@ def _describe_schema(name, val, depth, max_depth):
     if islist:
         elts = [(None, v) for v in val]
         schema_key = "items"
-    elif isdict:
+    else:
+        assert isdict
         elts = val.items()
         schema_key = "properties"
 
-    schema = [_describe_schema(k, v, depth + 1, max_depth) for k, v in elts]
+    schema = [
+        _describe_schema(k, v, depth + 1, max_depth, display_value=display_value)
+        for k, v in elts
+    ]
     # schema will be [None] if depth is exceeded, don't use it
     if any(schema):
         ret[schema_key] = schema
@@ -106,13 +114,14 @@ def _describe_schema(name, val, depth, max_depth):
     return ret
 
 
-def describe_value(name, val, max_depth=5):
-    ret = {
+def describe_value(name, val, max_depth=5, display_value=False):
+    ret = _describe_schema(name, val, 0, max_depth, display_value=display_value)
+    ret.update({
         "object_id": id(val),
-        "value": display_string(val),
-    }
-    ret.update(_describe_schema(name, val, 0, max_depth))
-    if any(_is_list_or_dict(type(val))):
+        "value": display_string(val, display_value=display_value),
+    })
+
+    if display_value and any(_is_list_or_dict(type(val))):
         ret["size"] = len(val)
 
     return ret
@@ -166,28 +175,55 @@ class Param:
     def __repr__(self):
         return "<Param name: %s kind: %s>" % (self.name, self.kind)
 
-    def to_dict(self, value):
+    def to_dict(self, value, display_value=False):
         ret = {"kind": self.kind}
-        ret.update(describe_value(self.name, value))
+        ret.update(describe_value(self.name, value, display_value=display_value))
         return ret
 
+def _get_name_parts(filterable):
+    """
+    Return the module name and qualname for filterable.obj.
+
+    If filterable.obj is an operator.attrgetter that we've determined is associated with a property,
+    compute the names from the fqname of the filterable. If it's anything else, try to get its
+    __module__ and __qualname__, falling back to default values if they're not available.
+    """
+    fn = filterable.obj
+    assert callable(fn), f"{filterable} doesn't have a callable obj"
+
+    if (
+        type(fn) is operator.attrgetter
+        and (parts := filterable.fqname.split("."))
+        and len(parts) > 2
+    ):
+        # filterable.fqname was set when we identified this filterable as a property
+        modname = ".".join(parts[:-2])
+        qualname = ".".join(parts[-2:])
+    else:
+        modname = getattr(fn, "__module__", "unknown")
+        qualname = getattr(fn, "__qualname__", None)
+        if qualname is None:
+            qualname = getattr(fn.__class__, "__name__", "unknown")
+    return modname, qualname
 
 class CallEvent(Event):
-    __slots__ = ["_fn", "static", "receiver", "parameters", "labels"]
+    # pylint: disable=method-cache-max-size-none
+    __slots__ = ["_fn", "_fqfn", "static", "receiver", "parameters", "labels", "auxtype"]
 
     @staticmethod
-    def make(fn, fntype):
+    def make(filterable):
         """
         Return a factory for creating new CallEvents based on
         introspecting the given function.
         """
 
         # Delete the labels so the app doesn't see them.
+        fn = filterable.obj
         labels = getattr(fn, "_appmap_labels", None)
         if labels:
             del fn._appmap_labels
 
-        return partial(CallEvent, fn, fntype, labels=labels)
+        return partial(CallEvent, filterable, labels=labels)
 
     @staticmethod
     def make_params(filterable):
@@ -209,15 +245,15 @@ class CallEvent(Event):
             # going to log a message about a mismatch.
             wrapped_sig = inspect.signature(fn, follow_wrapped=True)
             if sig != wrapped_sig:
-                logger.debug(
-                    "signature of wrapper %s.%s doesn't match wrapped",
-                    *split_function_name(fn)
-                )
+                logger.debug("signature of wrapper %r doesn't match wrapped", fn)
+                logger.debug("sig: %r", sig)
+                logger.debug("wrapped_sig: %r", wrapped_sig)
 
         return [Param(p) for p in sig.parameters.values()]
 
     @staticmethod
-    def set_params(params, instance, args, kwargs):
+    def set_params(params, instance, args, kwargs, display_value=False):
+        # pylint: disable=too-many-branches
         # Note that set_params expects args and kwargs as a tuple and
         # dict, respectively. It operates on them as collections, so
         # it doesn't unpack them.
@@ -264,23 +300,26 @@ class CallEvent(Event):
                 # If all the parameter types are handled, this
                 # shouldn't ever happen...
                 raise RuntimeError("Unknown parameter with desc %s" % (repr(p)))
-            ret.append(p.to_dict(value))
+            ret.append(p.to_dict(value, display_value=display_value))
         return ret
 
     @property
     @lru_cache(maxsize=None)
     def function_name(self):
-        return split_function_name(self._fn)
+        return self._fqfn.fqfn
 
     @property
     @lru_cache(maxsize=None)
     def defined_class(self):
-        return self.function_name[0]
+        return self._fqfn.fqclass
 
     @property
     @lru_cache(maxsize=None)
     def method_id(self):
-        return self.function_name[1]
+        ret = self._fqfn.fqfn[1]
+        if self.auxtype is not None:
+            ret = f"{ret} ({self.auxtype})"
+        return ret
 
     @property
     @lru_cache(maxsize=None)
@@ -305,9 +344,14 @@ class CallEvent(Event):
             comment = inspect.getcomments(self._fn)
         return comment
 
-    def __init__(self, fn, fntype, parameters, labels):
+    def __init__(self, filterable, parameters, labels):
         super().__init__("call")
+        fn = filterable.obj
         self._fn = fn
+        modname, qualname = _get_name_parts(filterable)
+        self._fqfn = FqFnName(modname, qualname)
+
+        fntype = filterable.fntype
         self.static = fntype in FnType.STATIC | FnType.CLASS | FnType.MODULE
         self.receiver = None
         if fntype in FnType.CLASS | FnType.INSTANCE:
@@ -315,6 +359,13 @@ class CallEvent(Event):
             parameters = parameters[1:]
         self.parameters = parameters
         self.labels = labels
+        self.auxtype = None
+        if fntype & FnType.GET:
+            self.auxtype = "get"
+        elif fntype & FnType.SET:
+            self.auxtype = "set"
+        elif fntype & FnType.DEL:
+            self.auxtype = "del"
 
     def to_dict(self, attrs=None):
         ret = super().to_dict()  # get the attrs defined in __slots__
@@ -329,7 +380,7 @@ class CallEvent(Event):
         return ret
 
 
-class SqlEvent(Event):
+class SqlEvent(Event):  # pylint: disable=too-few-public-methods
     __slots__ = ["sql_query"]
 
     def __init__(self, sql, vendor=None, version=None):
@@ -345,14 +396,23 @@ class SqlEvent(Event):
         )
 
 
-class MessageEvent(Event):
+class MessageEvent(Event):  # pylint: disable=too-few-public-methods
     __slots__ = ["message"]
 
     def __init__(self, message_parameters):
         super().__init__("call")
         self.message = []
-        for name, value in message_parameters.items():
-            message_object = describe_value(name, value)
+        self.message_parameters = message_parameters
+
+    @property
+    def message_parameters(self):
+        return self.message
+
+    @message_parameters.setter
+    def message_parameters(self, params):
+        display_params = Env.current.display_params
+        for name, value in params.items():
+            message_object = describe_value(name, value, display_value=display_params)
             self.message.append(message_object)
 
 
@@ -386,11 +446,13 @@ class HttpClientRequestEvent(MessageEvent):
 
 
 # pylint: disable=too-few-public-methods
+_NORMALIZED_PATH_INFO_ATTR = "normalized_path_info"
 class HttpServerRequestEvent(MessageEvent):
     """A call AppMap event representing an HTTP server request."""
 
     __slots__ = ["http_server_request"]
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(
         self,
         request_method,
@@ -406,7 +468,7 @@ class HttpServerRequestEvent(MessageEvent):
             "request_method": request_method,
             "protocol": protocol,
             "path_info": path_info,
-            "normalized_path_info": normalized_path_info,
+            _NORMALIZED_PATH_INFO_ATTR: normalized_path_info,
         }
 
         if headers is not None:
@@ -419,6 +481,14 @@ class HttpServerRequestEvent(MessageEvent):
             )
 
         self.http_server_request = compact_dict(request)
+
+    @property
+    def normalized_path_info(self):
+        return self.http_server_request.get(_NORMALIZED_PATH_INFO_ATTR, None)
+
+    @normalized_path_info.setter
+    def normalized_path_info(self, npi):
+        self.http_server_request[_NORMALIZED_PATH_INFO_ATTR] = npi
 
 
 class ReturnEvent(Event):
@@ -433,9 +503,13 @@ class ReturnEvent(Event):
 class FuncReturnEvent(ReturnEvent):
     __slots__ = ["return_value"]
 
-    def __init__(self, parent_id, elapsed, return_value):
+    def __init__(self, parent_id, elapsed, return_value, display_value=False):
         super().__init__(parent_id, elapsed)
-        self.return_value = describe_value(None, return_value)
+        # Import here to prevent circular dependency
+        # pylint: disable=import-outside-toplevel
+        from _appmap.instrument import recording_disabled # noqa: F401
+        with recording_disabled():
+            self.return_value = describe_value(None, return_value, display_value=display_value)
 
 
 class HttpResponseEvent(ReturnEvent):
@@ -443,18 +517,19 @@ class HttpResponseEvent(ReturnEvent):
 
     def __init__(self, status_code, headers=None, **kwargs):
         super().__init__(**kwargs)
+        self.response = {}
+        self.update(status_code, headers)
 
-        response = {"status_code": status_code}
+    def update(self, status_code, headers):
+        if status_code is not None:
+            self.response.update({"status_code": status_code})
 
         if headers is not None:
-            response.update(
-                {
-                    "mime_type": headers.get("Content-Type"),
-                    "headers": none_if_empty(dict(headers)),
-                }
-            )
-
-        self.response = compact_dict(response)
+            if "Content-Type" in headers:
+                self.response.update({"mime_type": headers.get("Content-Type")})
+            updated_headers = dict(headers)
+            if len(updated_headers) > 0:
+                self.response.update({"headers": updated_headers})
 
 
 # pylint: disable=too-few-public-methods

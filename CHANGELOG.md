@@ -1,3 +1,302 @@
+# [2.2.0](https://github.com/getappmap/appmap-python/compare/v2.1.9...v2.2.0) (2026-04-04)
+
+
+### Features
+
+* Capture argument values of labeled functions by default ([453b697](https://github.com/getappmap/appmap-python/commit/453b697512f04d235e09629b582d1a12f1dac2cc))
+
+## [2.1.9](https://github.com/getappmap/appmap-python/compare/v2.1.8...v2.1.9) (2026-02-03)
+
+
+### Bug Fixes
+
+* **recording:** sanitize process recording filenames for Windows ([eb0379f](https://github.com/getappmap/appmap-python/commit/eb0379f133b6fe8c1f69a98f4259a67de5725c95)), closes [#377](https://github.com/getappmap/appmap-python/issues/377)
+
+## [2.1.8](https://github.com/getappmap/appmap-python/compare/v2.1.7...v2.1.8) (2024-11-13)
+
+
+### Bug Fixes
+
+* Prevent process recordings from clobbering one another ([0347af1](https://github.com/getappmap/appmap-python/commit/0347af18d69f5f3be6a8c0789400bacd3fff42b9))
+
+## [2.1.7](https://github.com/getappmap/appmap-python/compare/v2.1.6...v2.1.7) (2024-08-15)
+
+
+### Bug Fixes
+
+* cache Env.root_dir, is_appmap_repo ([5122d76](https://github.com/getappmap/appmap-python/commit/5122d7659722663cecf4d203883a48d136e19618))
+* disable parameter rendering by  default ([91f1364](https://github.com/getappmap/appmap-python/commit/91f136445c16bcb55912549d8512bea7732d8218))
+
+## [2.1.6](https://github.com/getappmap/appmap-python/compare/v2.1.5...v2.1.6) (2024-08-13)
+
+
+### Bug Fixes
+
+* generate AppMap data from django tests ([ea0918c](https://github.com/getappmap/appmap-python/commit/ea0918cf4e952a9e1ab4a48253ec16e4484b78a0))
+* make wrapt function objects pickleable ([3561e3b](https://github.com/getappmap/appmap-python/commit/3561e3b13a1f004b793073a9f9f7e1345b192fa1))
+
+## [2.1.5](https://github.com/getappmap/appmap-python/compare/v2.1.4...v2.1.5) (2024-08-05)
+
+
+### Bug Fixes
+
+* reenable instrumentation of properties ([7b3119a](https://github.com/getappmap/appmap-python/commit/7b3119a4fdf60e19a28a279d4ba6afe379925e14))
+
+## [2.1.4](https://github.com/getappmap/appmap-python/compare/v2.1.3...v2.1.4) (2024-07-26)
+
+
+### Bug Fixes
+
+* disable property instrumentation by default ([a280300](https://github.com/getappmap/appmap-python/commit/a2803003a57b1aabc87cadc755786613e2709ff2))
+
+## [2.1.3](https://github.com/getappmap/appmap-python/compare/v2.1.2...v2.1.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* add APPMAP_INSTRUMENT_PROPERTIES ([11b6307](https://github.com/getappmap/appmap-python/commit/11b6307cf2bdbfae50f30d4f329e6ba3ac6f4035))
+* add ruff ([ac94204](https://github.com/getappmap/appmap-python/commit/ac94204d9bd35bf238865a7bf44cea039f8282fb))
+* improve property handling ([5cce0f0](https://github.com/getappmap/appmap-python/commit/5cce0f0644eebf7d19bad5cda61726393cd7ba68))
+* show config packages on startup ([feec761](https://github.com/getappmap/appmap-python/commit/feec761fefd5596c4fd7bde0cd9c3901e02791b3))
+* try to avoid recording tests ([1847b0e](https://github.com/getappmap/appmap-python/commit/1847b0e7177327adc080854fbbec17b89166d516))
+
+## [2.1.2](https://github.com/getappmap/appmap-python/compare/v2.1.1...v2.1.2) (2024-07-16)
+
+
+### Bug Fixes
+
+* catch BaseException from instrumented code ([c927f9c](https://github.com/getappmap/appmap-python/commit/c927f9cbbd809f683e8028505ef38bc3311fcf36))
+
+## [2.1.1](https://github.com/getappmap/appmap-python/compare/v2.1.0...v2.1.1) (2024-07-15)
+
+
+### Bug Fixes
+
+* Flask events are ordered correctly ([f970fb7](https://github.com/getappmap/appmap-python/commit/f970fb7828edc3e5d19aa03e48e9302077d58614))
+* only instrument property functions once ([23b52b5](https://github.com/getappmap/appmap-python/commit/23b52b507eedfb42a15e93a5e7ce1a5fc1d3edad))
+
+# [2.1.0](https://github.com/getappmap/appmap-python/compare/v2.0.10...v2.1.0) (2024-07-03)
+
+
+### Features
+
+* instrument properties ([d69b6e1](https://github.com/getappmap/appmap-python/commit/d69b6e1648bd647b91ca4f9ef75300af7e015bfb))
+
+## [2.0.10](https://github.com/getappmap/appmap-python/compare/v2.0.9...v2.0.10) (2024-06-21)
+
+
+### Bug Fixes
+
+* request recording in unittest setUp method ([1ee69cb](https://github.com/getappmap/appmap-python/commit/1ee69cb39b8be8e97b1498218b4ff3a4b9b1c3ee))
+
+## [2.0.9](https://github.com/getappmap/appmap-python/compare/v2.0.8...v2.0.9) (2024-06-20)
+
+
+### Bug Fixes
+
+* appmap breaks vscode python extension starting a REPL ([c179b86](https://github.com/getappmap/appmap-python/commit/c179b86a5769de90775f0d8848e8ad0422961dfe))
+
+## [2.0.8](https://github.com/getappmap/appmap-python/compare/v2.0.7...v2.0.8) (2024-06-05)
+
+
+### Bug Fixes
+
+* move __reduce_ex__ up to ObjectProxy ([f4618b6](https://github.com/getappmap/appmap-python/commit/f4618b68bc9bc40ff54120385c1820896094bd2e))
+* optionally disable schema render ([4e29c13](https://github.com/getappmap/appmap-python/commit/4e29c1321d0e52554a797efd4e5bdda240e2fe82))
+* support APPMAP_MAX_TIME ([d60c528](https://github.com/getappmap/appmap-python/commit/d60c52813aec424de1db2b45bb5f13eb23965d61))
+
+## [2.0.7](https://github.com/getappmap/appmap-python/compare/v2.0.6...v2.0.7) (2024-06-05)
+
+
+### Bug Fixes
+
+* max recursion depth exceeded ([4223079](https://github.com/getappmap/appmap-python/commit/42230798cda296e31d437b93593e87760a498fad))
+
+## [2.0.6](https://github.com/getappmap/appmap-python/compare/v2.0.5...v2.0.6) (2024-05-31)
+
+
+### Bug Fixes
+
+* use an RLock in SharedRecorder._add_event ([ec1f95d](https://github.com/getappmap/appmap-python/commit/ec1f95debdd3524b688793459be490432895d57c))
+
+## [2.0.5](https://github.com/getappmap/appmap-python/compare/v2.0.4...v2.0.5) (2024-05-30)
+
+
+### Bug Fixes
+
+* appmap.Recording is available even when APPMAP=[secure] ([6bb7687](https://github.com/getappmap/appmap-python/commit/6bb7687412808c1d10a5d705ab0b1983868bb576))
+
+## [2.0.4](https://github.com/getappmap/appmap-python/compare/v2.0.3...v2.0.4) (2024-05-29)
+
+
+### Bug Fixes
+
+* optionally limit number of events collected ([7c17a38](https://github.com/getappmap/appmap-python/commit/7c17a383fc849474ac44239abc6fb9f173f97edd))
+
+## [2.0.3](https://github.com/getappmap/appmap-python/compare/v2.0.2...v2.0.3) (2024-05-28)
+
+
+### Bug Fixes
+
+* ask pytest not to rewrite our modules ([aae5dea](https://github.com/getappmap/appmap-python/commit/aae5dea50217568c67ccd312558c5e818f49b4ca))
+
+## [2.0.2](https://github.com/getappmap/appmap-python/compare/v2.0.1...v2.0.2) (2024-05-27)
+
+
+### Bug Fixes
+
+* expect a missing config file ([9cb20a4](https://github.com/getappmap/appmap-python/commit/9cb20a4e09f4084bb11fa117016d6b418bc03651))
+
+## [2.0.1](https://github.com/getappmap/appmap-python/compare/v2.0.0...v2.0.1) (2024-05-23)
+
+
+### Bug Fixes
+
+* completely disable record-by-default ([27e1bb4](https://github.com/getappmap/appmap-python/commit/27e1bb40734213ad100f27e024337e3d2e484c3e))
+* handle non json serializable types ([b4fedc6](https://github.com/getappmap/appmap-python/commit/b4fedc6c8d22082c9640d03caa8fbf12121fe8f9))
+
+# [2.0.0](https://github.com/getappmap/appmap-python/compare/v1.24.1...v2.0.0) (2024-05-23)
+
+
+### Bug Fixes
+
+* combine testing-related env vars ([500fe55](https://github.com/getappmap/appmap-python/commit/500fe55f06c536611e3e292b22a8fade62101afe))
+* enabling process recording disables others ([74b2ee1](https://github.com/getappmap/appmap-python/commit/74b2ee15bfc380ee44ef74905e880541028f4c3b))
+* honor APPMAP_RECORD_REQUESTS when testing ([2df0f37](https://github.com/getappmap/appmap-python/commit/2df0f37474d1cd26bdfdbb45baf4fd2c9c9c982f))
+
+
+### Features
+
+* disable record by default ([57b3910](https://github.com/getappmap/appmap-python/commit/57b3910a48cea8582612772d79abacc53b5b73d5))
+
+
+### BREAKING CHANGES
+
+* disable record by default
+
+## [1.24.1](https://github.com/getappmap/appmap-python/compare/v1.24.0...v1.24.1) (2024-05-20)
+
+
+### Bug Fixes
+
+* find a config in the repo root ([b9ecced](https://github.com/getappmap/appmap-python/commit/b9ecced9407e59a302750615be66b08ad679ddb4))
+
+# [1.24.0](https://github.com/getappmap/appmap-python/compare/v1.23.0...v1.24.0) (2024-05-17)
+
+
+### Bug Fixes
+
+* improve handling of unset APPMAP ([bbeee65](https://github.com/getappmap/appmap-python/commit/bbeee653a04df9dafb7e4b8c04db023b3f9be210))
+
+
+### Features
+
+* append to a single log file ([cacc62f](https://github.com/getappmap/appmap-python/commit/cacc62f9ba6811c45e3bebe8849ad48800be60f9))
+
+# [1.23.0](https://github.com/getappmap/appmap-python/compare/v1.22.0...v1.23.0) (2024-05-16)
+
+
+### Features
+
+* check malformed path entries ([f7937ee](https://github.com/getappmap/appmap-python/commit/f7937eeffa4e690c57b3154847cc4b93c6187068))
+
+# [1.22.0](https://github.com/getappmap/appmap-python/compare/v1.21.0...v1.22.0) (2024-05-15)
+
+
+### Features
+
+* search for config file ([4555c82](https://github.com/getappmap/appmap-python/commit/4555c82c156d24475a5974566f5d531f5cc2fd69))
+
+# [1.21.0](https://github.com/getappmap/appmap-python/compare/v1.20.1...v1.21.0) (2024-04-29)
+
+
+### Features
+
+* add runner, get ready for v2 ([670660f](https://github.com/getappmap/appmap-python/commit/670660f4f1202f0a255d8f3ebcd11a4970090cca))
+
+## [1.20.1](https://github.com/getappmap/appmap-python/compare/v1.20.0...v1.20.1) (2024-04-10)
+
+
+### Bug Fixes
+
+* don't create a log file by default ([1fac839](https://github.com/getappmap/appmap-python/commit/1fac839d0e5d053e26597c09c4451aac7f227ca2))
+
+# [1.20.0](https://github.com/getappmap/appmap-python/compare/v1.19.1...v1.20.0) (2024-03-15)
+
+
+### Bug Fixes
+
+* log to a file by default ([3da004f](https://github.com/getappmap/appmap-python/commit/3da004f4ba67b7e3a923fc76ef733eec51a496c7))
+
+
+### Features
+
+* FastAPI support ([3dba2a2](https://github.com/getappmap/appmap-python/commit/3dba2a2561e51a6fe63c68dc870f817391c2bb0f))
+
+## [1.19.1](https://github.com/getappmap/appmap-python/compare/v1.19.0...v1.19.1) (2024-02-29)
+
+
+### Bug Fixes
+
+* add TRACE log level ([778c6e3](https://github.com/getappmap/appmap-python/commit/778c6e3ecea63f45a17e4c52bca8a31f4d9bb073))
+* drop Flask 1 ([5a28dc7](https://github.com/getappmap/appmap-python/commit/5a28dc733d684a9caa15fac7d16a9a82477dd8ca))
+* drop python 3.7 support ([99d33c9](https://github.com/getappmap/appmap-python/commit/99d33c9de1e5aea980c6a8561e7822f9359bb76d))
+* Flask integration should record exceptions ([2e89cfa](https://github.com/getappmap/appmap-python/commit/2e89cfaf3afc55901dfb9cbbe6fabde5d86c35ac))
+
+# [1.19.0](https://github.com/getappmap/appmap-python/compare/v1.18.4...v1.19.0) (2024-02-13)
+
+
+### Bug Fixes
+
+* get rid of unused metadata fields ([87efc91](https://github.com/getappmap/appmap-python/commit/87efc91b262c607b38f5f38eeb5c3c9942074147))
+
+
+### Features
+
+* add process recording ([81e5226](https://github.com/getappmap/appmap-python/commit/81e52268ba87905b2f973a120020aec74d09bece))
+
+## [1.18.4](https://github.com/getappmap/appmap-python/compare/v1.18.3...v1.18.4) (2024-02-10)
+
+
+### Bug Fixes
+
+* replace logging.info with logger in env.py ([68b6bca](https://github.com/getappmap/appmap-python/commit/68b6bca98d64bc55c7b5d0e67900791469fb5d2d))
+
+## [1.18.3](https://github.com/getappmap/appmap-python/compare/v1.18.2...v1.18.3) (2024-02-05)
+
+
+### Bug Fixes
+
+* support python 3.12 ([136b47b](https://github.com/getappmap/appmap-python/commit/136b47b14d390768fe8448f4649cdab838b70a92))
+
+## [1.18.2](https://github.com/getappmap/appmap-python/compare/v1.18.1...v1.18.2) (2024-01-22)
+
+
+### Bug Fixes
+
+* Exclude the appmap test files ([#271](https://github.com/getappmap/appmap-python/issues/271)) ([9ff91b8](https://github.com/getappmap/appmap-python/commit/9ff91b8ed73e8e7b7e01c1e28a829eecdf1e8581))
+
+## [1.18.1](https://github.com/getappmap/appmap-python/compare/v1.18.0...v1.18.1) (2023-11-05)
+
+
+### Bug Fixes
+
+* move source_location property to metadata ([7ac2aa0](https://github.com/getappmap/appmap-python/commit/7ac2aa042ce89bff30dd0bd71ca3d6220d1c8ba4))
+
+# [1.18.0](https://github.com/getappmap/appmap-python/compare/v1.17.1...v1.18.0) (2023-11-04)
+
+
+### Features
+
+* add noappmap decorator ([d8aa5d9](https://github.com/getappmap/appmap-python/commit/d8aa5d92535363b800fb26ac38686c4c51afa0ee))
+
+## [1.17.1](https://github.com/getappmap/appmap-python/compare/v1.17.0...v1.17.1) (2023-10-27)
+
+
+### Bug Fixes
+
+* make sure functions can be excluded ([d7518ee](https://github.com/getappmap/appmap-python/commit/d7518ee361dc4912b94ef4a1b87eb2d1b3a8be2b))
+
 # [1.17.0](https://github.com/getappmap/appmap-python/compare/v1.16.0...v1.17.0) (2023-07-11)
 
 

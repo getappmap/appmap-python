@@ -7,7 +7,7 @@ from .importer import Filterable
 logger = Env.current.getLogger(__name__)
 
 
-class labels:
+class labels:  # pylint: disable=too-few-public-methods
     def __init__(self, *args):
         self._labels = args
 

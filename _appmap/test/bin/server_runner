@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -x
+
+cd "$1"; shift
+
+set -a
+PYTHONUNBUFFERED=1
+APPMAP_OUTPUT_DIR=/tmp
+PYTHONPATH=./init
+
+exec $@

@@ -1,4 +1,4 @@
-"""Tests for the function parameter handling"""
+"""Tests for function parameter handling"""
 
 # pylint: disable=missing-function-docstring
 
@@ -28,13 +28,14 @@ class _params:
 
     @classmethod
     def prepare(cls, ffn):
-        fn = ffn.obj
-        make_call_event = CallEvent.make(fn, ffn.fntype)
+        make_call_event = CallEvent.make(ffn)
         params = CallEvent.make_params(ffn)
 
         def wrapped_fn(_, instance, args, kwargs):
             return make_call_event(
-                parameters=CallEvent.set_params(params, instance, args, kwargs)
+                parameters=CallEvent.set_params(
+                    params, instance, args, kwargs, display_value=True
+                )
             )
 
         return wrapped_fn
@@ -44,7 +45,7 @@ class _params:
         static_fn = inspect.getattr_static(C, fnname)
         fn = getattr(C, fnname)
         fc = FilterableCls(C)
-        ffn = FilterableFn(fc, fn, static_fn)
+        ffn = FilterableFn(fc, fn.__name__, fn, static_fn)
         wrapped = self.prepare(ffn)
         wrapt.wrap_function_wrapper(C, fnname, wrapped)
 
@@ -58,7 +59,7 @@ class TestMethodBase:
         of this fixture, unload it after.  This ensures that each test
         sees a pristine version of the classes it contains.
         """
-        from params import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
+        from params import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error,import-outside-toplevel
             C,
         )
 

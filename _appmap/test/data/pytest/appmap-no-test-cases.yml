@@ -1,0 +1,4 @@
+name: Simple
+record_test_cases: false
+packages:
+- path: simple

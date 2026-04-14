@@ -9,7 +9,6 @@ from threading import Thread
 import pytest
 
 import appmap
-from _appmap.env import Env
 from _appmap.event import _EventIds
 
 
@@ -45,7 +44,7 @@ class TestEvents:
     def test_recursion_protection(self):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             ExampleClass().instance_method()
 
@@ -53,10 +52,11 @@ class TestEvents:
         # is working
         assert True
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "true"})
     def test_when_str_raises(self, mocker):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
@@ -69,10 +69,11 @@ class TestEvents:
         actual_value = r.events[0].parameters[0]["value"]
         assert expected_value == actual_value
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "true"})
     def test_when_both_raise(self, mocker):
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.Mock()
             param.__str__ = mocker.Mock(side_effect=Exception)
@@ -84,11 +85,11 @@ class TestEvents:
         actual_value = r.events[0].parameters[0]["value"]
         assert re.fullmatch(expected_re, actual_value)
 
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "false"})
     def test_when_display_disabled(self, mocker):
-        Env.current.set("APPMAP_DISPLAY_PARAMS", "false")
         r = appmap.Recording()
         with r:
-            from example_class import ExampleClass
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
 
             param = mocker.MagicMock()
 
@@ -105,3 +106,101 @@ class TestEvents:
             # MagicMock. (If it's broken, we may not get here at all,
             # because the assertion above may fail.)
             param.__repr__.assert_called_once_with()
+
+    def test_describe_return_value_recursion_protection(self):
+        r = appmap.Recording()
+        with r:
+            # pylint: disable=import-outside-toplevel
+            from example_class import ExampleClass
+
+            ExampleClass().return_self()
+        # There should be no event for method another_method which is called by __repr__.
+        assert [e.method_id for e in r.events if e.event == "call" and hasattr(e, "method_id")] == [
+            "return_self"
+        ]
+
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": None})
+    def test_labeled_params_displayed_by_default(self):
+        """When display_params is 'labeled' (default),
+        labeled functions should still have their params displayed via repr()."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            result = ExampleClass().labeled_method_with_param("hello")
+            ExampleClass().instance_with_param("hello")
+
+        assert result == "hello"
+        call_event = r.events[0]
+        # Parameter value should be the repr, not the opaque object string
+        assert call_event.parameters[0]["value"] == "'hello'"
+        # Return value should also be displayed
+        return_event = r.events[1]
+        assert return_event.return_value["value"] == "'hello'"
+
+        # Unlabeled method should not have its params displayed, even in the same recording
+        call_event_unlabeled = r.events[2]
+        assert "object at" in call_event_unlabeled.parameters[0]["value"]
+
+    @pytest.mark.appmap_enabled(
+        env={
+            "APPMAP_DISPLAY_PARAMS": "false",
+        }
+    )
+    def test_labeled_params_not_displayed_when_disabled(self):
+        """When display_params is off, labeled functions should NOT have their params displayed."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            ExampleClass().labeled_method_with_param("hello")
+
+        call_event = r.events[0]
+        # Parameter value should be the opaque object string
+        assert "object at" in call_event.parameters[0]["value"]
+
+    @pytest.mark.appmap_enabled(env={"APPMAP_DISPLAY_PARAMS": "labeled"})
+    def test_unlabeled_params_not_displayed(self):
+        """When display_params is 'labeled', unlabeled functions should NOT
+        have their params displayed."""
+        r = appmap.Recording()
+        with r:
+            from example_class import ExampleClass  # pylint: disable=import-outside-toplevel
+
+            ExampleClass().instance_with_param("hello")
+
+        call_event = r.events[0]
+        # Parameter value should be the opaque object string
+        assert "object at" in call_event.parameters[0]["value"]
+
+    # There should be an exception return event generated even when the raised exception is a
+    # BaseException.
+    def test_exception_event_with_base_exception(self):
+        r = appmap.Recording()
+        with r:
+            # pylint: disable=import-outside-toplevel
+            from example_class import ExampleClass
+
+            try:
+                ExampleClass().raise_base_exception()
+            except BaseException: # pylint: disable=broad-exception-caught
+                pass
+        assert check_call_return_stack_order(r.events), "Unbalanced call stack"
+
+
+def check_call_return_stack_order(events):
+    stack = []
+    for e in events:
+        if e.event == "call":
+            stack.append(e)
+        elif e.event == "return":
+            if len(stack) > 0:
+                call = stack.pop()
+                if call.id != e.parent_id:
+                    return False
+            else:
+                return False
+    if len(stack) == 0:
+        return True
+
+    return False

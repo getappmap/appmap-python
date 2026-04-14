@@ -10,12 +10,12 @@ from functools import reduce
 from _appmap import wrapt
 
 from .env import Env
-from .utils import FnType
+from .utils import FnType, Scope
 
 logger = Env.current.getLogger(__name__)
 
 
-Filterable = namedtuple("Filterable", "fqname obj")
+Filterable = namedtuple("Filterable", "scope fqname obj")
 
 
 class FilterableMod(Filterable):
@@ -23,10 +23,7 @@ class FilterableMod(Filterable):
 
     def __new__(cls, mod):
         fqname = mod.__name__
-        return super(FilterableMod, cls).__new__(cls, fqname, mod)
-
-    def classify_fn(self, _):
-        return FnType.MODULE
+        return super(FilterableMod, cls).__new__(cls, Scope.MODULE, fqname, mod)
 
 
 class FilterableCls(Filterable):
@@ -34,35 +31,36 @@ class FilterableCls(Filterable):
 
     def __new__(cls, clazz):
         fqname = "%s.%s" % (clazz.__module__, clazz.__qualname__)
-        return super(FilterableCls, cls).__new__(cls, fqname, clazz)
-
-    def classify_fn(self, static_fn):
-        return FnType.classify(static_fn)
+        return super(FilterableCls, cls).__new__(cls, Scope.CLASS, fqname, clazz)
 
 
 class FilterableFn(
     namedtuple(
         "FilterableFn",
-        Filterable._fields
-        + (
-            "scope",
-            "static_fn",
-        ),
+        Filterable._fields + ("static_fn", "auxtype"),
     )
 ):
     __slots__ = ()
 
-    def __new__(cls, scope, fn, static_fn):
-        fqname = "%s.%s" % (scope.fqname, fn.__name__)
-        self = super(FilterableFn, cls).__new__(cls, fqname, fn, scope, static_fn)
+    def __new__(
+        cls, scope, fn_name, fn, static_fn, auxtype=None
+    ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
+        fqname = "%s.%s" % (scope.fqname, fn_name)
+        self = super(FilterableFn, cls).__new__(cls, scope.scope, fqname, fn, static_fn, auxtype)
         return self
 
     @property
     def fntype(self):
-        return self.scope.classify_fn(self.static_fn)
+        if self.scope == Scope.MODULE:
+            return FnType.MODULE
+
+        ret = FnType.classify(self.static_fn)
+        if self.auxtype is not None:
+            ret |= self.auxtype
+        return ret
 
 
-class Filter(ABC):
+class Filter(ABC):  # pylint: disable=too-few-public-methods
     def __init__(self, next_filter):
         self.next_filter = next_filter
 
@@ -75,7 +73,7 @@ class Filter(ABC):
         """
 
 
-class NullFilter(Filter):
+class NullFilter(Filter):  # pylint: disable=too-few-public-methods
     def __init__(self, next_filter=None):
         super().__init__(next_filter)
 
@@ -89,7 +87,11 @@ def is_class(c):
     # bound to __class__. (For example, celery.local.Proxy uses this
     # mechanism to return the class of the proxied object.)
     #
-    return inspect._is_type(c)  # pylint: disable=protected-access
+    try:
+        inspect._static_getmro(c)  # pylint: disable=protected-access
+    except TypeError:
+        return False
+    return True
 
 
 def get_classes(module):
@@ -125,19 +127,33 @@ def get_members(cls):
     # instead iterate over dir(cls), we would see functions from
     # superclasses, too. Those don't need to be instrumented here,
     # they'll get taken care of when the superclass is imported.
-    ret = []
+    functions = []
+    properties = {}
     modname = cls.__module__ if hasattr(cls, "__module__") else cls.__name__
     for key in cls.__dict__:
         if key.startswith("__"):
             continue
         static_value = inspect.getattr_static(cls, key)
-        if not is_member_func(static_value):
-            continue
-        value = getattr(cls, key)
-        if value.__module__ != modname:
-            continue
-        ret.append((key, static_value, value))
-    return ret
+        # Don't use isinstance to check the type of static_value -- we don't want to invoke the
+        # descriptor protocol.
+        if Importer.instrument_properties and type(static_value) is property:
+            properties[key] = (
+                static_value,
+                {
+                    "fget": (static_value.fget, FnType.GET),
+                    "fset": (static_value.fset, FnType.SET),
+                    "fdel": (static_value.fdel, FnType.DEL),
+                },
+            )
+        else:
+            if not is_member_func(static_value):
+                continue
+            value = getattr(cls, key)
+            if (m := getattr(value, "__module__", None)) and (m is None or m != modname):
+                continue
+            functions.append((key, static_value, value))
+
+    return (functions, properties)
 
 
 class Importer:
@@ -152,10 +168,24 @@ class Importer:
         cls.filter_stack = []
         cls.filter_chain = []
         cls._skip_instrumenting = ("appmap", "_appmap")
+        cls.instrument_properties = (
+            Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
+        )
 
     @classmethod
     def use_filter(cls, filter_class):
         cls.filter_stack.append(filter_class)
+
+    @classmethod
+    def instrument_function(cls, fn_name, filterableFn: FilterableFn, selected_functions=None):
+        # Only instrument the function if it was specifically called out for the package
+        # (e.g. because it should be labeled), or it's included by the filters
+        matched = cls.filter_chain.filter(filterableFn)
+        selected = selected_functions and fn_name in selected_functions
+        if selected or matched:
+            return cls.filter_chain.wrap(filterableFn)
+
+        return filterableFn.obj
 
     @classmethod
     def do_import(cls, *args, **kwargs):
@@ -163,27 +193,49 @@ class Importer:
         if mod.__name__.startswith(cls._skip_instrumenting):
             return
 
-        logger.debug("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
+        logger.trace("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
         if not cls.filter_chain:
             cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
 
         def instrument_functions(filterable, selected_functions=None):
-            logger.debug("  looking for members of %s", filterable.obj)
-            functions = get_members(filterable.obj)
-            logger.debug("  functions %s", functions)
+            # pylint: disable=too-many-locals
+            logger.trace("  looking for members of %s", filterable.obj)
+            functions, properties = get_members(filterable.obj)
+            logger.trace("  functions %s", functions)
 
             for fn_name, static_fn, fn in functions:
-                if selected_functions and fn_name not in selected_functions:
-                    continue
+                filterableFn = FilterableFn(filterable, fn_name, fn, static_fn)
+                new_fn = cls.instrument_function(fn_name, filterableFn, selected_functions)
+                if new_fn != fn:
+                    fw = wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+                    fw._appmap_instrumented = True  # pylint: disable=protected-access
 
-                new_fn = cls.filter_chain.wrap(FilterableFn(filterable, fn, static_fn))
-                if fn != new_fn:
-                    wrapt.wrap_function_wrapper(filterable.obj, fn_name, new_fn)
+            # Now that we've instrumented all the functions, go through the properties and update
+            # them
+            for prop_name, (prop, prop_fns) in properties.items():
+                instrumented_fns = {}
+                for k, (fn, auxtype) in prop_fns.items():
+                    if fn is None:
+                        continue
+                    filterableFn = FilterableFn(filterable, prop_name, fn, fn, auxtype)
+                    if getattr(fn, "_appmap_instrumented", None):
+                        continue
+                    new_fn = cls.instrument_function(prop_name, filterableFn, selected_functions)
+                    if new_fn != fn:
+                        new_fn = wrapt.FunctionWrapper(fn, new_fn)
+                        # Set _appmap_instrumented on the FunctionWrapper, not on the wrapped
+                        # function.
+                        new_fn._appmap_instrumented = True  # pylint: disable=protected-access
+
+                    instrumented_fns[k] = new_fn
+                if len(instrumented_fns) > 0:
+                    instrumented_fns["doc"] = prop.__doc__
+                    setattr(filterable.obj, prop_name, property(**instrumented_fns))
 
         # Import Config here, to avoid circular top-level imports.
         from .configuration import Config  # pylint: disable=import-outside-toplevel
 
-        package_functions = Config().package_functions
+        package_functions = Config.current.package_functions
         fm = FilterableMod(mod)
         if fm.fqname in package_functions:
             instrument_functions(fm, package_functions.get(fm.fqname))
@@ -191,11 +243,11 @@ class Importer:
             instrument_functions(fm)
 
         classes = get_classes(mod)
-        logger.debug("  classes %s", classes)
+        logger.trace("  classes %s", classes)
         for c in classes:
             fc = FilterableCls(c)
             if fc.fqname.startswith(cls._skip_instrumenting):
-                logger.debug("  not instrumenting %s", fc.fqname)
+                logger.trace("  not instrumenting %s", fc.fqname)
                 continue
             if fc.fqname in package_functions:
                 instrument_functions(fc, package_functions.get(fc.fqname))
@@ -214,18 +266,18 @@ def wrap_finder_function(fn, decorator):
     obj = fn.__self__ if hasattr(fn, "__self__") else fn
 
     if getattr(obj, marker, None) is None:
-        logger.debug("wrapping %r", fn)
+        logger.trace("wrapping %r", fn)
         ret = decorator(fn)
         setattr(obj, marker, True)
     else:
-        logger.debug("already wrapped, %r", fn)
+        logger.trace("already wrapped, %r", fn)
 
     return ret
 
 
 @wrapt.decorator
 def wrapped_exec_module(exec_module, _, args, kwargs):
-    logger.debug("exec_module %r args %s kwargs %s", exec_module, args, kwargs)
+    logger.trace("exec_module %r args %s kwargs %s", exec_module, args, kwargs)
     exec_module(*args, **kwargs)
     # Only process imports if we're currently enabled. This
     # handles the case where we previously hooked the finders, but
@@ -257,7 +309,7 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
             else:
                 loader.exec_module = wrap_exec_module(loader.exec_module)
         else:
-            logger.debug("no exec_module for loader %r", spec.loader)
+            logger.trace("no exec_module for loader %r", spec.loader)
     return spec
 
 
@@ -268,14 +320,14 @@ def wrap_finder_find_spec(finder):
     if sys.version_info[1] < 11:
         find_spec = getattr(finder, "find_spec", None)
         if find_spec is None:
-            logger.debug("no find_spec for finder %r", finder)
+            logger.trace("no find_spec for finder %r", finder)
             return
 
         finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
     else:
         find_spec = inspect.getattr_static(finder, "find_spec", None)
         if find_spec is None:
-            logger.debug("no find_spec for finder %r", finder)
+            logger.trace("no find_spec for finder %r", finder)
             return
 
         if isinstance(find_spec, (classmethod, staticmethod)):
@@ -312,7 +364,7 @@ def initialize():
     Importer.initialize()
     # If we're not enabled, there's no reason to hook the finders.
     if Env.current.enabled:
-        logger.debug("sys.metapath: %s", sys.meta_path)
+        logger.trace("sys.metapath: %s", sys.meta_path)
         for finder in sys.meta_path:
             wrap_finder_find_spec(finder)
 

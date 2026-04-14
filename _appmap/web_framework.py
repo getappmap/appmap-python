@@ -11,21 +11,31 @@ from abc import ABC, abstractmethod
 from contextvars import ContextVar
 from hashlib import sha256
 from json.decoder import JSONDecodeError
-from tempfile import NamedTemporaryFile
+from typing import Any, Optional, Protocol, Tuple
 
-from . import generation, remote_recording
+from _appmap import recording
+
+from . import remote_recording
 from .env import Env
-from .event import Event, ReturnEvent, describe_value
+from .event import (
+    Event,
+    ExceptionEvent,
+    HttpServerResponseEvent,
+    ReturnEvent,
+    describe_value,
+)
 from .recorder import Recorder, ThreadRecorder
 from .utils import root_relative_path, scenario_filename
 
 logger = Env.current.getLogger(__name__)
-request_recorder = ContextVar("appmap_request_recorder")
+request_recorder: ContextVar[Optional[Recorder]] = ContextVar("appmap_request_recorder")
 
 # These are the errors that can get raised when trying to update params based on the results of
 # parsing the body of an application/json request:
 JSON_ERRORS = (JSONDecodeError, AttributeError, TypeError, ValueError)
 
+REQUEST_ENABLED_ATTR = "_appmap_request_enabled"
+REMOTE_ENABLED_ATTR = "_appmap_remote_enabled"
 
 class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
     """A special call event that records template rendering."""
@@ -34,7 +44,7 @@ class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
 
     def __init__(self, path, instance=None):
         super().__init__("call")
-        self.receiver = describe_value(None, instance)
+        self.receiver = describe_value(None, instance, display_value=Env.current.display_params)
         self.path = root_relative_path(path)
 
     def to_dict(self, attrs=None):
@@ -50,7 +60,11 @@ class TemplateEvent(Event):  # pylint: disable=too-few-public-methods
         return result
 
 
-class TemplateHandler:  # pylint: disable=too-few-public-methods
+class HasFilename(Protocol):  # pylint: disable=too-few-public-methods
+    filename: str
+
+
+class TemplateHandler(HasFilename):  # pylint: disable=too-few-public-methods
     """Patch for a template class to capture and record template
     rendering (if recording is enabled).
 
@@ -65,10 +79,11 @@ class TemplateHandler:  # pylint: disable=too-few-public-methods
         If recording is enabled, adds appropriate TemplateEvent
         and ReturnEvent.
         """
+
         rec = Recorder.get_current()
         if rec.get_enabled():
             start = time.monotonic()
-            call_event = TemplateEvent(self.filename, self)  # pylint: disable=no-member
+            call_event = TemplateEvent(self.filename, self)
             Recorder.add_event(call_event)
         try:
             return orig(self, *args, **kwargs)
@@ -87,32 +102,13 @@ def name_hash(namepart):
     return sha256(os.fsencode(namepart)).hexdigest()
 
 
-def write_appmap(basedir, basename, contents):
-    """Write an appmap file into basedir.
-
-    Adds APPMAP_SUFFIX to basename; shortens the name if necessary.
-    Atomically replaces existing files. Creates the basedir if required.
-    """
-
-    if len(basename) > NAME_MAX - len(APPMAP_SUFFIX):
-        part = NAME_MAX - len(APPMAP_SUFFIX) - 1 - HASH_LEN
-        basename = basename[:part] + "-" + name_hash(basename[part:])[:HASH_LEN]
-    filename = basename + APPMAP_SUFFIX
-
-    if not basedir.exists():
-        basedir.mkdir(parents=True, exist_ok=True)
-
-    with NamedTemporaryFile(mode="w", dir=basedir, delete=False) as tmp:
-        tmp.write(contents)
-    os.replace(tmp.name, basedir / filename)
-
-
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 def create_appmap_file(
     output_dir,
     request_method,
     request_path_info,
     request_full_path,
-    response,
+    status,
     headers,
     rec,
 ):
@@ -122,41 +118,67 @@ def create_appmap_file(
         + " "
         + request_path_info
         + " ("
-        + str(response.status_code)
+        + str(status)
         + ") - "
         + start_time.strftime("%T.%f")[:-3]
     )
-    appmap_basename = scenario_filename(
-        "_".join([str(start_time.timestamp()), request_full_path])
-    )
+    appmap_basename = scenario_filename("_".join([str(start_time.timestamp()), request_full_path]))
     appmap_file_path = os.path.join(output_dir, appmap_basename)
+
+    recorder_type = "requests"
     metadata = {
         "name": appmap_name,
         "timestamp": start_time.timestamp(),
-        "recorder": {"name": "record_requests"},
+        "recorder": {"name": "record_requests", "type": recorder_type},
     }
-    write_appmap(output_dir, appmap_basename, generation.dump(rec, metadata))
+    recording.write_appmap(rec, appmap_basename, recorder_type, metadata)
     headers["AppMap-Name"] = os.path.abspath(appmap_name)
     headers["AppMap-File-Name"] = os.path.abspath(appmap_file_path) + APPMAP_SUFFIX
 
 
 class AppmapMiddleware(ABC):
+    @abstractmethod
+    def before_request_main(self, rec, req: Any) -> Tuple[float, int]:
+        """Specify the main operations to be performed by a request is processed."""
+        raise NotImplementedError
+
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def after_request_main(
+        self, request_path, status, headers, start, call_event_id
+    ) -> Optional[HttpServerResponseEvent]:
+        if request_path == self.record_url:
+            return None
+
+        env = Env.current
+        if env.enables("requests") or env.enables("remote"):
+            rec = request_recorder.get() if env.enables("requests") else Recorder.get_global()
+            assert rec is not None
+
+            duration = time.monotonic() - start
+            return_event = HttpServerResponseEvent(
+                parent_id=call_event_id,
+                elapsed=duration,
+                status_code=status,
+                headers=headers,
+            )
+            rec.add_event(return_event)
+            return return_event
+
+        return None
+
     def __init__(self, framework_name):
         self.record_url = "/_appmap/record"
         env = Env.current
         record_requests = env.enables("requests")
         if record_requests:
-            logger.debug("Requests will be recorded (%s)", framework_name)
+            logger.info("Requests will be recorded (%s)", framework_name)
 
         self.should_record = env.enables("remote") or record_requests
 
-    def before_request_hook(self, request, request_path):
-        if request_path == self.record_url:
-            return None, None, None
-
+    def before_request_hook(self, request) -> Tuple[Optional[Recorder], float, int]:
         rec = None
-        start = None
-        call_event_id = None
+        start = 0
+        call_event_id = 0
         env = Env.current
         if env.enables("requests"):
             rec = ThreadRecorder()
@@ -171,28 +193,26 @@ class AppmapMiddleware(ABC):
 
         return rec, start, call_event_id
 
-    @abstractmethod
-    def before_request_main(self, rec, req):
-        """Specify the main operations to be performed by a request is processed."""
-
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def after_request_hook(
         self,
         request_path,
         request_method,
         request_base_url,
-        response,
-        response_headers,
-        start,
-        call_event_id,
-    ):
+        status,
+        headers,
+        return_event,
+    ) -> None:
         if request_path == self.record_url:
-            return response
+            return
 
         env = Env.current
         if env.enables("requests"):
             rec = request_recorder.get()
+            assert rec is not None
+
             try:
-                self.after_request_main(rec, response, start, call_event_id)
+                return_event.update(status, headers)
 
                 output_dir = Env.current.output_dir / "requests"
                 create_appmap_file(
@@ -200,8 +220,8 @@ class AppmapMiddleware(ABC):
                     request_method,
                     request_path,
                     request_base_url,
-                    response,
-                    response_headers,
+                    status,
+                    headers,
                     rec,
                 )
             finally:
@@ -210,14 +230,18 @@ class AppmapMiddleware(ABC):
                 request_recorder.set(None)
         elif env.enables("remote"):
             rec = Recorder.get_global()
+            assert rec is not None
             if rec.get_enabled():
-                self.after_request_main(rec, response, start, call_event_id)
+                return_event.update(status, headers)
 
-        return response
-
-    @abstractmethod
-    def after_request_main(self, rec, response, start, call_event_id):
-        """Specify the main operations to be performed after a request is processed."""
+    def on_exception(self, rec, start, call_event_id, exc_info):
+        duration = time.monotonic() - start
+        exception_event = ExceptionEvent(
+            parent_id=call_event_id,
+            elapsed=duration,
+            exc_info=exc_info,
+        )
+        rec.add_event(exception_event)
 
 
 class MiddlewareInserter(ABC):
@@ -230,7 +254,7 @@ class MiddlewareInserter(ABC):
 
     @abstractmethod
     def insert_middleware(self):
-        """Insert the AppMap middleware."""
+        """Insert the AppMap middleware. Optionally return a new instance of the app."""
 
     @abstractmethod
     def remote_enabled(self):
@@ -238,10 +262,12 @@ class MiddlewareInserter(ABC):
 
     def run(self):
         if not self.middleware_present():
-            self.insert_middleware()
+            return self.insert_middleware()
 
         if self.remote_enabled() and not self.debug:
             self._show_warning()
+
+        return None
 
     def _show_warning(self):
         # The user has explicitly asked for remote recording to be enabled in production. Let them

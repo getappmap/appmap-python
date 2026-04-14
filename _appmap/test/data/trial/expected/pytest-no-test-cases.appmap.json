@@ -1,0 +1,28 @@
+{
+  "version": "1.9",
+  "metadata": {
+    "language": {
+      "name": "python"
+    },
+    "client": {
+      "name": "appmap",
+      "url": "https://github.com/applandinc/appmap-python"
+    },
+    "feature_group": "Deferred",
+    "recording": {
+      "defined_class": "test.test_deferred.TestDeferred",
+      "method_id": "test_hello_world"
+    },
+    "source_location": "test/test_deferred.py:7",
+    "name": "Deferred hello world",
+    "feature": "Hello world",
+    "app": "deferred",
+    "recorder": {
+      "name": "pytest",
+      "type": "tests"
+    },
+    "test_status": "succeeded"
+  },
+  "events": [],
+  "classMap": []
+}

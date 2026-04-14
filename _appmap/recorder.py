@@ -1,4 +1,5 @@
 import threading
+import time
 import traceback
 from abc import ABC, abstractmethod
 
@@ -10,6 +11,29 @@ logger = Env.current.getLogger(__name__)
 # pylint: disable=global-statement
 _default_recorder = None
 
+# Allow the user to suggest a limit on the number of events that should be added to a Recorder.
+# Depending on how exceptions get processed by the framework, there may be some more added, but it
+# shouldn't be an enormous number.
+_MAX_EVENTS = Env.current.get("APPMAP_MAX_EVENTS")
+if _MAX_EVENTS is not None:
+    _MAX_EVENTS = int(_MAX_EVENTS)
+
+_MAX_TIME = Env.current.get("APPMAP_MAX_TIME")
+if _MAX_TIME is not None:
+    _MAX_TIME = int(_MAX_TIME)
+
+
+class AppMapLimitExceeded(RuntimeError):
+    """Class of events thrown when some limit has been exceeded"""
+
+
+class AppMapTooManyEvents(AppMapLimitExceeded):
+    """Thrown when a recorder has more than APPMAP_MAX_EVENTS"""
+
+
+class AppMapSessionTooLong(AppMapLimitExceeded):
+    """Throw when an individual recording session has exceeded APPMAP_MAX_TIME"""
+
 
 class Recorder(ABC):
     """
@@ -17,6 +41,8 @@ class Recorder(ABC):
 
     Note that the abstract methods have implementations for use by subclasses.
     """
+
+    _aborting = False
 
     @property
     @abstractmethod
@@ -85,6 +111,14 @@ class Recorder(ABC):
         return cls.get_current()._stop_recording()  # pylint: disable=protected-access
 
     @classmethod
+    def check_time(cls, event_time):
+        if _MAX_TIME is None:
+            return
+        delta = event_time - cls.get_current()._start_time  # pylint: disable=protected-access
+        if delta > _MAX_TIME:
+            raise AppMapSessionTooLong(f"Session exceeded {_MAX_TIME} seconds")
+
+    @classmethod
     def add_event(cls, event):
         """
         Add the given event to the global recorder, as well as the thread's recorder (if it has
@@ -104,12 +138,14 @@ class Recorder(ABC):
         return [perthread, _default_recorder]
 
     def clear(self):
+        Recorder._aborting = False
         self._events = []
 
     def __init__(self, enabled=False):
         self._events = []
         self._enabled = enabled
         self.start_tb = None
+        self._start_time = None
 
     @abstractmethod
     def _start_recording(self):
@@ -120,6 +156,7 @@ class Recorder(ABC):
             raise RuntimeError("Recording already in progress")
         self.start_tb = traceback.extract_stack()
         self._enabled = True
+        self._start_time = time.time()
 
     @abstractmethod
     def _stop_recording(self):
@@ -130,7 +167,13 @@ class Recorder(ABC):
 
     @abstractmethod
     def _add_event(self, event):
+        if Recorder._aborting:
+            return
+
         self._events.append(event)
+        if _MAX_EVENTS is not None and len(self._events) > _MAX_EVENTS:
+            Recorder._aborting = True
+            raise AppMapTooManyEvents(f"Session exceeded {_MAX_EVENTS} events")
 
     @staticmethod
     def _initialize():
@@ -171,7 +214,7 @@ class SharedRecorder(Recorder):
     A shared Recorder. The global recorder is an instance of this class.
     """
 
-    _lock = threading.Lock()
+    _lock = threading.RLock()
 
     def __init__(self):
         super().__init__()

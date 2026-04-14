@@ -4,7 +4,7 @@ from django.core.handlers.base import BaseHandler
 
 @pytest.mark.parametrize(
     "mware",
-    [["app.middleware.hello_world"], ("app.middleware.hello_world",)],
+    [["djangoapp.middleware.hello_world"], ("djangoapp.middleware.hello_world",)],
 )
 def test_middleware_iterable_with_reset(client, settings, mware):
     """

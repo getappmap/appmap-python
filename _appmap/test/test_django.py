@@ -5,7 +5,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from threading import Thread
+from types import SimpleNamespace as NS
 
 import django
 import django.core.handlers.exception
@@ -21,22 +21,39 @@ import appmap.django  # noqa: F401
 from _appmap.metadata import Metadata
 
 from ..test.helpers import DictIncluding
-
-# Make sure assertions in web_framework get rewritten (e.g. to show
-# diffs in generated appmaps)
-pytest.register_assert_rewrite("_appmap.test.web_framework")
-
-# pylint: disable=unused-import,wrong-import-position
-from .web_framework import TestRemoteRecording  # pyright:ignore
-from .web_framework import TestRequestCapture  # pyright: ignore
-from .web_framework import _TestRecordRequests, exec_cmd, wait_until_port_is
-
-# pylint: enable=unused-import
+from .web_framework import (
+    _TestFormCapture,
+    _TestFormData,
+    _TestRecordRequests,
+    _TestRemoteRecording,
+    _TestRequestCapture,
+)
 
 sys.path += [str(Path(__file__).parent / "data" / "django")]
 
 # Import app just for the side-effects. It must happen after sys.path has been modified.
-import app  # pyright: ignore pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+# pylint: disable=import-error, unused-import,wrong-import-order,wrong-import-position
+import djangoapp  # pyright: ignore  # noqa: F401
+
+
+class TestFormCapture(_TestFormCapture):
+    pass
+
+
+class TestFormTest(_TestFormData):
+    pass
+
+
+class TestRecordRequests(_TestRecordRequests):
+    pass
+
+
+class TestRemoteRecording(_TestRemoteRecording):
+    pass
+
+
+class TestRequestCapture(_TestRequestCapture):
+    pass
 
 
 @pytest.mark.django_db
@@ -68,9 +85,9 @@ def test_template(events):
     render_to_string("hello_world.html")
     assert events[0].to_dict() == DictIncluding(
         {
-            "path": "_appmap/test/data/django/app/hello_world.html",
+            "path": "_appmap/test/data/django/djangoapp/hello_world.html",
             "event": "call",
-            "defined_class": "<templates>._AppmapTestDataDjangoAppHello_WorldHtml",
+            "defined_class": "<templates>._AppmapTestDataDjangoDjangoappHello_WorldHtml",
             "method_id": "render",
             "static": False,
         }
@@ -81,7 +98,7 @@ def test_template(events):
 class ClientAdaptor(django.test.Client):
     """Adaptor for the client request parameters used in .web_framework tests."""
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def generic(
         self,
         method,
@@ -152,10 +169,8 @@ def test_exception(client, events, monkeypatch):
         {"request_method": "GET", "path_info": "/exception", "protocol": "HTTP/1.1"}
     )
 
+    assert events[1].event == "return"
     assert events[1].parent_id == events[0].id
-    assert events[1].exceptions == [
-        DictIncluding({"class": "builtins.RuntimeError", "message": "An error"})
-    ]
 
 
 @pytest.mark.appmap_enabled(env={"APPMAP_RECORD_REQUESTS": "false"})
@@ -183,71 +198,52 @@ class TestDjangoApp:
         # To really check middleware reset, the tests must run in order,
         # so disable randomly.
         result = pytester.runpytest("-svv", "-p", "no:randomly")
-        result.assert_outcomes(passed=4, failed=0, errors=0)
+        result.assert_outcomes(passed=6, failed=0, errors=0)
         # Look for the http_server_request event in test_app's appmap. If
         # middleware reset is broken, it won't be there.
         appmap_file = pytester.path / "tmp" / "appmap" / "pytest" / "test_request.appmap.json"
-        assert not os.path.exists(pytester.path / "tmp" / "appmap" / "requests")
+        assert not os.path.exists(
+            pytester.path / "tmp" / "appmap" / "requests"
+        ), "django tests generated request recordings"
 
         events = json.loads(appmap_file.read_text())["events"]
         assert "http_server_request" in events[0]
 
     def test_disabled(self, pytester, monkeypatch):
-        monkeypatch.setenv("APPMAP", "false")
+        monkeypatch.setenv("_APPMAP", "false")
         result = pytester.runpytest("-svv", "-p", "no:randomly", "-k", "test_request")
-        result.assert_outcomes(passed=1, failed=0, errors=0)
+        result.assert_outcomes(passed=3, failed=0, errors=0)
         assert not (pytester.path / "tmp").exists()
 
+    def test_disabled_for_process(self, pytester, monkeypatch):
+        monkeypatch.setenv("APPMAP_RECORD_PROCESS", "true")
 
-class TestRecordRequestsDjango(_TestRecordRequests):
-    def server_start_thread(self, debug=True):
-        # Use appmap from our working copy, not the module installed by virtualenv. Add the init
-        # directory so the sitecustomize.py file it contains will be loaded on startup. This
-        # simulates a real installation.
-        settings = "settings_dev" if debug else "settings"
-        exec_cmd(
-            """
-export PYTHONPATH="$PWD"
+        result = pytester.runpytest("-svv")
 
-cd _appmap/test/data/django/
-PYTHONPATH="$PYTHONPATH:$PWD/init"
-"""
-            + f" APPMAP_OUTPUT_DIR=/tmp DJANGO_SETTINGS_MODULE=app.{settings}"
-            + " python manage.py runserver"
-            + f" 127.0.0.1:{_TestRecordRequests.server_port}"
-        )
+        # There are two tests for remote recording. They should both fail,
+        # because process recording should disable remote recording.
+        result.assert_outcomes(passed=4, failed=2, errors=0)
 
-    def server_start(self, debug=True):
-        def start_with_debug():
-            self.server_start_thread(debug)
+        assert (pytester.path / "tmp" / "appmap" / "process").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "requests").exists()
+        assert not (pytester.path / "tmp" / "appmap" / "pytest").exists()
 
-        # start as background thread so running the tests can continue
-        thread = Thread(target=start_with_debug)
-        thread.start()
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "open")
 
-    def server_stop(self):
-        exec_cmd(
-            "ps -ef"
-            + "| grep -i 'manage.py runserver'"
-            + "| grep -v grep"
-            + "| awk '{ print $2 }'"
-            + "| xargs kill -9"
-        )
-        wait_until_port_is("127.0.0.1", _TestRecordRequests.server_port, "closed")
+@pytest.fixture(name="server")
+def django_server(xprocess, server_base):
+    debug = server_base.debug
+    host = server_base.host
+    port = server_base.port
+    settings = "settings_dev" if debug else "settings"
 
-    def test_record_request_appmap_enabled_requests_enabled_no_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(False)
-        self.server_stop()
+    name = "django"
+    pattern = f"server at http://{host}:{port}"
+    cmd = f"manage.py runserver {host}:{port}"
+    env = {"DJANGO_SETTINGS_MODULE": f"djangoapp.{settings}"}
 
-    def test_record_request_appmap_enabled_requests_enabled_and_remote(self):
-        self.server_stop()  # ensure it's not running
-        self.server_start()
-        self.record_request(True)
-        self.server_stop()
+    xprocess.ensure(name, server_base.factory(name, cmd, pattern, env))
 
-    # it's not possible to test for
-    # appmap_not_enabled_requests_enabled_and_remote because when
-    # APPMAP=false the routes for remote recording are disabled.
+    url = f"http://{server_base.host}:{port}"
+    yield NS(debug=debug, url=url)
+
+    xprocess.getinfo(name).terminate()

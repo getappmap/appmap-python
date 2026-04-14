@@ -1,6 +1,6 @@
 [MAIN]
 # Specify a score threshold under which the program will exit with error.
-fail-under=9.77
+fail-under=9.99
 
 
 # Analyse import fallback blocks. This can be used to support both Python 2 and
@@ -95,7 +95,6 @@ recursive=no
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages.
-suggestion-mode=yes
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -416,7 +415,11 @@ confidence=HIGH,
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=raw-checker-failed,
+# Disable unidiomatic-typecheck. Using isinstance() invokes the descriptor protocol, which can have
+# side effects. Using type() avoids this.
+disable=unidiomatic-typecheck,
+        cyclic-import,
+        raw-checker-failed,
         bad-inline-option,
         locally-disabled,
         file-ignored,
@@ -428,7 +431,9 @@ disable=raw-checker-failed,
         missing-function-docstring,
         missing-class-docstring,
         missing-module-docstring,
-        consider-using-f-string
+        consider-using-f-string,
+        fixme,
+        similarities
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

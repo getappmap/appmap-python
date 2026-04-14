@@ -5,6 +5,7 @@ and called. Used for testing appmap instrumentation.
 
 import time
 from functools import lru_cache, wraps
+from typing import NoReturn
 
 import appmap
 
@@ -54,6 +55,10 @@ class ExampleClass(Super, ClassMethodMixin):
     @appmap.labels("super", "important")
     def labeled_method(self):
         return "super important"
+
+    @appmap.labels("super", "important")
+    def labeled_method_with_param(self, p):
+        return p
 
     @staticmethod
     @wrap_fn
@@ -109,6 +114,9 @@ class ExampleClass(Super, ClassMethodMixin):
     # multiple lines
     def with_comment(self):
         return True
+
+    def return_self(self):
+        return self
 
 
 def modfunc():

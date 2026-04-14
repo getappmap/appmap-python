@@ -1,0 +1,9 @@
+name: TestApp
+packages:
+- path: abc/xyz
+- path: abc\xyz
+- path: \abc
+- path: xyz/
+- path: 42
+- path: .
+- path: 

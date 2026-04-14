@@ -13,7 +13,7 @@ def test_describe_value_does_not_call_class():
         # pylint: disable=missing-class-docstring,too-few-public-methods
         @property
         def __class__(self):
-            raise Exception("__class__ called")
+            raise RuntimeError("__class__ called")
 
     describe_value(None, WithOverloadedClass())
 
@@ -24,7 +24,7 @@ class TestDictValue:
         return {"id": 1, "contents": "some text"}
 
     def test_one_level_schema(self, value):
-        actual = describe_value(None, value)
+        actual = describe_value(None, value, display_value=True)
         assert actual == DictIncluding(
             {
                 "properties": [
@@ -34,6 +34,13 @@ class TestDictValue:
             }
         )
 
+    def test_one_level_schema_display_false(self, value):
+        actual = describe_value(None, value, display_value=False)
+        assert "properties" not in actual
+        assert actual["class"] == "builtins.dict"
+        assert "builtins.dict object at" in actual["value"]
+        assert actual["object_id"] == id(value)
+
 
 class TestNestedDictValue:
     @pytest.fixture
@@ -41,7 +48,7 @@ class TestNestedDictValue:
         return {"page": {"page_number": 1, "page_size": 20, "total": 2383}}
 
     def test_two_level_schema(self, value):
-        actual = describe_value(None, value)
+        actual = describe_value(None, value, display_value=True)
         assert actual == DictIncluding(
             {
                 "properties": [
@@ -60,7 +67,7 @@ class TestNestedDictValue:
 
     def test_respects_max_depth(self, value):
         expected = {"properties": [{"name": "page", "class": "builtins.dict"}]}
-        actual = describe_value(None, value, max_depth=1)
+        actual = describe_value(None, value, max_depth=1, display_value=True)
         assert actual == DictIncluding(expected)
 
 
@@ -70,7 +77,7 @@ class TestListOfDicts:
         return [{"id": 1, "contents": "some text"}, {"id": 2}]
 
     def test_an_array_containing_schema(self, value):
-        actual = describe_value(None, value)
+        actual = describe_value(None, value, display_value=True)
         assert actual["class"] == "builtins.list"
         assert actual["items"][0] == DictIncluding(
             {
@@ -88,6 +95,13 @@ class TestListOfDicts:
             }
         )
 
+    def test_an_array_display_false(self, value):
+        actual = describe_value(None, value, display_value=False)
+        assert "items" not in actual
+        assert actual["class"] == "builtins.list"
+        assert "builtins.list object at" in actual["value"]
+        assert actual["object_id"] == id(value)
+
 
 class TestNestedArrays:
     @pytest.fixture
@@ -95,7 +109,7 @@ class TestNestedArrays:
         return [[["one"]]]
 
     def test_arrays_ignore_max_depth(self, value):
-        actual = describe_value(None, value, max_depth=1)
+        actual = describe_value(None, value, max_depth=1, display_value=True)
         expected = {
             "class": "builtins.list",
             "items": [

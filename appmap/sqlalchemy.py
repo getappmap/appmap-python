@@ -1,8 +1,8 @@
 """SQL statement capture for SQLAlchemy."""
 
 import time
+from importlib.metadata import version
 
-import sqlalchemy
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
@@ -13,15 +13,15 @@ from _appmap.recorder import Recorder
 
 
 @event.listens_for(Engine, "before_cursor_execute")
-# pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument,too-many-positional-arguments
 def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
-    """Capture SQL query callinto appmap."""
+    """Capture SQL query call into appmap."""
     if is_instrumentation_disabled():
         # We must be in the middle of fetching object representation.
         # Don't record this query in the appmap.
         pass
     elif Recorder.get_enabled():
-        Metadata.add_framework("SQLAlchemy", sqlalchemy.__version__)
+        Metadata.add_framework("SQLAlchemy", version("sqlalchemy"))
         if executemany:
             # Sometimes the same query is executed with different parameter sets.
             # Instead of substituting them all, just say how many times it was run.
@@ -45,7 +45,7 @@ def capture_sql_call(conn, cursor, statement, parameters, context, executemany):
 
 
 @event.listens_for(Engine, "after_cursor_execute")
-# pylint: disable=too-many-arguments,unused-argument
+# pylint: disable=too-many-arguments,unused-argument,too-many-positional-arguments
 def capture_sql(conn, cursor, statement, parameters, context, executemany):
     """Capture SQL query return into appmap."""
     if is_instrumentation_disabled():

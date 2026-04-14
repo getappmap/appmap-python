@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from . import remote_recording
 
 
-class RemoteRecording:  # pylint: disable=missing-class-docstring
+class RemoteRecording:  # pylint: disable=missing-class-docstring,too-few-public-methods
     def __init__(self, get_response):
         super().__init__()
         self.get_response = get_response
@@ -30,5 +30,7 @@ class RemoteRecording:  # pylint: disable=missing-class-docstring
         def not_allowed():
             return "", HTTPStatus.METHOD_NOT_ALLOWED
 
+        assert request.method is not None
         body, status = handlers.get(request.method, not_allowed)()
+
         return HttpResponse(body, status=status, content_type="application/json")

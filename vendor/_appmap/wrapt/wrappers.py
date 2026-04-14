@@ -457,9 +457,8 @@ class ObjectProxy(with_metaclass(_ObjectProxyMetaType)):
         raise NotImplementedError(
                 'object proxy must define __reduce_ex__()')
 
-    def __reduce_ex__(self, protocol):
-        raise NotImplementedError(
-                'object proxy must define __reduce_ex__()')
+    def __reduce_ex__(self):
+        raise NotImplementedError("object proxy must define __reduce_ex__()")
 
 class CallableObjectProxy(ObjectProxy):
 
@@ -506,22 +505,41 @@ class PartialCallableObjectProxy(ObjectProxy):
 
         return self.__wrapped__(*_args, **_kwargs)
 
+def _unpickle_functionwrapper(modname, qualname):
+    """
+    Given the module name and qualname of a function, return a FunctionWrapper instance for it. This
+    simply imports the module, then fetches the appropriate function. Provided AppMap
+    instrumentation has been configured correctly when unpickling, the attribute for the function
+    will be a FunctionWrapper. If it hasn't been configured correctly, the attribute will simply be
+    the original function. (This means the application will function correctly, but no events will
+    get generated when the function is called.)
+    """
+    _, _, original = resolve_path(modname, qualname)
+
+    return original
+
+
 class _FunctionWrapperBase(ObjectProxy):
+    __slots__ = (
+        "_self_instance",
+        "_self_wrapper",
+        "_self_enabled",
+        "_self_binding",
+        "_self_parent",
+        "_bfws",
+        "_appmap_instrumented",
+    )
 
-    __slots__ = ('_self_instance', '_self_wrapper', '_self_enabled',
-                 '_self_binding', '_self_parent', '_bfws')
-
-    def __init__(self, wrapped, instance, wrapper, enabled=None,
-            binding='function', parent=None):
-
+    def __init__(self, wrapped, instance, wrapper, enabled=None, binding="function", parent=None):
         super(_FunctionWrapperBase, self).__init__(wrapped)
 
-        object.__setattr__(self, '_self_instance', instance)
-        object.__setattr__(self, '_self_wrapper', wrapper)
-        object.__setattr__(self, '_self_enabled', enabled)
-        object.__setattr__(self, '_self_binding', binding)
-        object.__setattr__(self, '_self_parent', parent)
-        object.__setattr__(self, '_bfws', list())
+        object.__setattr__(self, "_self_instance", instance)
+        object.__setattr__(self, "_self_wrapper", wrapper)
+        object.__setattr__(self, "_self_enabled", enabled)
+        object.__setattr__(self, "_self_binding", binding)
+        object.__setattr__(self, "_self_parent", parent)
+        object.__setattr__(self, "_bfws", list())
+        object.__setattr__(self, "_appmap_instrumented", False)
 
     def __get__(self, instance, owner):
         # This method is actually doing double duty for both unbound and
@@ -649,6 +667,20 @@ class _FunctionWrapperBase(ObjectProxy):
         else:
             return issubclass(subclass, self.__wrapped__)
 
+    # Implement this here, rather than in ObjectProxy, because _unpickle_functionwrapper will only
+    # create new instances of subclasses of _FunctionWrapperBase via the agent's import hooks.
+    def __reduce_ex__(self, _):
+        modname = self.__wrapped__.__module__
+        qualname = getattr(self.__wrapped__, "__qualname__", None)
+        if qualname is None:
+            qualname = self.__wrapped__.__name__
+
+        return (
+            _unpickle_functionwrapper,
+            (modname, qualname),
+        )
+
+
 class BoundFunctionWrapper(_FunctionWrapperBase):
 
     def __new__(cls, *args, **kwargs):
@@ -731,27 +763,18 @@ class BoundFunctionWrapper(_FunctionWrapperBase):
             return self._self_wrapper(self.__wrapped__, instance, args,
                     kwargs)
 
+    def __getattribute__(self, name):
+        if name == "__func__":
+            # The __func__ attribute of a bound method is the unbound method. The corresponding
+            # attribute of a BoundFunctionWrapper is the associated FunctionWrapper (saved in
+            # _self_parent when the BFW is created).
+            return self._self_parent
+
+        return super().__getattribute__(name)
+
+
 class FunctionWrapper(_FunctionWrapperBase):
-
     __bound_function_wrapper__ = BoundFunctionWrapper
-
-    # The code here is pretty complicated (see the comment below), and it's not completely clear to
-    # me whether it actually keeps any state. If it does, __reduce_ex__ needs to return a tuple so a
-    # new FunctionWrapper will be created. If it doesn't, then __reduce_ex__ can simply return a
-    # string, which would cause deepcopy to return the original FunctionWrapper.
-    #
-    # Update: We'll return the qualname of the wrapped function instead of a tuple allows a
-    # FunctionWrapper to be pickled (as the function it wraps). This seems to be adequate for
-    # generating AppMaps, so go with that.
-
-    def __reduce_ex__(self, protocol):
-         return self.__wrapped__.__qualname__
- 
-         # return FunctionWrapper, (
-         #     self.__wrapped__,
-         #     self._self_wrapper,
-         #     self._self_enabled,
-         # )
 
     def __init__(self, wrapped, wrapper, enabled=None):
         # What it is we are wrapping here could be anything. We need to

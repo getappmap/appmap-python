@@ -52,7 +52,7 @@ class HTTPConnectionPatch:
         if not hasattr(request, "headers"):
             request["headers"] = {}
         headers = request["headers"]
-        if not header in headers:
+        if header not in headers:
             headers[header] = []
         headers[header].extend(values)
         orig(self, header, *values)

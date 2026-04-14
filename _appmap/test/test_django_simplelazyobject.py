@@ -16,7 +16,8 @@ def test_recording_simplelazyobject_does_not_evaluate():
     doesn't cause incorrect premature evaluation.
     """
     with appmap.Recording():
-        import appmap_testing.django_simplelazyobject as ecds  # pylint: disable=import-outside-toplevel
+        import appmap_testing.django_simplelazyobject as ecds  # pylint: disable=import-outside-toplevel, import-error
+
         ecds.lazy()
 
     # if we're here and the exception wasn't thrown, we're good

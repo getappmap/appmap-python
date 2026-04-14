@@ -11,9 +11,9 @@
     "feature_group": "Deferred",
     "recording": {
       "defined_class": "test.test_deferred.TestDeferred",
-      "method_id": "test_hello_world",
-      "source_location": "test/test_deferred.py:7"
+      "method_id": "test_hello_world"
     },
+    "source_location": "test/test_deferred.py:7",
     "name": "Deferred hello world",
     "feature": "Hello world",
     "app": "deferred",

@@ -2,6 +2,7 @@
 .tool-versions
 
 poetry.lock
+uv.lock
 
 __pycache__/
 *.py[cod]
@@ -19,4 +20,7 @@ htmlcov/
 
 /.tox
 /node_modules
+/ruff.toml
 
+appmap.log
+*.sqlite3

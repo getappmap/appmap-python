@@ -1,4 +1,9 @@
+import json
 import pytest
+
+import numpy as np
+
+from _appmap.generation import AppMapEncoder
 
 
 @pytest.mark.appmap_enabled
@@ -48,3 +53,18 @@ class TestGeneration:
             return ret
 
         verify_example_appmap(check_comment, "instance_method")
+
+class TestAppMapEncoder:
+    def test_np_int64_type(self):
+        data = {
+            "value": np.int64(42),
+        }
+        json_str = json.dumps(data, cls=AppMapEncoder)
+        assert '{"value": "42"}' == json_str
+
+    def test_np_array_type(self):
+        data = {
+            "value": np.array([0, 1, 2, 3])
+        }
+        json_str = json.dumps(data, cls=AppMapEncoder)
+        assert '{"value": "[0 1 2 3]"}' == json_str

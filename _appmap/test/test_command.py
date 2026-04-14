@@ -1,9 +1,9 @@
 import json
 import re
-from distutils.dir_util import copy_tree
+from shutil import copytree
+from importlib.metadata import version
 
 import pytest
-from importlib_metadata import version
 
 import _appmap
 from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_validate
@@ -11,10 +11,10 @@ from appmap.command import appmap_agent_init, appmap_agent_status, appmap_agent_
 from .helpers import DictIncluding
 
 
-@pytest.fixture(name="cmd_setup")
+@pytest.fixture(name="_cmd_setup")
 def _cmd_setup(request, git, data_dir, monkeypatch):
     repo_root = git.cwd
-    copy_tree(data_dir / request.param, str(repo_root))
+    copytree(data_dir / request.param, str(repo_root), dirs_exist_ok=True)
     monkeypatch.chdir(repo_root)
 
     # pylint: disable=protected-access
@@ -23,8 +23,8 @@ def _cmd_setup(request, git, data_dir, monkeypatch):
     return monkeypatch
 
 
-@pytest.mark.parametrize("cmd_setup", ["config"], indirect=True)
-def test_agent_init(cmd_setup, capsys):
+@pytest.mark.parametrize("_cmd_setup", ["config"], indirect=True)
+def test_agent_init(_cmd_setup, capsys):
     rc = appmap_agent_init._run()  # pylint: disable=protected-access
 
     assert rc == 0
@@ -39,19 +39,23 @@ def test_agent_init(cmd_setup, capsys):
 
 
 class TestAgentStatus:
-    @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
+    @pytest.mark.parametrize("_cmd_setup", ["pytest"], indirect=True)
     @pytest.mark.parametrize("do_discovery", [True, False])
-    def test_test_discovery_control(self, cmd_setup, do_discovery, mocker):
+    def test_test_discovery_control(self, _cmd_setup, do_discovery, mocker):
         mocker.patch("appmap.command.appmap_agent_status.discover_pytest_tests")
         rc = appmap_agent_status._run(  # pylint: disable=protected-access
             discover_tests=do_discovery
         )
         assert rc == 0
         call_count = 1 if do_discovery else 0
+
+        # Well, pylint, if it didn't have call_count, assertion would fail,
+        # wouldn't it?
+        # pylint: disable=no-member
         assert appmap_agent_status.discover_pytest_tests.call_count == call_count
 
-    @pytest.mark.parametrize("cmd_setup", ["pytest"], indirect=True)
-    def test_agent_status(self, cmd_setup, capsys):
+    @pytest.mark.parametrize("_cmd_setup", ["pytest"], indirect=True)
+    def test_agent_status(self, _cmd_setup, capsys):
         rc = appmap_agent_status._run(discover_tests=True)  # pylint: disable=protected-access
 
         assert rc == 0
@@ -77,8 +81,8 @@ class TestAgentStatus:
             {"args": [], "framework": "pytest", "command": "pytest"}
         )
 
-    @pytest.mark.parametrize("cmd_setup", ["package1"], indirect=True)
-    def test_agent_status_no_commands(self, cmd_setup, capsys):
+    @pytest.mark.parametrize("_cmd_setup", ["package1"], indirect=True)
+    def test_agent_status_no_commands(self, _cmd_setup, capsys):
         rc = appmap_agent_status._run(discover_tests=True)  # pylint: disable=protected-access
 
         assert rc == 0
@@ -103,7 +107,7 @@ class TestAgentValidate:
             assert err["level"] == "error"
             assert re.match(msg, err["message"]) is not None
 
-    def test_no_errors(self, capsys, mocker):
+    def test_no_errors(self, capsys):
         # Both Django and flask are installed in a dev environment, so
         # validation will succeed.
         self.check_errors(capsys, 0, 0, None)
@@ -134,4 +138,4 @@ class TestAgentValidate:
             side_effect=lambda d: "1.0" if d == "flask" else version(d),
         )
 
-        self.check_errors(capsys, 1, 1, "flask must have version >= 1.1, found 1.0")
+        self.check_errors(capsys, 1, 1, "flask must have version >= 2.0, found 1.0")

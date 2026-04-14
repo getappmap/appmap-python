@@ -1,0 +1,5 @@
+name: TestApp
+packages:
+  - path: example_class
+  - path:
+

@@ -3,16 +3,29 @@
 
 import json
 import os
+from shutil import copy, copytree
 from threading import Thread
 
 import pytest
 
 import appmap
+from _appmap.configuration import Config
 from _appmap.event import Event
 from _appmap.recorder import Recorder, ThreadRecorder
 from _appmap.wrapt import FunctionWrapper
 
 from .normalize import normalize_appmap, remove_line_numbers
+
+
+def _call_modfunc(q):
+    r = appmap.Recording()
+    with r:
+        f = q.get()
+        f()
+    events = r.events
+    assert len(events) == 2
+    assert events[0].event == "call"
+    assert events[0].method_id == "modfunc"
 
 
 @pytest.mark.appmap_enabled
@@ -46,11 +59,12 @@ class TestRecordingWhenEnabled:
         ), f"expected path {expected_path}"
 
     def test_recording_clears(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
-        with appmap.Recording():
+        rec = appmap.Recording()
+        with rec:
             ExampleClass.static_method()
 
         # fresh recording shouldn't contain previous traces
@@ -67,9 +81,9 @@ class TestRecordingWhenEnabled:
         assert rec.events[2].method_id == "instance_method"
 
     def test_recording_shallow(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         rec = appmap.Recording()
         with rec:
@@ -81,9 +95,9 @@ class TestRecordingWhenEnabled:
         assert len(rec.events) == 8
 
     def test_recording_wrapped(self):
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            ExampleClass,
-        )
+        #  pylint: disable=import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
 
         rec = appmap.Recording()
         with rec:
@@ -116,21 +130,23 @@ class TestRecordingWhenEnabled:
             f1 = deepcopy(modfunc)
             f1()
 
-    def test_can_pickle(self):
-        import pickle
+    def test_can_pickle(self, monkeypatch):
+        # Make sure subprocesses see whatever config is set for us.
+        monkeypatch.setenv("APPMAP_CONFIG", str(Config.current._file))  # pylint: disable=protected-access
 
-        from example_class import (  # pyright: ignore[reportMissingImports] pylint: disable=import-error
-            modfunc,
-        )
+        from multiprocessing import Process, Queue
 
-        rec = appmap.Recording()
-        with rec:
-            assert isinstance(modfunc, FunctionWrapper)
-            f = pickle.loads(pickle.dumps(modfunc))
-            f()
-        evt = rec.events[-2]
-        assert evt.event == "call"
-        assert evt.method_id == "modfunc"
+        #  pylint: disable=import-error
+        from example_class import modfunc  # pyright: ignore[reportMissingImports]
+        #  pylint: enable=import-error
+
+        assert isinstance(modfunc, FunctionWrapper), "modfunc isn't instrumented?"
+
+        q = Queue()
+        q.put(modfunc)
+        p = Process(target=_call_modfunc, args=(q,))
+        p.start()
+        p.join()
 
 
 @pytest.mark.appmap_enabled
@@ -168,9 +184,7 @@ class TestRecordingPerThread:
             r.add_event(Event({"name": name}))
             recorders[name] = r
 
-        threads = [
-            Thread(target=add_event, args=(f"thread{i}",)) for i in range(thread_count)
-        ]
+        threads = [Thread(target=add_event, args=(f"thread{i}",)) for i in range(thread_count)]
         for _, t in enumerate(threads):
             t.start()
         for _, t in enumerate(threads):
@@ -188,3 +202,51 @@ class TestRecordingPerThread:
             events = recorders[f"thread{n}"].events
             assert len(events) == 1
             assert events[0].event["name"] == f"thread{n}"
+
+
+def test_process_recording(data_dir, shell, tmp_path):
+    fixture = data_dir / "package1"
+    tmp = tmp_path / "process"
+    copytree(fixture, str(tmp / "package1"), dirs_exist_ok=True)
+    copy(data_dir / "appmap.yml", str(tmp))
+    copytree(data_dir / "flask" / "init", str(tmp / "init"), dirs_exist_ok=True)
+
+    ret = shell.run(
+        "python",
+        "-m",
+        "package1.package2",
+        env={"PYTHONPATH": "init", "APPMAP_RECORD_PROCESS": "true"},
+        cwd=tmp,
+    )
+    assert ret.returncode == 0
+
+    appmap_dir = tmp / "tmp" / "appmap" / "process"
+    appmap_files = list(appmap_dir.glob("*.appmap.json"))
+    assert len(appmap_files) == 1, "this only fails when run from VS Code?"
+    actual = json.loads(appmap_files[0].read_text())
+    assert len(actual["events"]) > 0
+    assert len(actual["classMap"]) > 0
+
+
+def test_process_recording_filename_is_sanitized(data_dir, shell, tmp_path):
+    fixture = data_dir / "package1"
+    tmp = tmp_path / "process"
+    copytree(fixture, str(tmp / "package1"), dirs_exist_ok=True)
+    copy(data_dir / "appmap.yml", str(tmp))
+    copytree(data_dir / "flask" / "init", str(tmp / "init"), dirs_exist_ok=True)
+
+    ret = shell.run(
+        "python",
+        "-m",
+        "package1.package2",
+        env={"PYTHONPATH": "init", "APPMAP_RECORD_PROCESS": "true"},
+        cwd=tmp,
+    )
+    assert ret.returncode == 0
+
+    appmap_dir = tmp / "tmp" / "appmap" / "process"
+    appmap_files = list(appmap_dir.glob("*.appmap.json"))
+    assert len(appmap_files) == 1, "this only fails when run from VS Code?"
+
+    filename = appmap_files[0].name
+    assert ":" not in filename

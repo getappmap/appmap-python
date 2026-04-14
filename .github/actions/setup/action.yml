@@ -1,0 +1,28 @@
+name: Setup base (python, uv, tox)
+description: "Setup Python, uv and tox for further steps"
+inputs:
+  python:
+    description: "Python version to use"
+    required: true
+    type: string
+    default: 3.12
+outputs:
+  'python-version':
+    value: ${{ steps.python.outputs.python-version }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v6
+      id: python
+      with:
+        python-version: ${{ inputs.python }}
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install tox, tox-uv and tox-gh-actions
+      shell: bash
+      run: |
+        uv tool install tox --with tox-uv --with tox-gh-actions

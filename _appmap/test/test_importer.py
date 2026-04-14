@@ -2,7 +2,10 @@
 
 import sys
 
+import pytest
+
 from _appmap.importer import Importer, wrap_exec_module
+from _appmap.wrapt.wrappers import BoundFunctionWrapper
 
 
 def test_exec_module_protection(monkeypatch):
@@ -28,3 +31,18 @@ def test_exec_module_protection(monkeypatch):
 
     f()
     assert True
+
+
+@pytest.mark.appmap_enabled(config="appmap-exclude-fn.yml")
+@pytest.mark.usefixtures("with_data_dir")
+def test_excluded(verify_example_appmap):
+    def check_imports(*_):
+        #  pylint: disable=import-outside-toplevel, import-error
+        from example_class import ExampleClass  # pyright: ignore[reportMissingImports]
+
+        #  pylint: enable=import-outside-toplevel, import-error
+
+        assert isinstance(ExampleClass.instance_method, BoundFunctionWrapper)
+        assert not isinstance(ExampleClass.another_method, BoundFunctionWrapper)
+
+    verify_example_appmap(check_imports, "instance_method")

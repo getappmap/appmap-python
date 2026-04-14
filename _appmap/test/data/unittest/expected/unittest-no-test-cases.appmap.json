@@ -1,0 +1,148 @@
+{
+  "version": "1.9",
+  "metadata": {
+    "language": {
+      "name": "python"
+    },
+    "client": {
+      "name": "appmap",
+      "url": "https://github.com/applandinc/appmap-python"
+    },
+    "feature_group": "Unit test test",
+    "recording": {
+      "defined_class": "simple.test_simple.UnitTestTest",
+      "method_id": "test_hello_world"
+    },
+    "source_location": "simple/test_simple.py:14",
+    "name": "Unit test test hello world",
+    "feature": "Hello world",
+    "app": "Simple",
+    "recorder": {
+      "name": "unittest",
+      "type": "tests"
+    },
+    "test_status": "succeeded"
+  },
+  "events": [
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [
+        {
+          "kind": "req",
+          "value": "'!'",
+          "name": "bang",
+          "class": "builtins.str"
+        }
+      ],
+      "id": 1,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "hello_world",
+      "path": "simple/__init__.py",
+      "lineno": 8
+    },
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [],
+      "id": 2,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "hello",
+      "path": "simple/__init__.py",
+      "lineno": 2
+    },
+    {
+      "return_value": {
+        "value": "'Hello'",
+        "class": "builtins.str"
+      },
+      "parent_id": 2,
+      "id": 3,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "static": false,
+      "receiver": {
+        "kind": "req",
+        "value": "<simple.Simple object at 0xabcdef>",
+        "name": "self",
+        "class": "simple.Simple"
+      },
+      "parameters": [],
+      "id": 4,
+      "event": "call",
+      "thread_id": 1,
+      "defined_class": "simple.Simple",
+      "method_id": "world",
+      "path": "simple/__init__.py",
+      "lineno": 5
+    },
+    {
+      "return_value": {
+        "value": "'world'",
+        "class": "builtins.str"
+      },
+      "parent_id": 4,
+      "id": 5,
+      "event": "return",
+      "thread_id": 1
+    },
+    {
+      "return_value": {
+        "value": "'Hello world!'",
+        "class": "builtins.str"
+      },
+      "parent_id": 1,
+      "id": 6,
+      "event": "return",
+      "thread_id": 1
+    }
+  ],
+  "classMap": [
+    {
+      "name": "simple",
+      "type": "package",
+      "children": [
+        {
+          "name": "Simple",
+          "type": "class",
+          "children": [
+            {
+              "name": "hello",
+              "type": "function",
+              "location": "simple/__init__.py:2",
+              "static": false
+            },
+            {
+              "name": "hello_world",
+              "type": "function",
+              "location": "simple/__init__.py:8",
+              "static": false
+            },
+            {
+              "name": "world",
+              "type": "function",
+              "location": "simple/__init__.py:5",
+              "static": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
