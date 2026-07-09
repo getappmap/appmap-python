@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -64,3 +65,19 @@ class TestEnv:
         )
         assert result.returncode == 0
         assert re.match(r"true", result.stdout) is not None
+
+    def test_internal_state_not_leaked_to_child(self, script_runner):
+        # appmap-python is itself instrumented at interpreter startup (via
+        # appmap.pth), which can set internal, process-scoped _APPMAP*
+        # markers using whatever it inherited, before this script has
+        # computed the environment the child command should actually run
+        # with. Simulate that by pre-setting one such marker (the
+        # once-per-process "startup messages already shown" guard) and
+        # confirm it doesn't leak into the child's environment, which would
+        # otherwise silently suppress the child's own startup logging.
+        env = {**os.environ, "_APPMAP_MESSAGES_SHOWN": "true"}
+        result = script_runner.run(
+            ["appmap-python", "printenv", "_APPMAP_MESSAGES_SHOWN"], env=env
+        )
+        assert result.returncode != 0
+        assert result.stdout == ""

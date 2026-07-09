@@ -130,7 +130,17 @@ def run():
             print(f"{k}={v}")
         sys.exit(0)
 
-    os.execvpe(cmd[0], cmd, {**os.environ, **envvars})
+    # appmap-python is itself instrumented on interpreter startup (via
+    # appmap.pth), before this point, using whatever environment it inherited
+    # rather than the envvars computed above. That incidental self-init can
+    # set internal, process-scoped state under _APPMAP*-prefixed names (e.g.
+    # the once-per-process "startup messages already shown" guard); left in
+    # place, it would carry over into the child's environment and suppress
+    # or corrupt the child's own startup behavior. Drop all of it and let
+    # envvars below re-set whatever the child actually needs.
+    child_env = {k: v for k, v in os.environ.items() if not k.startswith("_APPMAP")}
+    child_env.update(envvars)
+    os.execvpe(cmd[0], cmd, child_env)
 
 
 if __name__ == "__main__":
