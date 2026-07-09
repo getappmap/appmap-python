@@ -26,7 +26,9 @@ test_log_file_not_writable()
 import appmap
 EOF
 
-  python test_log_file_not_writable.py
+  # Log file creation is opt-in, so force it on to exercise the fallback
+  # when the log file can't be created (e.g. read-only mount).
+  APPMAP_DISABLE_LOG_FILE=false python test_log_file_not_writable.py
 
   if [[ $? -eq 0 ]]; then
     echo 'Script executed successfully'

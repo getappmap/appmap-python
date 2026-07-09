@@ -508,5 +508,13 @@ if _startup_messages_shown is None:
     logger.info("file: %s", c._file if c.file_present else "[no appmap.yml]")
     logger.info("config: %r", c)
     logger.debug("package_functions: %s", c.package_functions)
-    logger.info("env: %r", os.environ)
+    # Only log AppMap's own settings, never the full environment: arbitrary
+    # environment variables (API keys, credentials, tokens, etc.) must never
+    # end up in application logs.
+    appmap_env = {
+        k: v
+        for k, v in os.environ.items()
+        if k in ("APPMAP", "_APPMAP") or k.startswith(("APPMAP_", "_APPMAP_"))
+    }
+    logger.info("env: %r", appmap_env)
     os.environ["_APPMAP_MESSAGES_SHOWN"] = "true"

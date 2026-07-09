@@ -122,7 +122,7 @@ def run():
         envvars[f"APPMAP_RECORD_{disabled.upper()}"] = "false"
 
     envvars["APPMAP_DISABLE_LOG_FILE"] = (
-        "true" if parsed_args.get("no_enable_log", set()) else "false"
+        "false" if parsed_args.get("enable_log", False) else "true"
     )
 
     if len(cmd) == 0:

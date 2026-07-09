@@ -37,6 +37,20 @@ def test_runner_multi_recording_type(script_runner, flag, expected):
     assert len(re.findall("(?m)^APPMAP_RECORD_PYTEST=true$", result.stdout)) == expected
 
 
+@pytest.mark.parametrize(
+    "flags,expected",
+    [
+        ([], "true"),
+        (["--no-enable-log"], "true"),
+        (["--enable-log"], "false"),
+    ],
+)
+def test_runner_log_file_disabled_by_default(script_runner, flags, expected):
+    result = script_runner.run(["appmap-python", *flags, "--record", "process"])
+    assert result.returncode == 0
+    assert re.search(f"(?m)^APPMAP_DISABLE_LOG_FILE={expected}$", result.stdout) is not None
+
+
 @pytest.mark.script_launch_mode("subprocess")
 class TestEnv:
     def test_appmap_present(self, script_runner):

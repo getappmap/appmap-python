@@ -168,7 +168,10 @@ class Env(metaclass=SingletonMeta):
         trace_logger.install()
 
         log_level = self.get("APPMAP_LOG_LEVEL", "warn").upper()
-        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "false").upper() != "FALSE"
+        # No log file unless the user opts in: it can contain data (e.g.
+        # rendered parameter values) that shouldn't be written to disk or
+        # committed to source control by default.
+        disable_log = os.environ.get("APPMAP_DISABLE_LOG_FILE", "true").upper() != "FALSE"
         log_config = self.get("APPMAP_LOG_CONFIG")
         config_dict = {
             "version": 1,
