@@ -1,3 +1,11 @@
+## [3.0.1](https://github.com/getappmap/appmap-python/compare/v3.0.0...v3.0.1) (2026-07-10)
+
+
+### Bug Fixes
+
+* don't create log file by default, never log full environment ([60a0c2e](https://github.com/getappmap/appmap-python/commit/60a0c2e16acaf17878b4a983c51c3ed26a41a58f))
+* don't leak the wrapper's own internal state into the child process ([6594576](https://github.com/getappmap/appmap-python/commit/6594576fd2230128852eda6e35ac712e646d9a5e))
+
 # [3.0.0](https://github.com/getappmap/appmap-python/compare/v2.2.0...v3.0.0) (2026-04-14)
 
 
