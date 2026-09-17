@@ -159,6 +159,8 @@ def get_members(cls):
 class Importer:
     filter_stack = [NullFilter]
     filter_chain = None
+    _building_filter_chain = False
+    _deferred_modules = []
 
     def get_filter_stack(self):
         return self.filter_stack
@@ -167,6 +169,8 @@ class Importer:
     def initialize(cls):
         cls.filter_stack = []
         cls.filter_chain = []
+        cls._building_filter_chain = False
+        cls._deferred_modules = []
         cls._skip_instrumenting = ("appmap", "_appmap")
         cls.instrument_properties = (
             Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
@@ -188,14 +192,41 @@ class Importer:
         return filterableFn.obj
 
     @classmethod
+    def _build_filter_chain(cls, mod):
+        """
+        Build the filter chain. Returns False if mod was deferred instead because the chain is
+        already being built.
+
+        Building the chain imports modules of its own: from Python 3.13, the
+        importlib.metadata.files() call in DistMatcher imports csv lazily. Those imports land here
+        while filter_chain is still unset. Building a second chain at that point re-enters
+        importlib.metadata with csv half-initialized, and the process dies in appmap.pth. So build
+        once, and process the modules imported meanwhile once the chain exists.
+        """
+        if cls._building_filter_chain:
+            cls._deferred_modules.append(mod)
+            return False
+
+        cls._building_filter_chain = True
+        try:
+            cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
+        finally:
+            cls._building_filter_chain = False
+
+        deferred, cls._deferred_modules = cls._deferred_modules, []
+        for deferred_mod in deferred:
+            cls.do_import(deferred_mod)
+        return True
+
+    @classmethod
     def do_import(cls, *args, **kwargs):
         mod = args[0]
         if mod.__name__.startswith(cls._skip_instrumenting):
             return
 
         logger.trace("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
-        if not cls.filter_chain:
-            cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
+        if not cls.filter_chain and not cls._build_filter_chain(mod):
+            return
 
         def instrument_functions(filterable, selected_functions=None):
             # pylint: disable=too-many-locals
