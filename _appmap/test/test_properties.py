@@ -118,8 +118,7 @@ def test_operator_itemgetter(events):
     assert len(events) == 2
     assert events[0].to_dict() == DictIncluding({
         "event": "call",
-        # operator.itemgetter.__module__ isn't available before 3.10
-        # "defined_class": "operator",
+        "defined_class": "operator",
         "method_id": "itemgetter (get)",
     })
 

@@ -320,26 +320,18 @@ def wrapped_find_spec(find_spec, _, args, kwargs):
 
 
 def wrap_finder_find_spec(finder):
-    # Prior to 3.11, it worked fine to just grab find_spec from the finder and wrap it. The
-    # implementation of builtin finders must have changed with 3.11, because we now need the same
-    # kind of workaround we use above for exec_module.
-    if sys.version_info[1] < 11:
-        find_spec = getattr(finder, "find_spec", None)
-        if find_spec is None:
-            logger.trace("no find_spec for finder %r", finder)
-            return
+    # Builtin finders define find_spec as a classmethod or staticmethod, which wrapt has trouble
+    # identifying (see the comment in wrapped_find_spec above), so wrap the descriptor found in
+    # __dict__ instead.
+    find_spec = inspect.getattr_static(finder, "find_spec", None)
+    if find_spec is None:
+        logger.trace("no find_spec for finder %r", finder)
+        return
 
+    if isinstance(find_spec, (classmethod, staticmethod)):
         finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
     else:
-        find_spec = inspect.getattr_static(finder, "find_spec", None)
-        if find_spec is None:
-            logger.trace("no find_spec for finder %r", finder)
-            return
-
-        if isinstance(find_spec, (classmethod, staticmethod)):
-            finder.find_spec = wrap_finder_function(find_spec, wrapped_find_spec)
-        else:
-            finder.find_spec = wrap_finder_function(finder.find_spec, wrapped_find_spec)
+        finder.find_spec = wrap_finder_function(finder.find_spec, wrapped_find_spec)
 
 
 class MetapathObserver(MutableSequence):

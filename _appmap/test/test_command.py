@@ -115,14 +115,14 @@ class TestAgentValidate:
     def test_python_version(self, capsys, mocker):
         mocker.patch(
             "_appmap.py_version_check._get_py_version",
-            return_value=(3, 5),
+            return_value=(3, 10),
         )
         mocker.patch(
             "_appmap.py_version_check._get_platform_version",
-            return_value="3.5",
+            return_value="3.10",
         )
 
-        self.check_errors(capsys, 1, 1, r"Minimum Python version supported is \d\.\d, found")
+        self.check_errors(capsys, 1, 1, r"Minimum Python version supported is \d+\.\d+, found")
 
     def test_django_version(self, capsys, mocker):
         mocker.patch(

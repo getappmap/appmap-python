@@ -3,7 +3,7 @@ name = "appmap"
 version = "3.0.1"
 description = "Create AppMap files by recording a Python application."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
   { name = "Alan Potter", email = "alan@app.land" },
@@ -14,10 +14,20 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Framework :: Django",
   "Framework :: Django :: 3.2",
+  "Framework :: Django :: 4.2",
+  "Framework :: Django :: 5.2",
+  "Framework :: Django :: 6.0",
   "Framework :: Flask",
   "Framework :: Pytest",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Software Development",
   "Topic :: Software Development :: Debuggers",
   "Topic :: Software Development :: Documentation",
@@ -60,8 +70,7 @@ test = [
   "Flask",
   "sqlalchemy",
   "pytest-django>=4.7,<5.0",
-  "numpy>=1.24.4,<2.0; python_version < '3.9'",
-  "numpy>=2.0; python_version >= '3.9'",
+  "numpy>=2.0",
 ]
 dev = [
   "appmap[test]",
