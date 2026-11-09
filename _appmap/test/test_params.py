@@ -266,9 +266,6 @@ class TestInstanceMethods(TestMethodBase):
             },
         )
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 8), reason="positional-only added in 3.8"
-    )
     @pytest.mark.parametrize("params", ["positional_only"], indirect=True)
     def test_positional_only(self, params):
         evt = params.C().positional_only(1, 2)
@@ -282,7 +279,6 @@ class TestInstanceMethods(TestMethodBase):
             evt, 1, {"class": "builtins.int", "kind": "req", "name": "p2", "value": "2"}
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 8), reason="keyword-only added in 3.8")
     @pytest.mark.parametrize("params", ["keyword_only"], indirect=True)
     def test_keyword_only(self, params):
         evt = params.C().keyword_only(p2=2, p1=1)

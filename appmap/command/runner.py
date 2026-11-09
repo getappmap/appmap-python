@@ -53,29 +53,12 @@ _parser.add_argument(
     default=argparse.SUPPRESS,
 )
 
-if sys.version_info >= (3, 9):
-    _parser.add_argument(
-        "--enable-log",
-        help="create a log file",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-    )
-else:
-    # You can see why BooleanOptionalAction was added. This is close, though not
-    # really as good....
-    _enable_log_group = _parser.add_mutually_exclusive_group()
-    _enable_log_group.add_argument(
-        "--enable-log",
-        help="create a log file",
-        dest="enable_log",
-        action="store_true",
-    )
-    _enable_log_group.add_argument(
-        "--no-enable-log",
-        help="don't create a log file",
-        dest="enable_log",
-        action="store_false",
-    )
+_parser.add_argument(
+    "--enable-log",
+    help="create a log file",
+    action=argparse.BooleanOptionalAction,
+    default=False,
+)
 
 _parser.add_argument(
     "command",

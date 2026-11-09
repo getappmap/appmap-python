@@ -185,13 +185,10 @@ class Config(metaclass=SingletonMeta):
         env = Env.current
         output_dir = env.output_dir
         root_dir = env.root_dir
-        try:
+        # If output_dir isn't relative to root_dir, APPMAP_OUTPUT_DIR is set, and we've already
+        # logged a warning.
+        if output_dir.is_relative_to(root_dir):
             ret["appmap_dir"] = str(output_dir.relative_to(root_dir))
-        except ValueError:
-            # The only way we can get here is if APPMAP_OUTPUT_DIR is set, and we've already logged
-            # a warning. (Note that PurePath.is_relative_to wasn't added till 3.9, so it can't be
-            # used here.)
-            pass
 
         return ret
 

@@ -96,7 +96,7 @@ cd appmap-python
 APPMAP_DISPLAY_PARAMS=true uv run appmap-python pytest
 
 # Run tests with a specific Python version
-APPMAP_DISPLAY_PARAMS=true uv run --python 3.9 appmap-python pytest
+APPMAP_DISPLAY_PARAMS=true uv run --python 3.11 appmap-python pytest
 
 # Run tests in parallel
 APPMAP_DISPLAY_PARAMS=true uv run appmap-python pytest -n auto
