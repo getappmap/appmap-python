@@ -166,7 +166,7 @@ class Importer:
     @classmethod
     def initialize(cls):
         cls.filter_stack = []
-        cls.filter_chain = []
+        cls.filter_chain = None
         cls._skip_instrumenting = ("appmap", "_appmap")
         cls.instrument_properties = (
             Env.current.get("APPMAP_INSTRUMENT_PROPERTIES", "true").lower() == "true"
@@ -175,6 +175,10 @@ class Importer:
     @classmethod
     def use_filter(cls, filter_class):
         cls.filter_stack.append(filter_class)
+
+    @classmethod
+    def build_filter_chain(cls):
+        cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
 
     @classmethod
     def instrument_function(cls, fn_name, filterableFn: FilterableFn, selected_functions=None):
@@ -194,8 +198,10 @@ class Importer:
             return
 
         logger.trace("do_import, mod %s args %s kwargs %s", mod, args, kwargs)
-        if not cls.filter_chain:
-            cls.filter_chain = reduce(lambda acc, e: e(acc), cls.filter_stack, NullFilter(None))
+        if cls.filter_chain is None:
+            # Only possible while _appmap is being (re)initialized, before install() has run.
+            logger.trace("no filter chain yet, not instrumenting %s", mod.__name__)
+            return
 
         def instrument_functions(filterable, selected_functions=None):
             # pylint: disable=too-many-locals
@@ -362,6 +368,18 @@ class MetapathObserver(MutableSequence):
 
 def initialize():
     Importer.initialize()
+
+
+def install():
+    """
+    Build the filter chain and hook the finders. Must run after the filters have been registered
+    (i.e. after configuration.initialize()).
+
+    The chain is built before the finders are hooked because building it can import modules (e.g.
+    since 3.13, importlib.metadata.files imports csv lazily). If the hooks were already in place,
+    those imports would need the chain that's still being built.
+    """
+    Importer.build_filter_chain()
     # If we're not enabled, there's no reason to hook the finders.
     if Env.current.enabled:
         logger.trace("sys.metapath: %s", sys.meta_path)
