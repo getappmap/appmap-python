@@ -156,10 +156,11 @@ class Event:
 
 
 class Param:
-    __slots__ = ["name", "kind", "default", "default_class"]
+    __slots__ = ["name", "kind", "positional_only", "default", "default_class"]
 
     def __init__(self, sigp):
         self.name = sigp.name
+        self.positional_only = sigp.kind == Parameter.POSITIONAL_ONLY
         has_default = sigp.default is not Signature.empty
         if sigp.kind in (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD):
             self.kind = "opt" if has_default else "req"
@@ -275,28 +276,34 @@ class CallEvent(Event):
             # we're popping the front repeatedly, lists are better at this
             args = list(args)
 
+        # Names of keyword arguments bound to named parameters. Python
+        # doesn't include them in **kwargs, so neither do we.
+        bound = set()
         for p in params:
-            if p.kind == "req":
-                # A 'req' argument can be either keyword or
-                # positional.
-                if p.name in kwargs:
+            if p.kind in ("req", "opt"):
+                # These can be either keyword or positional, unless
+                # they're positional-only.
+                if not p.positional_only and p.name in kwargs:
                     value = kwargs[p.name]
-                else:
-                    if args:
-                        value = args.pop(0)
-                    else:
-                        continue  # required argument missing
-            elif p.kind == "keyreq":
-                if p.name in kwargs:
-                    value = kwargs[p.name]
+                    bound.add(p.name)
+                elif args:
+                    value = args.pop(0)
+                elif p.kind == "opt":
+                    value = p.default
                 else:
                     continue  # required argument missing
-            elif p.kind in ("opt", "key"):
-                value = kwargs.get(p.name, p.default)
+            elif p.kind in ("keyreq", "key"):
+                if p.name in kwargs:
+                    value = kwargs[p.name]
+                    bound.add(p.name)
+                elif p.kind == "key":
+                    value = p.default
+                else:
+                    continue  # required argument missing
             elif p.kind == "rest":
                 value = tuple(args)
             elif p.kind == "keyrest":
-                value = kwargs
+                value = {k: v for k, v in kwargs.items() if k not in bound} if bound else kwargs
             else:
                 # If all the parameter types are handled, this
                 # shouldn't ever happen...

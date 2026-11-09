@@ -321,3 +321,161 @@ class TestInstanceMethods(TestMethodBase):
         self.assert_parameter(
             evt, 1, {"class": "builtins.int", "kind": "opt", "name": "p2", "value": "4"}
         )
+
+    @pytest.mark.parametrize("params", ["with_defaults"], indirect=True)
+    def test_defaults_positional(self, params):
+        evt = params.C().with_defaults(3, 4)
+        assert len(evt.parameters) == 2
+
+        self.assert_parameter(
+            evt, 0, {"class": "builtins.int", "kind": "opt", "name": "p1", "value": "3"}
+        )
+
+        self.assert_parameter(
+            evt, 1, {"class": "builtins.int", "kind": "opt", "name": "p2", "value": "4"}
+        )
+
+    @pytest.mark.parametrize("params", ["with_defaults"], indirect=True)
+    def test_defaults_positional_and_keyword(self, params):
+        evt = params.C().with_defaults(3, p2=4)
+        assert len(evt.parameters) == 2
+
+        self.assert_parameter(
+            evt, 0, {"class": "builtins.int", "kind": "opt", "name": "p1", "value": "3"}
+        )
+
+        self.assert_parameter(
+            evt, 1, {"class": "builtins.int", "kind": "opt", "name": "p2", "value": "4"}
+        )
+
+
+class TestMixedParams(TestMethodBase):
+    """
+    C.mixed has the signature (self, a, b=None, c="dflt", *args, d, e="e", **kwargs),
+    covering every parameter kind.
+    """
+
+    def assert_values(self, evt, expected):
+        actual = {p["name"]: (p["kind"], p["value"]) for p in evt.parameters}
+        assert actual == expected
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_positional_opt(self, params):
+        evt = params.C().mixed("A", "B", "C", d="D")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "B"),
+                "c": ("opt", "C"),
+                "args": ("rest", "()"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "e"),
+                "kwargs": ("keyrest", "{}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_partial_positional_opt(self, params):
+        evt = params.C().mixed("A", "B", d="D")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "B"),
+                "c": ("opt", "dflt"),
+                "args": ("rest", "()"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "e"),
+                "kwargs": ("keyrest", "{}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_keyword_opt(self, params):
+        evt = params.C().mixed("A", c="C", d="D")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "None"),
+                "c": ("opt", "C"),
+                "args": ("rest", "()"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "e"),
+                "kwargs": ("keyrest", "{}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_rest_after_opt(self, params):
+        evt = params.C().mixed("A", "B", "C", "X", "Y", d="D")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "B"),
+                "c": ("opt", "C"),
+                "args": ("rest", "('X', 'Y')"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "e"),
+                "kwargs": ("keyrest", "{}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_keyword_only(self, params):
+        evt = params.C().mixed("A", d="D", e="E", f="F")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "None"),
+                "c": ("opt", "dflt"),
+                "args": ("rest", "()"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "E"),
+                "kwargs": ("keyrest", "{'f': 'F'}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["mixed"], indirect=True)
+    def test_keyword_req(self, params):
+        evt = params.C().mixed(a="A", d="D", f="F")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "None"),
+                "c": ("opt", "dflt"),
+                "args": ("rest", "()"),
+                "d": ("keyreq", "D"),
+                "e": ("key", "e"),
+                "kwargs": ("keyrest", "{'f': 'F'}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["positional_only_kwargs"], indirect=True)
+    def test_positional_only_name_in_kwargs(self, params):
+        # Keyword arguments named like positional-only parameters go to **kwargs
+        evt = params.C().positional_only_kwargs("A", "B", a="X", b="Y")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "B"),
+                "kwargs": ("keyrest", "{'a': 'X', 'b': 'Y'}"),
+            },
+        )
+
+    @pytest.mark.parametrize("params", ["positional_only_kwargs"], indirect=True)
+    def test_positional_only_default_name_in_kwargs(self, params):
+        evt = params.C().positional_only_kwargs("A", b="Y")
+        self.assert_values(
+            evt,
+            {
+                "a": ("req", "A"),
+                "b": ("opt", "dflt"),
+                "kwargs": ("keyrest", "{'b': 'Y'}"),
+            },
+        )
