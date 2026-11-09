@@ -12,6 +12,7 @@ def initialize(**kwargs):
     importer.initialize()
     recorder.initialize()
     configuration.initialize()  # needs to be initialized after recorder
+    importer.install()  # needs the filters registered by configuration
     metadata.initialize()
     web_framework.initialize()
     recording.initialize()
