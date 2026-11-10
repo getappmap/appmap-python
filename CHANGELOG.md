@@ -1,3 +1,21 @@
+# [4.0.0](https://github.com/getappmap/appmap-python/compare/v3.0.1...v4.0.0) (2026-11-10)
+
+
+* feat!: require Python 3.11+, test on 3.11-3.15 ([f40aace](https://github.com/getappmap/appmap-python/commit/f40aace2562f0f127966acb611ccc324360e03f6))
+
+
+### Bug Fixes
+
+* build the import filter chain before hooking imports ([2e959a3](https://github.com/getappmap/appmap-python/commit/2e959a34dc940201b2b26fd7732c180bebe8b818))
+* record positional optional params and **kwargs correctly ([d92c301](https://github.com/getappmap/appmap-python/commit/d92c301a8898505f2e8e0b7522457101e5573f5f))
+
+
+### BREAKING CHANGES
+
+* Python 3.8, 3.9 and 3.10 are no longer supported.
+
+Assisted-by: Claude:claude-opus-5-5
+
 ## [3.0.1](https://github.com/getappmap/appmap-python/compare/v3.0.0...v3.0.1) (2026-07-10)
 
 
