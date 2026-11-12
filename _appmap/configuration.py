@@ -392,8 +392,11 @@ class DistMatcher(PathMatcher):
     def __init__(self, dist, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dist = dist
-        dist_files = importlib.metadata.files(dist)
-        self.files = [str(pp.locate()) for pp in dist_files] if dist_files is not None else []
+        try:
+            dist_files = importlib.metadata.files(dist)
+            self.files = [str(pp.locate()) for pp in dist_files] if dist_files is not None else []
+        except importlib.metadata.PackageNotFoundError:
+            self.files = []
 
     def matches(self, filterable):
         try:

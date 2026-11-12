@@ -1,6 +1,7 @@
 """Test Configuration"""
 # pylint: disable=missing-function-docstring
 
+import importlib.metadata
 from contextlib import contextmanager
 from shutil import copytree
 from pathlib import Path
@@ -11,7 +12,14 @@ import yaml
 
 import _appmap
 import appmap
-from _appmap.configuration import Config, ConfigFilter
+
+from _appmap.configuration import (
+    Config,
+    ConfigFilter,
+    DistMatcher,
+    PathMatcher,
+    matcher_of_config,
+)
 from _appmap.env import Env
 from _appmap.importer import Filterable, NullFilter
 
@@ -340,3 +348,20 @@ class TestSearchConfig:
         Config.current  # pylint: disable=pointless-statement
         # No default config since we specified APPMAP_CONFIG
         assert not Env.current.enabled
+
+
+def test_missing_distribution_does_not_stop_other_packages(mocker):
+    mocker.patch(
+        "importlib.metadata.files",
+        side_effect=importlib.metadata.PackageNotFoundError("missing-package"),
+    )
+
+    matchers = [
+        matcher_of_config({"dist": "missing-package", "path": "missing_package"}),
+        matcher_of_config({"path": "other_package"}),
+    ]
+
+    assert len(matchers) == 2
+    assert isinstance(matchers[0], DistMatcher)
+    assert matchers[0].files == []
+    assert isinstance(matchers[1], PathMatcher)
